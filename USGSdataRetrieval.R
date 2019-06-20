@@ -45,8 +45,10 @@ dir_ROI = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Da
 dir_ColFuns = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges"
 #USGS streamflow gauges
 dir_sfgauges = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges"
-#DEM
-dir_DEM = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\DEM\\USGS_NED_1_n40w077_ArcGrid\\grdn40w077_1"
+#DEM - specify as a vector of directories if there are multiple tiles to be added.
+# The directory order has to match the file name order for f_DEM below.
+dir_DEM = c("C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\DEM\\USGS_NED_1_n40w077_ArcGrid\\grdn40w077_1",
+            'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\DEM\\USGS_NED_1_n40w078_ArcGrid\\grdn40w078_1')
 
 #Set filenames----
 #Region of interest shapefile name
@@ -54,8 +56,13 @@ f_ROI = "Watershed_GF"
 #Streamflow gauges and site coordinates filenames
 f_StreamGaugeData = "BES_USGS_GaugeStations.csv"
 f_StreamGaugeSites = "USGS_GaugeSites.txt"
-#DEM
-f_DEM = "w001001.adf"
+#DEM - all separate DEM tiles may be added to this as a vector (e.g. c("w001001.adf", "w001002.adf") )
+f_DEM = c("w001001.adf", "w001001.adf")
+
+#Set project coordinate system----
+#This is the coordinate system that all data will be plotted and written in
+# It is not the coordinate system of your data (although it could be)
+pCRS = '+init=epsg:26918'
 
 #Load libraries----
 #USGS function library - note that a more recent version is available through Github
@@ -74,23 +81,23 @@ source('ColorFunctions.R')
 
 #Streamflow----
 setwd(dir_sfgauges)
-# Read station data from .csv file----
-station <- read.csv(f_StreamGaugeData, stringsAsFactors = FALSE)
+# Read USGS station data from .csv file----
+AllStations <- read.csv(f_StreamGaugeData, stringsAsFactors = FALSE)
 
 #Add a leading 0 to the NWIS gauges to look up their values on the server
 # Some of the gauges are not numbers so only add 0 to number gauges
 # NOTE: This step may not be necessary for your dataset.
 # NOTE: suppressing warnings for NAs introduced by coercion, which is intended.
 #       Users should check that other warnings are not also being suppressed.
-StationStart = substr(station$GaugeNum, start = 1, stop = 1)
-for (i in 1:nrow(station)){
-  if(station$Source[i] == 'NWIS'){
+StationStart = substr(AllStations$GaugeNum, start = 1, stop = 1)
+for (i in 1:nrow(AllStations)){
+  if(AllStations$Source[i] == 'NWIS'){
     if (suppressWarnings(is.na(as.numeric(StationStart[i])))){
       #This station starts with a character. Retain original name
-      station$GaugeNum[i] <- station$GaugeNum[i]
+      AllStations$GaugeNum[i] <- AllStations$GaugeNum[i]
     }else{
       #Add a leading 0
-      station$GaugeNum[i] <- paste0("0", station$GaugeNum[i])
+      AllStations$GaugeNum[i] <- paste0("0", AllStations$GaugeNum[i])
     }
   }
 }
@@ -127,7 +134,7 @@ Par.Long = "91111"
 ReadParams = c(Par.cfsFlow, Par.Nflow, Par.Long, Par.Lat)
 
 # Collect data for each NWIS gauge----
-NWISstations = station[station$Source == 'NWIS',]
+NWISstations = AllStations[AllStations$Source == 'NWIS',]
 
 #Add Gauge locations to that dataset. Also contains altitudes of the gauges, which should be crosss-checked with DEM data
 # NOTE: you may have to change the commands to match your file.
@@ -145,8 +152,8 @@ GaugesLocs_NAD83 = GaugesLocs[GaugesLocs$coord_datum_cd == 'NAD83', ]
 coordinates(GaugesLocs_NAD83) = c('dec_long_va', 'dec_lat_va')
 proj4string(GaugesLocs_NAD83) = CRS('+init=epsg:4269')
 #Transform to NAD83 UTM Zone 18N
-GaugeLocs_NAD27 = spTransform(GaugesLocs_NAD27, CRS('+init=epsg:26918'))
-GaugeLocs_NAD83 = spTransform(GaugesLocs_NAD83, CRS('+init=epsg:26918'))
+GaugeLocs_NAD27 = spTransform(GaugesLocs_NAD27, CRS(pCRS))
+GaugeLocs_NAD83 = spTransform(GaugesLocs_NAD83, CRS(pCRS))
 #Join to one dataset again
 GaugeLocs = rbind(GaugeLocs_NAD27, GaugeLocs_NAD83)
 #Remove separate datasets
@@ -154,11 +161,17 @@ rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugesLocs, GaugesLocs_NAD27, GaugesLocs_NA
 
 #Add DEM elevation in resolution of your choice for modeling
 #gather all of the DEMs together and mosaic into one file
-#Fixme: have a function to specify multiple DEMs to mosaic
-DEM = raster(x = paste0(dir_DEM, "/", f_DEM))
-DEM2 = raster(x = paste0("C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\DEM\\USGS_NED_1_n40w078_ArcGrid\\grdn40w078_1", '/', 'w001001.adf'))
-DEM = mosaic(DEM, DEM2, fun = mean)
-DEM = projectRaster(DEM, crs = CRS('+init=epsg:26918'))
+for (d in 1:length(dir_DEM)){
+  if (d > 1){
+    DEM2 = raster(x = paste0(dir_DEM[d], "/", f_DEM[d]))
+    DEM = mosaic(DEM, DEM2, fun = mean)
+  }else{
+    DEM = raster(x = paste0(dir_DEM[d], "/", f_DEM[d]))
+  }
+}
+rm(d, DEM2)
+#Project to project coordinate system
+DEM = projectRaster(DEM, crs = CRS(pCRS))
 #Add the DEM elevation to the gauge dataset
 elev = extract(x = DEM, y = GaugeLocs)
 GaugeLocs$ElevDEM = elev
@@ -173,12 +186,12 @@ dev.off()
 
 #Fixme: Correct the elevations for those gauges that are very different than the DEM
 # and have collection codes that suggest lower data quality
+# Some of the gauges were likely reported in m instead of in ft in the USGS database
 #Identify those gauges that are more than 50 feet different
 plot(GaugeLocs)
 plot(GaugeLocs[which(abs(GaugeLocs$ElevDEM/.3048 - GaugeLocs$alt_va) >= 50),], col = 'red', add =T)
 plot(GaugeLocs[which(abs(GaugeLocs$ElevDEM/.3048 - GaugeLocs$alt_va) >= 100),], col = 'blue', add =T)
 plot(GaugeLocs[which(abs(GaugeLocs$ElevDEM/.3048 - GaugeLocs$alt_va) >= 200),], col = 'green', add =T)
-#Some of the gauges were likely reported in m instead of in ft in the USGS database
 
 #Add coordinates and elevation data to the NWISstations data
 NWISstations$Long = NWISstations$Lat = NWISstations$ElevDEM = NWISstations$ElevUSGS = NWISstations$ElevUSGS_Method = NWISstations$ElevUSGS_Err = NA
@@ -197,28 +210,25 @@ for (i in 1:nrow(NWISstations)){
 rm(i, Ind)
 
 #Make NWIS stations a spatial dataframe
-# NOTE: your coordinate system may be different (epsg code)
 coordinates(NWISstations) = c('Long', 'Lat')
-proj4string(NWISstations) = CRS('+init=epsg:26918')
+proj4string(NWISstations) = CRS(pCRS)
 
 #Clip the NWIS gauges to the region of interest (shapefile) 
-# Gwynns Falls watershed in this example
-# NOTE: your coordinate system may be different (epsg code)
-GwynnsFalls = readOGR(dsn = dir_ROI, layer = f_ROI, stringsAsFactors = FALSE)
-GwynnsFalls = spTransform(GwynnsFalls, CRS('+init=epsg:26918'))
+ROI = readOGR(dsn = dir_ROI, layer = f_ROI, stringsAsFactors = FALSE)
+ROI = spTransform(ROI, CRS(pCRS))
 #Clip the streamflow gauges to the region of interest
-NWIS_GF = NWISstations[GwynnsFalls,]
+NWIS_ROI = NWISstations[ROI,]
 
 #Plot locations of NWIS gauges
 png('StremflowGauges.png', res = 300, units = 'in', width = 6, height = 6)
 # All NWIS streamflow gauges in bounding box
 plot(NWISstations, pch = 16, col = 'white')
 # ROI
-plot(GwynnsFalls, add = TRUE)
+plot(ROI, add = TRUE)
 # All NWIS streamflow gauges in bounding box, in color
 plot(NWISstations, pch = 16, add = TRUE)
 # NWIS streamflow gauges in ROI
-plot(NWIS_GF, pch = 16, col = 'red', add = TRUE)
+plot(NWIS_ROI, pch = 16, col = 'red', add = TRUE)
 # Add coordinates
 axis(side = 1)
 axis(side = 2)
@@ -229,18 +239,18 @@ dev.off()
 
 #Compare elevation of gauges within the ROI
 png('CompareGaugeElev.png', res = 300, units = 'in', width = 5, height = 5)
-plot(NWIS_GF$ElevUSGS, NWIS_GF$ElevDEM/.3048,
+plot(NWIS_ROI$ElevUSGS, NWIS_ROI$ElevDEM/.3048,
      xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations')
 lines(c(-100,1100), c(-100,1100), col = 'red')
 dev.off()
 
 #One of these gauge elevations is a lot lower than DEM. Likely that the gauge was reported in m in USGS database
-identify(NWIS_GF$ElevUSGS, NWIS_GF$ElevDEM/.3048)
+#identify(NWIS_ROI$ElevUSGS, NWIS_ROI$ElevDEM/.3048)
 
 #Download the within-ROI stream gauge data in parallel.
 # Use only the unique gauge numbers in the dataset 
 # (repeats occur when multiple variables are available for a gauge)
-uniqueNums = unique(NWIS_GF$GaugeNum)
+uniqueNums = unique(NWIS_ROI$GaugeNum)
 cl = makeCluster(detectCores() - 1)
 registerDoParallel(cl)
 a = foreach(i = uniqueNums, .packages = 'dataRetrieval') %dopar% {
@@ -313,16 +323,16 @@ for (i in 1:length(StreamStationList)){
 }
 rm(i, c, colCodes, codes)
 
-#Identify missing data and add the total number of missing days to the NWIS_GF file
+#Identify missing data and add the total number of missing days to the NWIS_ROI file
 #Fixme: edit this function
-NWIS_GF$MissingData = NA
+NWIS_ROI$MissingData = NA
 for (i in 1:length(StreamStationList)){
   #Missing data that are reported as blank cells
-  NWIS_GF$MissingData[which(as.numeric(NWIS_GF$GaugeNum) == as.numeric(StreamStationList[[i]]$site_no[1]))] = length(which(is.na(StreamStationList[[i]]$X_00060_00003)))
+  NWIS_ROI$MissingData[which(as.numeric(NWIS_ROI$GaugeNum) == as.numeric(StreamStationList[[i]]$site_no[1]))] = length(which(is.na(StreamStationList[[i]]$X_00060_00003)))
   #Add to those the missing data resulting from gaps > 1 day in the record
   gaps = c(with(data = StreamStationList[[i]], as.numeric(Date[-1]) - as.numeric(Date[-nrow(StreamStationList[[i]])])))
   
-  NWIS_GF$MissingData[which(as.numeric(NWIS_GF$GaugeNum) == as.numeric(StreamStationList[[i]]$site_no[1]))] = NWIS_GF$MissingData[which(as.numeric(NWIS_GF$GaugeNum) == as.numeric(StreamStationList[[i]]$site_no[1]))] + sum(gaps[which(gaps > 1)])
+  NWIS_ROI$MissingData[which(as.numeric(NWIS_ROI$GaugeNum) == as.numeric(StreamStationList[[i]]$site_no[1]))] = NWIS_ROI$MissingData[which(as.numeric(NWIS_ROI$GaugeNum) == as.numeric(StreamStationList[[i]]$site_no[1]))] + sum(gaps[which(gaps > 1)])
   
   #Fill in the missing data dates with NA values to have a complete time series for all records
   Inds = which(gaps > 1)
@@ -343,21 +353,21 @@ rm(gaps)
 
 #Make a map of points colored by their record lengths
 # Fixme: Some of the gauges have gaps in their records. Ignoring for now. Could subtract the number of NAs from previous step once it is completed.
-NWIS_GF$RecordLength = NA
+NWIS_ROI$RecordLength = NA
 for (i in 1:length(StreamStationList)){
-  NWIS_GF$RecordLength[which(as.numeric(NWIS_GF$GaugeNum) == as.numeric(StreamStationList[[i]]$site_no[1]))] = as.numeric((max(StreamStationList[[i]]$Date) - min(StreamStationList[[i]]$Date)))
+  NWIS_ROI$RecordLength[which(as.numeric(NWIS_ROI$GaugeNum) == as.numeric(StreamStationList[[i]]$site_no[1]))] = as.numeric((max(StreamStationList[[i]]$Date) - min(StreamStationList[[i]]$Date)))
 }
 #in years
-NWIS_GF$RecordLength = NWIS_GF$RecordLength/365.25
+NWIS_ROI$RecordLength = NWIS_ROI$RecordLength/365.25
 
 #Color by decades
 scaleRange = c(0,70)
 scaleBy = 10
 Pal = rev(rainbow((scaleRange[2] - scaleRange[1])/scaleBy))
 png('StremflowGauges_RecordLengths.png', res = 300, units = 'in', width = 6, height = 6)
-plot(GwynnsFalls)
+plot(ROI)
 # Gauges colored by their record lengths
-plot(NWIS_GF, pch = 16, col = colFun(NWIS_GF$RecordLength), add = TRUE)
+plot(NWIS_ROI, pch = 16, col = colFun(NWIS_ROI$RecordLength), add = TRUE)
 # Add coordinates
 axis(side = 1)
 axis(side = 2)
@@ -379,16 +389,16 @@ proj4string(GaugesLocs_NAD83) = CRS('+init=epsg:4269')
 GaugesLocs_WGS84 = WQstations[WQstations$HorizontalCoordinateReferenceSystemDatumName == 'WGS84', ]
 proj4string(GaugesLocs_WGS84) = CRS('+init=epsg:4326')
 #Transform to NAD83 UTM Zone 18N
-GaugeLocs_NAD27 = spTransform(GaugesLocs_NAD27, CRS('+init=epsg:26918'))
-GaugeLocs_NAD83 = spTransform(GaugesLocs_NAD83, CRS('+init=epsg:26918'))
-GaugeLocs_WGS84 = spTransform(GaugesLocs_WGS84, CRS('+init=epsg:26918'))
+GaugeLocs_NAD27 = spTransform(GaugesLocs_NAD27, CRS(pCRS))
+GaugeLocs_NAD83 = spTransform(GaugesLocs_NAD83, CRS(pCRS))
+GaugeLocs_WGS84 = spTransform(GaugesLocs_WGS84, CRS(pCRS))
 #Join to one dataset again
 WQGaugeLocs = rbind(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugeLocs_WGS84)
 #Remove separate datasets
 rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugeLocs_WGS84, GaugesLocs_NAD27, GaugesLocs_NAD83, GaugesLocs_WGS84)
 
 #Clip to ROI
-WQstations_GF = WQGaugeLocs[GwynnsFalls,]
+WQstations_ROI = WQGaugeLocs[ROI,]
 
 #Find sites that have any N and P water quality data in Maryland
 #Phosphorous
@@ -397,13 +407,13 @@ phosSites <- whatWQPsites(statecode="MD", characteristicName="Phosphorus")
 NitroSites <- whatWQPsites(statecode="MD", characteristicName="Nitrogen")
 
 #Select only those sites that have nitrogen data
-WQstations_GF_N = WQstations_GF[WQstations_GF$MonitoringLocationIdentifier %in% NitroSites$MonitoringLocationIdentifier,]
+WQstations_ROI_N = WQstations_ROI[WQstations_ROI$MonitoringLocationIdentifier %in% NitroSites$MonitoringLocationIdentifier,]
 #Select only those sites that have phosphorous data
-WQstations_GF_P = WQstations_GF[WQstations_GF$MonitoringLocationIdentifier %in% phosSites$MonitoringLocationIdentifier,]
+WQstations_ROI_P = WQstations_ROI[WQstations_ROI$MonitoringLocationIdentifier %in% phosSites$MonitoringLocationIdentifier,]
 
 #Use only the unique gauge numbers in the dataset (repeats occur when multiple variables are available for a gauge)
-uniqueWQNums_N = unique(WQstations_GF_N$MonitoringLocationIdentifier)
-uniqueWQNums_P = unique(WQstations_GF_P$MonitoringLocationIdentifier)
+uniqueWQNums_N = unique(WQstations_ROI_N$MonitoringLocationIdentifier)
+uniqueWQNums_P = unique(WQstations_ROI_P$MonitoringLocationIdentifier)
 
 #Run the downloads in parallel.
 cl = makeCluster(detectCores() - 1)
