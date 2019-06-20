@@ -457,17 +457,14 @@ if (any(!is.null(unlist(p)))){
   rm(p)
 }
 
+# Process Nitrogen data----
 #Gather the records for each gauge into a list of dataframes
 NitroStationList = list()
-#Also record their error codes for use in plotting later
-NitroErrCodes = vector('character')
 #Find all of the Nitrogen station file indices in directory
-Ind_f_NitroStat = list.files()[grep(pattern = 'Nitrogen', x = list.files(), ignore.case = FALSE, fixed = TRUE)]
+Ind_f_NitroStat = list.files()[grep(pattern = 'Nitrogen_', x = list.files(), ignore.case = FALSE, fixed = TRUE)]
 for (i in 1:length(Ind_f_NitroStat)){
   #Read file
   f = read.table(Ind_f_NitroStat[i], header = TRUE, sep = '\t', stringsAsFactors = FALSE)
-  #Gather the error codes for dates
-  #ErrCodes = unique(c(ErrCodes, f$X_00060_00003_cd))
   #Add to list
   NitroStationList = c(NitroStationList, list(f))
 }
@@ -529,6 +526,8 @@ rm(i, c, colCodes)
 
 #Search for flow-normalized outliers
 
+# Process Phosphorous Data----
+
 # BES Water Quality Gauge Data----
 setwd("C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\WaterChemistry")
 #BES Water quality sample time series
@@ -564,7 +563,7 @@ dev.off()
 #Map the station locations and plot them on a map showing BES data and WQP data
 
 
-#Climate----
+#Weather Stations----
 #Fixme: some AllStations data are climate stations
 #Load file containing hyperlinks to the climate data
 ClimGauges = read.csv("NOAA_HyperlinksToGauges.csv", stringsAsFactors = FALSE)
@@ -583,4 +582,3 @@ for (i in 1:nrow(ClimGauges)){
               paste0(getwd(), '/Clim_', StationName, ".txt"), 
               sep = "\t")
 }
-
