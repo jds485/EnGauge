@@ -12,6 +12,15 @@
 #Coordinates of gauges are not reported in that download :( 
 # You can find coordinates for your gauges on this site if you provide a bounding box of coordinates:
 # https://waterdata.usgs.gov/nwis/inventory?search_criteria=lat_long_bounding_box&submitted_form=introduction
+# Coordinates can include altitude of the gauge, which can be important vs. DEM elevation 
+#  (e.g. if there's a cliff at the gauge vs. mean elevation of the pixel)
+#  Select the altitude features in the scroll list to download them
+#  A plot of DEM vs. Gauge reported elevation is a good diagnostic idea to detect discrepancies
+#  Ensure that the units and the vertical datum are the same for your DEM and gauge altitudes
+#   DEMs in the US tend to be NAVD88 in m, whereas gauges are NGVD29 in ft
+#   Differences tend to be minor in the US, except in the West: https://www.ngs.noaa.gov/TOOLS/Vertcon/vertcon.html
+#  Altitude datum codes: https://help.waterdata.usgs.gov/code/alt_datum_cd_query?fmt=html
+#                   AND: https://help.waterdata.usgs.gov/code/alt_meth_cd_query?fmt=html
 
 #You can find water quality gauges on this website:
 # https://www.waterqualitydata.us/portal/
@@ -36,6 +45,8 @@ dir_ROI = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Da
 dir_ColFuns = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges"
 #USGS streamflow gauges
 dir_sfgauges = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges"
+#DEM
+dir_DEM = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\DEM\\USGS_NED_1_n40w077_ArcGrid\\grdn40w077_1"
 
 #Set filenames----
 #Region of interest shapefile name
@@ -43,6 +54,8 @@ f_ROI = "Watershed_GF"
 #Streamflow gauges and site coordinates filenames
 f_StreamGaugeData = "BES_USGS_GaugeStations.csv"
 f_StreamGaugeSites = "USGS_GaugeSites.txt"
+#DEM
+f_DEM = "w001001.adf"
 
 #Load libraries----
 #USGS function library - note that a more recent version is available through Github
@@ -54,6 +67,7 @@ library(foreach)
 library(doParallel)
 library(rgdal)
 library(GISTools)
+library(raster)
 #Color functions for plots (R script from Jared Smith's Geothermal_ESDA Github Repo)
 setwd(dir_ColFuns)
 source('ColorFunctions.R')
@@ -115,7 +129,7 @@ ReadParams = c(Par.cfsFlow, Par.Nflow, Par.Long, Par.Lat)
 # Collect data for each NWIS gauge----
 NWISstations = station[station$Source == 'NWIS',]
 
-#Add Gauge locations to that dataset
+#Add Gauge locations to that dataset. Also contains altitudes of the gauges, which should be crosss-checked with DEM data
 # NOTE: you may have to change the commands to match your file.
 GaugesLocs = read.table(f_StreamGaugeSites, sep = "\t", header = TRUE, stringsAsFactors = FALSE)
 
@@ -138,8 +152,36 @@ GaugeLocs = rbind(GaugeLocs_NAD27, GaugeLocs_NAD83)
 #Remove separate datasets
 rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugesLocs, GaugesLocs_NAD27, GaugesLocs_NAD83)
 
-#Add coordinates to the NWISstations data
-NWISstations$Long = NWISstations$Lat = NA
+#Add DEM elevation in resolution of your choice for modeling
+#gather all of the DEMs together and mosaic into one file
+#Fixme: have a function to specify multiple DEMs to mosaic
+DEM = raster(x = paste0(dir_DEM, "/", f_DEM))
+DEM2 = raster(x = paste0("C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\DEM\\USGS_NED_1_n40w078_ArcGrid\\grdn40w078_1", '/', 'w001001.adf'))
+DEM = mosaic(DEM, DEM2, fun = mean)
+DEM = projectRaster(DEM, crs = CRS('+init=epsg:26918'))
+#Add the DEM elevation to the gauge dataset
+elev = extract(x = DEM, y = GaugeLocs)
+GaugeLocs$ElevDEM = elev
+rm(elev)
+
+#Compare the DEM elevation to the listed elevation
+png('CompareGaugeElev.png', res = 300, units = 'in', width = 5, height = 5)
+plot(GaugeLocs$alt_va[is.na(GaugeLocs$alt_va) == FALSE], GaugeLocs$ElevDEM[is.na(GaugeLocs$alt_va) == FALSE]/.3048,
+     xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations')
+lines(c(-100,1100), c(-100,1100), col = 'red')
+dev.off()
+
+#Fixme: Correct the elevations for those gauges that are very different than the DEM
+# and have collection codes that suggest lower data quality
+#Identify those gauges that are more than 50 feet different
+plot(GaugeLocs)
+plot(GaugeLocs[which(abs(GaugeLocs$ElevDEM/.3048 - GaugeLocs$alt_va) >= 50),], col = 'red', add =T)
+plot(GaugeLocs[which(abs(GaugeLocs$ElevDEM/.3048 - GaugeLocs$alt_va) >= 100),], col = 'blue', add =T)
+plot(GaugeLocs[which(abs(GaugeLocs$ElevDEM/.3048 - GaugeLocs$alt_va) >= 200),], col = 'green', add =T)
+#Some of the gauges were likely reported in m instead of in ft in the USGS database
+
+#Add coordinates and elevation data to the NWISstations data
+NWISstations$Long = NWISstations$Lat = NWISstations$ElevDEM = NWISstations$ElevUSGS = NWISstations$ElevUSGS_Method = NWISstations$ElevUSGS_Err = NA
 for (i in 1:nrow(NWISstations)){
   Ind = which(GaugeLocs$site_no == as.numeric(NWISstations$GaugeNum[i]))
   if (length(Ind) > 1){
@@ -147,6 +189,10 @@ for (i in 1:nrow(NWISstations)){
   }
   NWISstations$Long[i] = GaugeLocs[Ind,]@coords[1,1]
   NWISstations$Lat[i] = GaugeLocs[Ind,]@coords[1,2]
+  NWISstations$ElevUSGS[i] = GaugeLocs[Ind,]$alt_va
+  NWISstations$ElevUSGS_Method[i] = GaugeLocs[Ind,]$alt_meth_cd
+  NWISstations$ElevUSGS_Err[i] = GaugeLocs[Ind,]$alt_acy_va
+  NWISstations$ElevDEM[i] = GaugeLocs[Ind,]$ElevDEM
 }
 rm(i, Ind)
 
@@ -180,6 +226,16 @@ box()
 north.arrow(xb = 370000, yb = 4346000, len = 700, col = 'black', lab = 'N')
 legend('topleft', title = 'Streamflow Stations', legend = c('In ROI', 'Not in ROI'), pch = 16, col = c('red', 'black'))
 dev.off()
+
+#Compare elevation of gauges within the ROI
+png('CompareGaugeElev.png', res = 300, units = 'in', width = 5, height = 5)
+plot(NWIS_GF$ElevUSGS, NWIS_GF$ElevDEM/.3048,
+     xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations')
+lines(c(-100,1100), c(-100,1100), col = 'red')
+dev.off()
+
+#One of these gauge elevations is a lot lower than DEM. Likely that the gauge was reported in m in USGS database
+identify(NWIS_GF$ElevUSGS, NWIS_GF$ElevDEM/.3048)
 
 #Download the within-ROI stream gauge data in parallel.
 # Use only the unique gauge numbers in the dataset 
@@ -258,6 +314,7 @@ for (i in 1:length(StreamStationList)){
 rm(i, c, colCodes, codes)
 
 #Identify missing data and add the total number of missing days to the NWIS_GF file
+#Fixme: edit this function
 NWIS_GF$MissingData = NA
 for (i in 1:length(StreamStationList)){
   #Missing data that are reported as blank cells
