@@ -47,6 +47,7 @@ dir_ColFuns = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BE
 dir_sfgauges = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges"
 #DEM - specify as a vector of directories if there are multiple tiles to be added.
 # The directory order has to match the file name order for f_DEM below.
+# Fixme: can DEMs be downloaded from a server instead of downloading manually before using this script?
 dir_DEM = c("C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\DEM\\USGS_NED_1_n40w077_ArcGrid\\grdn40w077_1",
             'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\DEM\\USGS_NED_1_n40w078_ArcGrid\\grdn40w078_1')
 
@@ -327,38 +328,46 @@ rm(i, c, colCodes, codes)
 #Fixme: edit this function
 NWIS_ROI$MissingData = NA
 for (i in 1:length(StreamStationList)){
-  #Missing data that are reported as blank cells
+  #Missing data that are reported as NA cells
   NWIS_ROI$MissingData[which(as.numeric(NWIS_ROI$GaugeNum) == as.numeric(StreamStationList[[i]]$site_no[1]))] = length(which(is.na(StreamStationList[[i]]$X_00060_00003)))
   #Add to those the missing data resulting from gaps > 1 day in the record
+  # NOTE: this assumes data are daily streamflow
   gaps = c(with(data = StreamStationList[[i]], as.numeric(Date[-1]) - as.numeric(Date[-nrow(StreamStationList[[i]])])))
   
   NWIS_ROI$MissingData[which(as.numeric(NWIS_ROI$GaugeNum) == as.numeric(StreamStationList[[i]]$site_no[1]))] = NWIS_ROI$MissingData[which(as.numeric(NWIS_ROI$GaugeNum) == as.numeric(StreamStationList[[i]]$site_no[1]))] + sum(gaps[which(gaps > 1)])
   
   #Fill in the missing data dates with NA values to have a complete time series for all records
   Inds = which(gaps > 1)
-  for (j in 1:length(Inds)){
-    NumNAs = as.numeric(StreamStationList[[i]][(Inds[j]+1),]$Date - StreamStationList[[i]][Inds[j],]$Date) - 1
-    DateNAs = seq(StreamStationList[[i]][Inds[j],]$Date+1, StreamStationList[[i]][Inds[j]+1,]$Date-1, 1)
-    #Assign NumNAs new rows to this dataframe with NA streamflow
-    for (k in 1:NumNAs){
-      rbind(StreamStationList[[i]], c(StreamStationList[[i]][1,1:2], DateNAs[k], NA, NA))
+  if (length(Inds) > 0){
+    for (j in 1:length(Inds)){
+      NumNAs = as.numeric(StreamStationList[[i]][(Inds[j]+1),]$Date - StreamStationList[[i]][Inds[j],]$Date) - 1
+      DateNAs = seq(StreamStationList[[i]][Inds[j],]$Date+1, StreamStationList[[i]][Inds[j]+1,]$Date-1, 1)
+      #Assign NumNAs new rows to this dataframe with NA streamflow
+      for (k in 1:NumNAs){
+        r = cbind(StreamStationList[[i]][1,1:2], DateNAs[k], NA, NA)
+        colnames(r) = colnames(StreamStationList[[i]]) 
+        StreamStationList[[i]] = rbind(StreamStationList[[i]], r)
+      }
     }
   }
+  #Sort the streamflow series by date
+  StreamStationList[[i]] = StreamStationList[[i]][order(StreamStationList[[i]]$Date),]
 }
-rm(gaps)
+rm(gaps, Inds, NumNAs, DateNAs, r, i, j, k)
 
-#Fixme: Missing data fill in
-
+#Fixme: Missing data fill in with numerical value estimates using prediction in ungauged basins methods
 #Fixme: check for high and low flow outliers in each record, and compare spatially to other gauges on those dates
 
 #Make a map of points colored by their record lengths
-# Fixme: Some of the gauges have gaps in their records. Ignoring for now. Could subtract the number of NAs from previous step once it is completed.
-NWIS_ROI$RecordLength = NA
+NWIS_ROI$RecordLength = NWIS_ROI$RecordLengthMinusGaps = NA
 for (i in 1:length(StreamStationList)){
   NWIS_ROI$RecordLength[which(as.numeric(NWIS_ROI$GaugeNum) == as.numeric(StreamStationList[[i]]$site_no[1]))] = as.numeric((max(StreamStationList[[i]]$Date) - min(StreamStationList[[i]]$Date)))
 }
+rm(i)
+NWIS_ROI$RecordLengthMinusGaps = NWIS_ROI$RecordLength - NWIS_ROI$MissingData
 #in years
 NWIS_ROI$RecordLength = NWIS_ROI$RecordLength/365.25
+NWIS_ROI$RecordLengthMinusGaps = NWIS_ROI$RecordLengthMinusGaps/365.25
 
 #Color by decades
 scaleRange = c(0,70)
@@ -367,7 +376,7 @@ Pal = rev(rainbow((scaleRange[2] - scaleRange[1])/scaleBy))
 png('StremflowGauges_RecordLengths.png', res = 300, units = 'in', width = 6, height = 6)
 plot(ROI)
 # Gauges colored by their record lengths
-plot(NWIS_ROI, pch = 16, col = colFun(NWIS_ROI$RecordLength), add = TRUE)
+plot(NWIS_ROI, pch = 16, col = colFun(NWIS_ROI$RecordLengthMinusGaps), add = TRUE)
 # Add coordinates
 axis(side = 1)
 axis(side = 2)
@@ -556,6 +565,7 @@ dev.off()
 
 
 #Climate----
+#Fixme: some AllStations data are climate stations
 #Load file containing hyperlinks to the climate data
 ClimGauges = read.csv("NOAA_HyperlinksToGauges.csv", stringsAsFactors = FALSE)
 
