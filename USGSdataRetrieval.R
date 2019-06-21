@@ -68,7 +68,7 @@ f_ROI = "Watershed_GF"
 #Streamflow gauges and site coordinates filenames
 f_StreamGaugeData = "BES_USGS_GaugeStations.csv"
 #Optional site data. If not provided, will use function readNWISsite() to collect site coordinates
-f_StreamGaugeSites = "USGS_GaugeSites.txt"
+#f_StreamGaugeSites = "USGS_GaugeSites.txt"
 #DEM - all separate DEM tiles may be added to this as a vector (e.g. c("w001001.adf", "w001002.adf") )
 f_DEM = c("w001001.adf", "w001001.adf")
 #Water quality gauges
@@ -443,6 +443,7 @@ rm(i)
 
 #Water Quality----
 setwd(dir_wq)
+#Read water quality station data----
 WQstations = read.csv(f_WQgauges, stringsAsFactors = FALSE)
 #Convert to spatial data
 coordinates(WQstations) = c('LongitudeMeasure', 'LatitudeMeasure')
@@ -465,7 +466,7 @@ rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugeLocs_WGS84, GaugesLocs_NAD27, GaugesLo
 #Clip to ROI
 WQstations_ROI = WQGaugeLocs[ROI,]
 
-#Find sites that have any N and P water quality data in Maryland
+#Find sites that have any N and P water quality data in Maryland----
 #Phosphorous
 phosSites <- whatWQPsites(statecode="MD", characteristicName="Phosphorus")
 #Nitrogen
@@ -476,13 +477,14 @@ WQstations_ROI_N = WQstations_ROI[WQstations_ROI$MonitoringLocationIdentifier %i
 #Select only those sites that have phosphorous data
 WQstations_ROI_P = WQstations_ROI[WQstations_ROI$MonitoringLocationIdentifier %in% phosSites$MonitoringLocationIdentifier,]
 
-#Use only the unique gauge numbers in the dataset (repeats occur when multiple variables are available for a gauge)
+#Use only the unique gauge numbers in the dataset 
+# (repeats occur when multiple variables are available for a gauge)
 uniqueWQNums_N = unique(WQstations_ROI_N$MonitoringLocationIdentifier)
 uniqueWQNums_P = unique(WQstations_ROI_P$MonitoringLocationIdentifier)
 
-#Run the downloads in parallel.
+#Run the downloads for those sites in parallel----
 # NOTE: These downloads occasionally fail when run in parallel and return internal server errors.
-# If that happens to you, try running in serial and see if you still get the errors.
+# If that happens to you, try running in serial and see if you still get the errors (i.e. change dopar to do).
 # I'm not sure what to do if you still get them. Running in serial has worked for me.
 #Fixme: which function is better? This also exists: readNWISqw
 cl = makeCluster(detectCores() - 1)
@@ -502,7 +504,7 @@ p = foreach(i = uniqueWQNums_P, .packages = 'dataRetrieval') %dopar% {
               sep = "\t")
 }
 stopCluster(cl)
-rm(cl, stationData)
+rm(cl)
 #Check that the run was successful
 if (any(!is.null(unlist(n)))){
   print('NITROGEN DOWNLOAD UNSUCCESSFUL')
@@ -516,6 +518,8 @@ if (any(!is.null(unlist(p)))){
   print('Phosphorous gauge data download complete!')
   rm(p)
 }
+
+#REMAINDER OF SCRIPT IN DEVELOPMENT----
 
 # Process Nitrogen data----
 #Gather the records for each gauge into a list of dataframes
@@ -547,44 +551,44 @@ for (i in 1:length(NitroStationList)){
   }
 }
 
-#Need to check that the units are all the same for each measurement type in each record and across records
+#Fixme: handle missing data, as with streamflow
+
+#Fixme: Need to check that the units are all the same for each measurement type in each record and across records
 #ResultMeasure.MeasureUnitCode
 #ResultMeasureValue
 
-#Check any detection limits in DetectionQuantitationLimitMeasure.MeasureValue
+#Fixme: Check any detection limits in DetectionQuantitationLimitMeasure.MeasureValue
 
-#Plot the time series for each gauge, and the eCDF, colored by error code
+#Fixme: Plot the time series for each gauge, and the eCDF, colored by error code
 # Fixme: make the legend only include the error codes that are in the station's dataset
-for (i in 1:length(StreamStationList)){
-  #Assign colors to the error codes
-  colCodes = rainbow(length(ErrCodes))
-  
-  png(paste0('StreamflowTimeseries_', StreamStationList[[i]]$site_no[1],'.png'), res = 300, units = 'in', width = 6, height = 6)
-  plot(x = StreamStationList[[i]]$Date, y = StreamStationList[[i]]$X_00060_00003, type = 'o', pch = 16, cex = 0.3,
-       xlab = 'Year', ylab = 'Daily Mean Streamflow (cfs)', main = paste0('Station #', StreamStationList[[i]]$site_no[1]),
-       ylim = c(0, 7000), xlim = c(as.Date("1950-01-01"), as.Date("2020-01-01")))
-  #Add colors
-  for (c in 1:length(colCodes)){
-    par(new = TRUE)
-    plot(x = StreamStationList[[i]]$Date[StreamStationList[[i]]$X_00060_00003_cd == ErrCodes[c]], y = StreamStationList[[i]]$X_00060_00003[StreamStationList[[i]]$X_00060_00003_cd == ErrCodes[c]], pch = 16, cex = 0.3,
-         col = colCodes[c],
-         ylim = c(0, 7000), xlim = c(as.Date("1950-01-01"), as.Date("2020-01-01")), axes = FALSE, xlab = '', ylab = '')
-  }
-  legend('topleft', legend = ErrCodes, col = colCodes, pch = 16)
-  dev.off()
-  
-  png(paste0('StreamflowExceedance_', StreamStationList[[i]]$site_no[1],'.png'), res = 300, units = 'in', width = 6, height = 6)
-  qqnorm(StreamStationList[[i]]$X_00060_00003, pch = 1, 
-         ylab = 'Daily Mean Streamflow (cfs)', main = paste0('Non-Exceedance Probability for Daily Mean Streamflow \n Station #', StreamStationList[[i]]$site_no[1]))
-  dev.off()
-}
-rm(i, c, colCodes)
+# for (i in 1:length(StreamStationList)){
+#   #Assign colors to the error codes
+#   colCodes = rainbow(length(ErrCodes))
+#   
+#   png(paste0('StreamflowTimeseries_', StreamStationList[[i]]$site_no[1],'.png'), res = 300, units = 'in', width = 6, height = 6)
+#   plot(x = StreamStationList[[i]]$Date, y = StreamStationList[[i]]$X_00060_00003, type = 'o', pch = 16, cex = 0.3,
+#        xlab = 'Year', ylab = 'Daily Mean Streamflow (cfs)', main = paste0('Station #', StreamStationList[[i]]$site_no[1]),
+#        ylim = c(0, 7000), xlim = c(as.Date("1950-01-01"), as.Date("2020-01-01")))
+#   #Add colors
+#   for (c in 1:length(colCodes)){
+#     par(new = TRUE)
+#     plot(x = StreamStationList[[i]]$Date[StreamStationList[[i]]$X_00060_00003_cd == ErrCodes[c]], y = StreamStationList[[i]]$X_00060_00003[StreamStationList[[i]]$X_00060_00003_cd == ErrCodes[c]], pch = 16, cex = 0.3,
+#          col = colCodes[c],
+#          ylim = c(0, 7000), xlim = c(as.Date("1950-01-01"), as.Date("2020-01-01")), axes = FALSE, xlab = '', ylab = '')
+#   }
+#   legend('topleft', legend = ErrCodes, col = colCodes, pch = 16)
+#   dev.off()
+#   
+#   png(paste0('StreamflowExceedance_', StreamStationList[[i]]$site_no[1],'.png'), res = 300, units = 'in', width = 6, height = 6)
+#   qqnorm(StreamStationList[[i]]$X_00060_00003, pch = 1, 
+#          ylab = 'Daily Mean Streamflow (cfs)', main = paste0('Non-Exceedance Probability for Daily Mean Streamflow \n Station #', StreamStationList[[i]]$site_no[1]))
+#   dev.off()
+# }
+# rm(i, c, colCodes)
 
-#Missing data
+#Fixme: Search for flow-normalized outliers
 
-#Evaluate nondetects in result_cd
-
-#Search for flow-normalized outliers
+#Fixme: write water quality data to files
 
 # Process Phosphorous Data----
 
@@ -625,6 +629,7 @@ dev.off()
 
 #Weather Stations----
 #Fixme: some AllStations data are climate stations
+#       add DEM elevation to dataset and compare
 #Load file containing hyperlinks to the climate data
 ClimGauges = read.csv("NOAA_HyperlinksToGauges.csv", stringsAsFactors = FALSE)
 
