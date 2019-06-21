@@ -1,26 +1,31 @@
 #Script to read USGS streamflow and water quality data from gauges
-# Function help at: https://github.com/USGS-R/dataRetrieval and slideshow https://owi.usgs.gov/R/dataRetrieval.html#1
+# Function help at: https://github.com/USGS-R/dataRetrieval 
+#             Blog: https://owi.usgs.gov/R/training-curriculum/usgs-packages/
+#        Slideshow: https://owi.usgs.gov/R/dataRetrieval.html#1
 # Also has a component for downloading weather station data stored on the USGS database (which includes NOAA ACIS data)
 
 #You can find USGS gauges of any type in your region of interest on this website:
 # https://cida.usgs.gov/enddat/dataDiscovery.jsp
-# Record the coordinates of the bounding box for your region of interest! Important for next step. 
+# Record the coordinates of the bounding box for your region of interest! They could be important for the next step. 
 # Select the data you want and copy the resulting table of values into a txt file
-# txt is important to (hopefully) retain any leading zeros on gauge numbers
+#  txt is important to retain leading zeros on gauge numbers
 # If you inhereted a csv or txt file without leading zeros, a script below can add them to NWIS gauges.
+#  Other gauge datasets seem to not require leading zeros.
 
 #Coordinates of gauges are not reported in that download :( 
-# You can find coordinates for your gauges on this site if you provide a bounding box of coordinates:
+# The USGS function readNWISsite() can look up the coordinates, given the gauge numbers.
+# You can also find coordinates for your gauges on this site if you provide a bounding box of coordinates:
 # https://waterdata.usgs.gov/nwis/inventory?search_criteria=lat_long_bounding_box&submitted_form=introduction
-# Coordinates can include altitude of the gauge, which can be important vs. DEM elevation 
-#  (e.g. if there's a cliff at the gauge vs. mean elevation of the pixel)
-#  Select the altitude features in the scroll list to download them
-#  A plot of DEM vs. Gauge reported elevation is a good diagnostic idea to detect discrepancies
-#  Ensure that the units and the vertical datum are the same for your DEM and gauge altitudes
-#   DEMs in the US tend to be NAVD88 in m, whereas gauges are NGVD29 in ft
+# Obtained coordinates may include altitude of the gauge, which can be important vs. DEM elevation 
+#  (e.g. if there's a cliff at the gauge vs. DEM mean elevation of the pixel)
+#  Select the altitude features that you want from the scroll list on that website to download them
+#  A plot of DEM vs. Gauge reported elevation is made below to visually detect discrepancies
+#   (e.g. USGS data reported in m instead of in ft)
+#  Ensure that the units and the vertical datum are the same for your DEM and all gauge altitudes
+#   DEMs in the US tend to be NAVD88 in m, whereas gauges tend to be referenced to NGVD29 in ft
 #   Differences tend to be minor in the US, except in the West: https://www.ngs.noaa.gov/TOOLS/Vertcon/vertcon.html
 #  Altitude datum codes: https://help.waterdata.usgs.gov/code/alt_datum_cd_query?fmt=html
-#                   AND: https://help.waterdata.usgs.gov/code/alt_meth_cd_query?fmt=html
+#   collection method codes: https://help.waterdata.usgs.gov/code/alt_meth_cd_query?fmt=html
 
 #You can find water quality gauges on this website:
 # https://www.waterqualitydata.us/portal/
@@ -29,11 +34,13 @@
 
 #You can find data quality codes for USGS datasets here:
 # https://help.waterdata.usgs.gov/codes-and-parameters/codes#discharge_cd
-# e.g. for streamflow: https://help.waterdata.usgs.gov/codes-and-parameters/daily-value-qualification-code-dv_rmk_cd
-#                 AND: https://help.waterdata.usgs.gov/codes-and-parameters/instantaneous-and-daily-value-status-codes
-#                 Yes, there are 2 separate reference schemes for the same data.
+# You should always look at these quality codes, and process your data accordingly.
+# This script colors streamflow time series by error code, but doesn't process further than that.
+# codes for streamflow: https://help.waterdata.usgs.gov/codes-and-parameters/daily-value-qualification-code-dv_rmk_cd
+#                  AND: https://help.waterdata.usgs.gov/codes-and-parameters/instantaneous-and-daily-value-status-codes
+#                  Yes, there are 2 separate reference schemes for streamflow data.
 
-#Portions of the function for streamflow download were provided by:
+#Portions of the function for the streamflow download were provided by:
 # Caitline Barber (Caitline.Barber@tufts.edu) and Jonathan Lamontagne (Jonathan.Lamontagne@tufts.edu)
 # Modified by Jared Smith (js4yd@virginia.edu) in June, 2019, and started git tracking.
 # See git commit history for all later contributions
@@ -45,24 +52,43 @@ dir_ROI = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Da
 dir_ColFuns = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges"
 #USGS streamflow gauges
 dir_sfgauges = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges"
-#DEM - specify as a vector of directories if there are multiple tiles to be added.
+#DEM - specify as a vector of directories if there are multiple tiles to be mosaicked together.
 # The directory order has to match the file name order for f_DEM below.
 # Fixme: can DEMs be downloaded from a server instead of downloading manually before using this script?
 dir_DEM = c("C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\DEM\\USGS_NED_1_n40w077_ArcGrid\\grdn40w077_1",
             'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\DEM\\USGS_NED_1_n40w078_ArcGrid\\grdn40w078_1')
+#Output for processed DEM
+dir_DEM_out = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\DEM\\'
+#Water quality gauges
+dir_wq = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges'
 
-#Set filenames----
+#Set input filenames----
 #Region of interest shapefile name
 f_ROI = "Watershed_GF"
 #Streamflow gauges and site coordinates filenames
 f_StreamGaugeData = "BES_USGS_GaugeStations.csv"
+#Optional site data. If not provided, will use function readNWISsite() to collect site coordinates
 f_StreamGaugeSites = "USGS_GaugeSites.txt"
 #DEM - all separate DEM tiles may be added to this as a vector (e.g. c("w001001.adf", "w001002.adf") )
 f_DEM = c("w001001.adf", "w001001.adf")
+#Water quality gauges
+f_WQgauges = "BES_WaterQualityGaugeStations.csv"
+
+#Set output filenames----
+#DEM - geotiff format is the default. You can change in the script below
+f_DEM_mosiac = "DEM_mosaic"
+#NWIS streamflow gauges in ROI
+f_NWIS_ROI_out = 'NWIS_ROI'
+#NWIS streamflow gauges in bounding box
+f_NWIS_bb_out = 'NWIS_bb'
+#Streamflow gauge data processing name appendage
+# e.g. 0159384_p
+f_sf_processKey = '_p'
 
 #Set project coordinate system----
 #This is the coordinate system that all data will be plotted and written in
 # It is not the coordinate system of your data (although it could be)
+# EPSG codes from: https://spatialreference.org/ref/?page=2
 pCRS = '+init=epsg:26918'
 
 #Load libraries and functions----
@@ -135,7 +161,7 @@ Par.Lat = "91110"
 Par.Long = "91111"
 
 #Fixme: is there a way to collect all variables that begin Par. and collect them into a new vector?
-ReadParams = c(Par.cfsFlow, Par.Nflow, Par.Long, Par.Lat)
+Pars = c(Par.cfsFlow, Par.Nflow, Par.Long, Par.Lat)
 
 # Collect data for each NWIS gauge----
 NWISstations = AllStations[AllStations$Source == 'NWIS',]
@@ -143,7 +169,11 @@ NWISstations = AllStations[AllStations$Source == 'NWIS',]
 #  Add Gauge locations to that dataset---- 
 #   Also contains altitudes of the gauges, which should be crosss-checked with DEM data
 #   NOTE: you may have to change the commands to match your file.
-GaugesLocs = read.table(f_StreamGaugeSites, sep = "\t", header = TRUE, stringsAsFactors = FALSE)
+if(exists("f_StreamGaugeSites")){
+  GaugesLocs = read.table(f_StreamGaugeSites, sep = "\t", header = TRUE, stringsAsFactors = FALSE)
+}else{
+  GaugesLocs = readNWISsite(NWISstations$GaugeNum)
+}
 
 # Make spatial dataframe
 # NOTE: Your data may be all one coordinate system, and therefore not need to split into 2 datasets
@@ -201,23 +231,27 @@ plot(GaugeLocs[which(abs(GaugeLocs$ElevDEM/.3048 - GaugeLocs$alt_va) >= 100),], 
 plot(GaugeLocs[which(abs(GaugeLocs$ElevDEM/.3048 - GaugeLocs$alt_va) >= 200),], col = 'green', add =T)
 
 #  Add coordinates and elevation data to the NWISstations data----
-NWISstations$Long = NWISstations$Lat = NWISstations$ElevDEM = NWISstations$ElevUSGS = NWISstations$ElevUSGS_Method = NWISstations$ElevUSGS_Err = NA
 for (i in 1:nrow(NWISstations)){
-  Ind = which(GaugeLocs$site_no == as.numeric(NWISstations$GaugeNum[i]))
+  #NOTE: if your data are not both character, errors stating the following will appear:
+  # Error in data.frame(..., check.names = FALSE) : 
+  #  arguments imply differing number of rows: 1, 0
+  Ind = which(GaugeLocs$site_no == NWISstations$GaugeNum[i])
   if (length(Ind) > 1){
     print('More than one gauge number matches the uniqueNum gauge ', i, '. Using only first match.')
   }
-  NWISstations$Long[i] = GaugeLocs[Ind,]@coords[1,1]
-  NWISstations$Lat[i] = GaugeLocs[Ind,]@coords[1,2]
-  NWISstations$ElevUSGS[i] = GaugeLocs[Ind,]$alt_va
-  NWISstations$ElevUSGS_Method[i] = GaugeLocs[Ind,]$alt_meth_cd
-  NWISstations$ElevUSGS_Err[i] = GaugeLocs[Ind,]$alt_acy_va
-  NWISstations$ElevDEM[i] = GaugeLocs[Ind,]$ElevDEM
+  test = cbind(NWISstations[i,], GaugeLocs@data[Ind,], GaugeLocs@coords[Ind,][1], GaugeLocs@coords[Ind,][2])
+  colnames(test) = c(colnames(NWISstations), colnames(GaugeLocs@data), colnames(GaugeLocs@coords))
+  if (i == 1){ 
+    NewData = test
+  }else{
+    NewData = rbind(NewData, test)
+  }
 }
-rm(i, Ind)
+NWISstations = NewData
+rm(i, Ind, NewData, test)
 
 #Make NWIS stations a spatial dataframe
-coordinates(NWISstations) = c('Long', 'Lat')
+coordinates(NWISstations) = c('dec_long_va', 'dec_lat_va')
 proj4string(NWISstations) = CRS(pCRS)
 
 #Clip the NWIS gauges to the region of interest (shapefile) 
@@ -246,13 +280,13 @@ dev.off()
 
 # Compare reported vs. DEM elevation of gauges within the ROI----
 png('CompareGaugeElev.png', res = 300, units = 'in', width = 5, height = 5)
-plot(NWIS_ROI$ElevUSGS, NWIS_ROI$ElevDEM/.3048,
+plot(NWIS_ROI$alt_va, NWIS_ROI$ElevDEM/.3048,
      xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations')
 lines(c(-100,1100), c(-100,1100), col = 'red')
 dev.off()
 
 #One of these gauge elevations is a lot lower than DEM. Likely that the gauge was reported in m in USGS database
-#identify(NWIS_ROI$ElevUSGS, NWIS_ROI$ElevDEM/.3048)
+#identify(NWIS_ROI$alt_va, NWIS_ROI$ElevDEM/.3048)
 
 # Download the within-ROI stream gauge data in parallel----
 #  Use only the unique gauge numbers in the dataset 
@@ -261,10 +295,10 @@ uniqueNums = unique(NWIS_ROI$GaugeNum)
 cl = makeCluster(detectCores() - 1)
 registerDoParallel(cl)
 a = foreach(i = uniqueNums, .packages = 'dataRetrieval') %dopar% {
-  # Read all of the ReadParams data for the provided station number
+  # Read all of the Pars data for the provided station number
   #Fixme: unable to test the use of Stats instead of only specifying statistic codes one by one.
   # Need a site that has more than one of these statistic codes reported to test.
-  stationData <- readNWISdv(siteNumbers = i, parameterCd = ReadParams, statCd = Stats)
+  stationData <- readNWISdv(siteNumbers = i, parameterCd = Pars, statCd = Stats)
   write.table(stationData, 
               paste0(getwd(), '/StreamStat_', i, ".txt"), 
               sep = "\t")
@@ -323,6 +357,7 @@ for (i in 1:length(StreamStationList)){
   legend('topleft', legend = ErrCodes[codes], col = colCodes[codes], pch = 16)
   dev.off()
   
+  #Fixme: get prettier streamflow exceedance graphs from a package
   png(paste0('StreamflowExceedance_', StreamStationList[[i]]$site_no[1],'.png'), res = 300, units = 'in', width = 6, height = 6)
   qqnorm(StreamStationList[[i]]$X_00060_00003, pch = 1, 
          ylab = 'Daily Mean Streamflow (cfs)', main = paste0('Non-Exceedance Probability for Daily Mean Streamflow \n Station #', StreamStationList[[i]]$site_no[1]))
@@ -392,9 +427,23 @@ north.arrow(xb = 370000, yb = 4346000, len = 700, col = 'black', lab = 'N')
 legend('right', title = 'Streamflow Station \n Record Lengths \n (years)', legend = seq(scaleRange[1], scaleRange[2]-scaleBy, scaleBy), pch = 16, col = colFun(seq(scaleRange[1], scaleRange[2]-scaleBy, scaleBy)), bty = 'n')
 dev.off()
 
+# Write streamflow datasets to files----
+setwd(dir_DEM_out)
+writeRaster(x = DEM, filename = f_DEM_mosiac, format = "GTiff")
+setwd(dir_sfgauges)
+writeOGR(obj = NWIS_ROI, dsn = getwd(), driver = 'ESRI Shapefile', layer = f_NWIS_ROI_out)
+writeOGR(obj = NWISstations, dsn = getwd(), driver = 'ESRI Shapefile', layer = f_NWIS_bb_out)
+#Stream gauges had missing dates added to the files. Write new files.
+for (i in names(StreamStationList)){
+  write.table(StreamStationList[[i]], 
+              paste0(getwd(), '/StreamStat_', i, f_sf_processKey, ".txt"), 
+              sep = "\t")
+}
+rm(i)
 
 #Water Quality----
-WQstations = read.csv("BES_WaterQualityGaugeStations.csv", stringsAsFactors = FALSE)
+setwd(dir_wq)
+WQstations = read.csv(f_WQgauges, stringsAsFactors = FALSE)
 #Convert to spatial data
 coordinates(WQstations) = c('LongitudeMeasure', 'LatitudeMeasure')
 #Split dataset according to the coordinate reference systems used
@@ -435,6 +484,7 @@ uniqueWQNums_P = unique(WQstations_ROI_P$MonitoringLocationIdentifier)
 # NOTE: These downloads occasionally fail when run in parallel and return internal server errors.
 # If that happens to you, try running in serial and see if you still get the errors.
 # I'm not sure what to do if you still get them. Running in serial has worked for me.
+#Fixme: which function is better? This also exists: readNWISqw
 cl = makeCluster(detectCores() - 1)
 registerDoParallel(cl)
 n = foreach(i = uniqueWQNums_N, .packages = 'dataRetrieval') %dopar% {
