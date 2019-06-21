@@ -33,7 +33,7 @@
 #                 AND: https://help.waterdata.usgs.gov/codes-and-parameters/instantaneous-and-daily-value-status-codes
 #                 Yes, there are 2 separate reference schemes for the same data.
 
-#Function for streamflow download provided by:
+#Portions of the function for streamflow download were provided by:
 # Caitline Barber (Caitline.Barber@tufts.edu) and Jonathan Lamontagne (Jonathan.Lamontagne@tufts.edu)
 # Modified by Jared Smith (js4yd@virginia.edu) in June, 2019, and started git tracking.
 # See git commit history for all later contributions
@@ -65,7 +65,7 @@ f_DEM = c("w001001.adf", "w001001.adf")
 # It is not the coordinate system of your data (although it could be)
 pCRS = '+init=epsg:26918'
 
-#Load libraries----
+#Load libraries and functions----
 #USGS function library - note that a more recent version is available through Github
 library(dataRetrieval)
 #R libraries
@@ -90,6 +90,7 @@ AllStations <- read.csv(f_StreamGaugeData, stringsAsFactors = FALSE)
 # NOTE: This step may not be necessary for your dataset.
 # NOTE: suppressing warnings for NAs introduced by coercion, which is intended.
 #       Users should check that other warnings are not also being suppressed.
+#Fixme: Function for leading zeros to NWIS gauges
 StationStart = substr(AllStations$GaugeNum, start = 1, stop = 1)
 for (i in 1:nrow(AllStations)){
   if(AllStations$Source[i] == 'NWIS'){
@@ -106,6 +107,7 @@ rm(StationStart, i)
 
 # Statistics to report for each streamflow gauge, if available----
 # All codes defined here: https://help.waterdata.usgs.gov/code/stat_cd_nm_query?stat_nm_cd=%25&fmt=html
+#Fixme: lookup codes from the website
 Stat.minFlow = "00002"
 Stat.avgFlow = "00003"
 Stat.maxFlow = "00001"
@@ -126,6 +128,7 @@ Stats = c(Stat.minFlow, Stat.P1, Stat.P5, Stat.P25, Stat.P50, Stat.P75, Stat.P95
 
 # Parameters to report for each gauge, if available----
 # All codes defined here: https://help.waterdata.usgs.gov/code/parameter_cd_query?fmt=rdb&inline=true&group_cd=%
+#Fixme: lookup codes from the website
 Par.cfsFlow = "00060"
 Par.Nflow = "00600"
 Par.Lat = "91110"
@@ -137,8 +140,9 @@ ReadParams = c(Par.cfsFlow, Par.Nflow, Par.Long, Par.Lat)
 # Collect data for each NWIS gauge----
 NWISstations = AllStations[AllStations$Source == 'NWIS',]
 
-#Add Gauge locations to that dataset. Also contains altitudes of the gauges, which should be crosss-checked with DEM data
-# NOTE: you may have to change the commands to match your file.
+#  Add Gauge locations to that dataset---- 
+#   Also contains altitudes of the gauges, which should be crosss-checked with DEM data
+#   NOTE: you may have to change the commands to match your file.
 GaugesLocs = read.table(f_StreamGaugeSites, sep = "\t", header = TRUE, stringsAsFactors = FALSE)
 
 # Make spatial dataframe
@@ -146,6 +150,7 @@ GaugesLocs = read.table(f_StreamGaugeSites, sep = "\t", header = TRUE, stringsAs
 #       before joining into 1 dataset.
 # NOTE: your coordinate system may be different (epsg code)
 # Some of the data are NAD27 projection and others are NAD83 projection. Split the dataset to handle each
+#Fixme: function for splitting coordinate systems and returning one same-coordinate system file
 GaugesLocs_NAD27 = GaugesLocs[GaugesLocs$coord_datum_cd == 'NAD27', ]
 coordinates(GaugesLocs_NAD27) = c('dec_long_va', 'dec_lat_va')
 proj4string(GaugesLocs_NAD27) = CRS('+init=epsg:4267')
@@ -160,8 +165,9 @@ GaugeLocs = rbind(GaugeLocs_NAD27, GaugeLocs_NAD83)
 #Remove separate datasets
 rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugesLocs, GaugesLocs_NAD27, GaugesLocs_NAD83)
 
-#Add DEM elevation in resolution of your choice for modeling
-#gather all of the DEMs together and mosaic into one file
+#  Add DEM elevation in resolution of your choice for modeling----
+#   Gather all of the DEMs together and mosaic into one file
+#Fixme: function for DEM mosaikinng from separate tiles
 for (d in 1:length(dir_DEM)){
   if (d > 1){
     DEM2 = raster(x = paste0(dir_DEM[d], "/", f_DEM[d]))
@@ -178,7 +184,7 @@ elev = extract(x = DEM, y = GaugeLocs)
 GaugeLocs$ElevDEM = elev
 rm(elev)
 
-#Compare the DEM elevation to the listed elevation
+#   Compare the DEM elevation to the listed elevation----
 png('CompareGaugeElev.png', res = 300, units = 'in', width = 5, height = 5)
 plot(GaugeLocs$alt_va[is.na(GaugeLocs$alt_va) == FALSE], GaugeLocs$ElevDEM[is.na(GaugeLocs$alt_va) == FALSE]/.3048,
      xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations')
@@ -188,13 +194,13 @@ dev.off()
 #Fixme: Correct the elevations for those gauges that are very different than the DEM
 # and have collection codes that suggest lower data quality
 # Some of the gauges were likely reported in m instead of in ft in the USGS database
-#Identify those gauges that are more than 50 feet different
+#Identify spatially those gauges that are more than X feet different
 plot(GaugeLocs)
 plot(GaugeLocs[which(abs(GaugeLocs$ElevDEM/.3048 - GaugeLocs$alt_va) >= 50),], col = 'red', add =T)
 plot(GaugeLocs[which(abs(GaugeLocs$ElevDEM/.3048 - GaugeLocs$alt_va) >= 100),], col = 'blue', add =T)
 plot(GaugeLocs[which(abs(GaugeLocs$ElevDEM/.3048 - GaugeLocs$alt_va) >= 200),], col = 'green', add =T)
 
-#Add coordinates and elevation data to the NWISstations data
+#  Add coordinates and elevation data to the NWISstations data----
 NWISstations$Long = NWISstations$Lat = NWISstations$ElevDEM = NWISstations$ElevUSGS = NWISstations$ElevUSGS_Method = NWISstations$ElevUSGS_Err = NA
 for (i in 1:nrow(NWISstations)){
   Ind = which(GaugeLocs$site_no == as.numeric(NWISstations$GaugeNum[i]))
@@ -220,7 +226,7 @@ ROI = spTransform(ROI, CRS(pCRS))
 #Clip the streamflow gauges to the region of interest
 NWIS_ROI = NWISstations[ROI,]
 
-#Plot locations of NWIS gauges
+# Plot locations of NWIS gauges----
 png('StremflowGauges.png', res = 300, units = 'in', width = 6, height = 6)
 # All NWIS streamflow gauges in bounding box
 plot(NWISstations, pch = 16, col = 'white')
@@ -238,7 +244,7 @@ north.arrow(xb = 370000, yb = 4346000, len = 700, col = 'black', lab = 'N')
 legend('topleft', title = 'Streamflow Stations', legend = c('In ROI', 'Not in ROI'), pch = 16, col = c('red', 'black'))
 dev.off()
 
-#Compare elevation of gauges within the ROI
+# Compare reported vs. DEM elevation of gauges within the ROI----
 png('CompareGaugeElev.png', res = 300, units = 'in', width = 5, height = 5)
 plot(NWIS_ROI$ElevUSGS, NWIS_ROI$ElevDEM/.3048,
      xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations')
@@ -248,9 +254,9 @@ dev.off()
 #One of these gauge elevations is a lot lower than DEM. Likely that the gauge was reported in m in USGS database
 #identify(NWIS_ROI$ElevUSGS, NWIS_ROI$ElevDEM/.3048)
 
-#Download the within-ROI stream gauge data in parallel.
-# Use only the unique gauge numbers in the dataset 
-# (repeats occur when multiple variables are available for a gauge)
+# Download the within-ROI stream gauge data in parallel----
+#  Use only the unique gauge numbers in the dataset 
+#  (repeats occur when multiple variables are available for a gauge)
 uniqueNums = unique(NWIS_ROI$GaugeNum)
 cl = makeCluster(detectCores() - 1)
 registerDoParallel(cl)
@@ -273,7 +279,7 @@ if (any(!is.null(unlist(a)))){
   rm(a)
 }
 
-#Gather the records for each gauge into a list of dataframes
+# Gather the records for each gauge into a list of dataframes----
 StreamStationList = list()
 #Also record their error codes for use in plotting later
 ErrCodes = vector('character')
@@ -295,7 +301,7 @@ for (i in 1:length(StreamStationList)){
 }
 rm(i)
 
-#Plot the time series for each gauge, and the eCDF, colored by error code
+# Plot the time series for each gauge, and the eCDF, colored by error code----
 for (i in 1:length(StreamStationList)){
   #Assign colors to the error codes
   colCodes = rainbow(length(ErrCodes))
@@ -324,8 +330,8 @@ for (i in 1:length(StreamStationList)){
 }
 rm(i, c, colCodes, codes)
 
-#Identify missing data and add the total number of missing days to the NWIS_ROI file
-#Fixme: edit this function
+# Identify missing data and add the total number of missing days to the NWIS_ROI file----
+#Fixme: make this a function
 NWIS_ROI$MissingData = NA
 for (i in 1:length(StreamStationList)){
   #Missing data that are reported as NA cells
@@ -355,10 +361,11 @@ for (i in 1:length(StreamStationList)){
 }
 rm(gaps, Inds, NumNAs, DateNAs, r, i, j, k)
 
-#Fixme: Missing data fill in with numerical value estimates using prediction in ungauged basins methods
+#Fixme: Missing data fill in with numerical value estimates using prediction in ungauged basins methods for large gaps
 #Fixme: check for high and low flow outliers in each record, and compare spatially to other gauges on those dates
+# Can include both FFA and daily flow outlier analysis
 
-#Make a map of points colored by their record lengths
+# Make a map of points colored by their record lengths, corrected for the total amount of missing data----
 NWIS_ROI$RecordLength = NWIS_ROI$RecordLengthMinusGaps = NA
 for (i in 1:length(StreamStationList)){
   NWIS_ROI$RecordLength[which(as.numeric(NWIS_ROI$GaugeNum) == as.numeric(StreamStationList[[i]]$site_no[1]))] = as.numeric((max(StreamStationList[[i]]$Date) - min(StreamStationList[[i]]$Date)))
@@ -425,6 +432,9 @@ uniqueWQNums_N = unique(WQstations_ROI_N$MonitoringLocationIdentifier)
 uniqueWQNums_P = unique(WQstations_ROI_P$MonitoringLocationIdentifier)
 
 #Run the downloads in parallel.
+# NOTE: These downloads occasionally fail when run in parallel and return internal server errors.
+# If that happens to you, try running in serial and see if you still get the errors.
+# I'm not sure what to do if you still get them. Running in serial has worked for me.
 cl = makeCluster(detectCores() - 1)
 registerDoParallel(cl)
 n = foreach(i = uniqueWQNums_N, .packages = 'dataRetrieval') %dopar% {
@@ -442,7 +452,7 @@ p = foreach(i = uniqueWQNums_P, .packages = 'dataRetrieval') %dopar% {
               sep = "\t")
 }
 stopCluster(cl)
-rm(cl)
+rm(cl, stationData)
 #Check that the run was successful
 if (any(!is.null(unlist(n)))){
   print('NITROGEN DOWNLOAD UNSUCCESSFUL')
