@@ -102,6 +102,7 @@ library(doParallel)
 library(rgdal)
 library(GISTools)
 library(raster)
+library(rlist)
 #Color functions for plots (R script from Jared Smith's Geothermal_ESDA Github Repo)
 setwd(dir_ColFuns)
 source('ColorFunctions.R')
@@ -237,7 +238,7 @@ for (i in 1:nrow(NWISstations)){
   #  arguments imply differing number of rows: 1, 0
   Ind = which(GaugeLocs$site_no == NWISstations$GaugeNum[i])
   if (length(Ind) > 1){
-    print('More than one gauge number matches the uniqueNum gauge ', i, '. Using only first match.')
+    print(paste('More than one gauge number matches the uniqueNum gauge ', i, '. Using only first match.'))
   }
   test = cbind(NWISstations[i,], GaugeLocs@data[Ind,], GaugeLocs@coords[Ind,][1], GaugeLocs@coords[Ind,][2])
   colnames(test) = c(colnames(NWISstations), colnames(GaugeLocs@data), colnames(GaugeLocs@coords))
@@ -443,7 +444,7 @@ rm(i)
 
 #Water Quality----
 setwd(dir_wq)
-#Read water quality station data----
+# Read water quality station data----
 WQstations = read.csv(f_WQgauges, stringsAsFactors = FALSE)
 #Convert to spatial data
 coordinates(WQstations) = c('LongitudeMeasure', 'LatitudeMeasure')
@@ -466,27 +467,45 @@ rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugeLocs_WGS84, GaugesLocs_NAD27, GaugesLo
 #Clip to ROI
 WQstations_ROI = WQGaugeLocs[ROI,]
 
-#Find sites that have any N and P water quality data in Maryland----
-#Phosphorous
+#  Find sites that have any N and P water quality data in a state within the ROI----
+#   Accepts any state postal code, but only one at a time.
+#Phosphorus
 phosSites <- whatWQPsites(statecode="MD", characteristicName="Phosphorus")
 #Nitrogen
 NitroSites <- whatWQPsites(statecode="MD", characteristicName="Nitrogen")
 
-#Select only those sites that have nitrogen data
+#Select only those sites in the ROI that have nitrogen data
 WQstations_ROI_N = WQstations_ROI[WQstations_ROI$MonitoringLocationIdentifier %in% NitroSites$MonitoringLocationIdentifier,]
-#Select only those sites that have phosphorous data
+#Select only those sites in the ROI that have Phosphorus data
 WQstations_ROI_P = WQstations_ROI[WQstations_ROI$MonitoringLocationIdentifier %in% phosSites$MonitoringLocationIdentifier,]
 
-#Use only the unique gauge numbers in the dataset 
-# (repeats occur when multiple variables are available for a gauge)
+#  Plot TN and TP sampling locations on a map----
+png('TNTPsites.png', res = 300, units = 'in', width = 6, height = 6)
+plot(ROI)
+plot(WQstations_ROI_N, pch = 16, add = TRUE, col = 'red')
+plot(WQstations_ROI_P, pch = 16, add = TRUE, col = 'blue')
+plot(WQstations_ROI_P[WQstations_ROI_N,], pch = 16, add = TRUE, col = 'purple')
+plot(WQstations_ROI_N[WQstations_ROI_P,], pch = 16, add = TRUE, col = 'purple')
+# Add coordinates
+axis(side = 1)
+axis(side = 2)
+box()
+north.arrow(xb = 365000, yb = 4346000, len = 700, col = 'black', lab = 'N')
+legend('topright', title = 'Water Quality Sites', legend = c('T Nitrogen Only', 'T Phosphorus Only', 'Both'), col = c('red', 'blue', 'purple'), pch = 16)
+dev.off()
+
+#  Download data for those sites in parallel----
+#   Use only the unique gauge numbers in the dataset 
+#   (repeats occur when multiple variables are available for a gauge)
 uniqueWQNums_N = unique(WQstations_ROI_N$MonitoringLocationIdentifier)
 uniqueWQNums_P = unique(WQstations_ROI_P$MonitoringLocationIdentifier)
 
-#Run the downloads for those sites in parallel----
 # NOTE: These downloads occasionally fail when run in parallel and return internal server errors.
 # If that happens to you, try running in serial and see if you still get the errors (i.e. change dopar to do).
 # I'm not sure what to do if you still get them. Running in serial has worked for me.
-#Fixme: which function is better? This also exists: readNWISqw
+# NOTE: the readWQPqw function used here imports all water quality portal data.
+#  A similar function called readNWISqw only downloads USGS data.
+#  readWQPqw should be more generic, although this repo has not tested if those downloads contain all of the USGS data.
 cl = makeCluster(detectCores() - 1)
 registerDoParallel(cl)
 n = foreach(i = uniqueWQNums_N, .packages = 'dataRetrieval') %dopar% {
@@ -500,7 +519,7 @@ p = foreach(i = uniqueWQNums_P, .packages = 'dataRetrieval') %dopar% {
   # Read all of the data for the provided station number
   stationData <- readWQPqw(siteNumbers = i, parameterCd = "")
   write.table(stationData, 
-              paste0(getwd(), '/Phosphorous_', i, ".txt"), 
+              paste0(getwd(), '/Phosphorus_', i, ".txt"), 
               sep = "\t")
 }
 stopCluster(cl)
@@ -513,15 +532,13 @@ if (any(!is.null(unlist(n)))){
   rm(n)
 }
 if (any(!is.null(unlist(p)))){
-  print('PHOSPHOROUS DOWNLOAD UNSUCCESSFUL')
+  print('Phosphorus DOWNLOAD UNSUCCESSFUL')
 }else{
-  print('Phosphorous gauge data download complete!')
+  print('Phosphorus gauge data download complete!')
   rm(p)
 }
 
-#REMAINDER OF SCRIPT IN DEVELOPMENT----
-
-# Process Nitrogen data----
+# Process Nitrogen Data----
 #Gather the records for each gauge into a list of dataframes
 NitroStationList = list()
 #Find all of the Nitrogen station file indices in directory
@@ -534,63 +551,203 @@ for (i in 1:length(Ind_f_NitroStat)){
 }
 rm(f, Ind_f_NitroStat, i)
 
-#Filter the CharacteristicName for nitrogen measurements only. Then look at the ResultSampleFractionText
-#For now, taking only total nitrogen, but many sites have other nitrogen measurements
-#Fixme: ideally, this would cycle through all of the unique combinations of ResultSampleFractionText and CharacteristicName and return separate lists for each variable
+#Cycle through all of the unique combinations of ResultSampleFractionText and CharacteristicName and return separate text files for each variable
+# Record the ResultMeasureValue and ResultMeasure.MeasureUnitCode, ResultValueTypeName, MeasureQualifierCode, DetectionQuantitationLimitTypeName DetectionQuantitationLimitMeasure.MeasureValue DetectionQuantitationLimitMeasure.MeasureUnitCode
 for (i in 1:length(NitroStationList)){
-  #Find all of the "Total" or "total" in the ResultSampleFractionText field
-  T_Ind = grep(x = NitroStationList[[i]][,"ResultSampleFractionText"], pattern = 'Total', ignore.case = TRUE)
-  #There are some datasets that have multiple total nitrogen CharacteristcName.
-  #Find all and make separate time series for each
-  N_names = unique(NitroStationList[[i]][T_Ind,][grep(x = NitroStationList[[i]][T_Ind,"CharacteristicName"], pattern = 'nitrogen', ignore.case = TRUE), "CharacteristicName"])
-  for (n in N_names){
-    N_Ind = which(NitroStationList[[i]][T_Ind,"CharacteristicName"] == n)
-    write.table(NitroStationList[[i]][T_Ind,][N_Ind,], 
-                paste0(getwd(), '/Nitrogen_', NitroStationList[[i]]$MonitoringLocationIdentifier[1], "_", gsub(pattern = " ", replacement = "", x = n, fixed = TRUE),".txt"), 
+  #Find all of the unique CharacteristicName, ResultSampleFractionText combinations
+  us = unique(NitroStationList[[i]][,c("CharacteristicName", "ResultSampleFractionText")])
+  #Write separate files for each combination
+  for (u in 1:nrow(us)){
+    #Check for NA values in us
+    if(is.na(us[u,1])){
+      u_Ind1 = which(is.na(NitroStationList[[i]][, c("CharacteristicName", "ResultSampleFractionText")[1]]))
+    }else{
+      u_Ind1 = which(NitroStationList[[i]][, c("CharacteristicName", "ResultSampleFractionText")[1]] == us[u,1])
+    }
+    if(is.na(us[u,2])){
+      u_Ind2 = which(is.na(NitroStationList[[i]][, c("CharacteristicName", "ResultSampleFractionText")[2]]))
+    }else{
+      u_Ind2 = which(NitroStationList[[i]][, c("CharacteristicName", "ResultSampleFractionText")[2]] == us[u,2])
+    }
+    #Gather only the indices for this unique combination
+    u_Ind = u_Ind1[u_Ind1 %in% u_Ind2]
+    
+    #Check that ActivityMediaName = Water for stream-only nitrogen data
+    w_Ind = which(NitroStationList[[i]][u_Ind,"ActivityMediaName"] != "Water")
+    if (length(w_Ind) > 0){
+      print(paste('Some of the samples are taken in media ', unique(NitroStationList[[i]]$ActivityMediaName), ' for station ', NitroStationList[[i]]$MonitoringLocationIdentifier[1]))
+    }
+    #Note: subbing ~ in for / because files will not save with / in the name.
+    write.table(NitroStationList[[i]][u_Ind,], 
+                paste0(getwd(), '/Nitrogen_', NitroStationList[[i]]$MonitoringLocationIdentifier[1], "_cn", gsub(pattern = "/", x = us[u,1], replacement = "~", fixed = TRUE), '_rt', us[u,2], ".txt"), 
                 sep = "\t")
   }
 }
+rm(us, u, i, u_Ind, u_Ind1, u_Ind2)
 
-#Fixme: handle missing data, as with streamflow
+#Read in the CharacteristicName for nitrogen measurements only
+cn_Nitro = grep(x = list.files(), pattern = '_cnNitrogen', ignore.case = TRUE)
+# For now, taking only ResultSampleFractionText = total nitrogen
+cn_Nitro1 = grep(x = list.files()[cn_Nitro], pattern = 'Total', ignore.case = TRUE)
+#Total nitrogen files only
+f_TN = list.files()[cn_Nitro][cn_Nitro1]
+rm(cn_Nitro, cn_Nitro1)
+#Make a list of all of the total nitrogen gauge datasets
+TN = list()
+for (i in 1:length(f_TN)){
+  f = read.table(f_TN[i], header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+  
+  #Place the measurements in chronological order
+  f = f[order(f$ActivityStartDate),]
+  
+  #Check that the units are all the same for each measurement
+  us = unique(f$ResultMeasure.MeasureUnitCode)
+  if (length(us) > 1){
+    print(paste('Warning: more than one measurement unit for station ', f$MonitoringLocationIdentifier[1], '. Fix manually.'))
+  }
+  
+  #Check for detection limits
+  dl = unique(f$DetectionQuantitationLimitMeasure.MeasureValue)
+  #remove NAs
+  dl = dl[!is.na(dl)]
+  if(length(dl) != 0){
+    print(paste('Warning: detection limits for station', f$MonitoringLocationIdentifier[1], '. Fix manually.'))
+  }
+  
+  #add data to list
+  TN = c(TN, 
+         list(f))
+}
+rm(i, f, dl, us)
 
-#Fixme: Need to check that the units are all the same for each measurement type in each record and across records
-#ResultMeasure.MeasureUnitCode
-#ResultMeasureValue
+#  Plot TN timeseries----
+for (i in 1:length(TN)){
+  png(paste0('TN_Timeseries_', TN[[i]]$MonitoringLocationIdentifier[1],'.png'), res = 300, units = 'in', width = 6, height = 6)
+  plot(y = TN[[i]]$ResultMeasureValue, x = as.Date(TN[[i]]$ActivityStartDate), type = 'o', pch = 16, cex = 0.3,
+       xlab = 'Year', 
+       ylab = paste0(TN[[i]]$ResultSampleFractionText[1], " ", TN[[i]]$CharacteristicName[1], " (", TN[[i]]$ResultMeasure.MeasureUnitCode[1], ")"), 
+       main = paste0('Station #', TN[[i]]$MonitoringLocationIdentifier[1]),
+       ylim = c(0, 10), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")))
+  dev.off()
+}
+rm(i)
 
-#Fixme: Check any detection limits in DetectionQuantitationLimitMeasure.MeasureValue
-
-#Fixme: Plot the time series for each gauge, and the eCDF, colored by error code
-# Fixme: make the legend only include the error codes that are in the station's dataset
-# for (i in 1:length(StreamStationList)){
-#   #Assign colors to the error codes
-#   colCodes = rainbow(length(ErrCodes))
-#   
-#   png(paste0('StreamflowTimeseries_', StreamStationList[[i]]$site_no[1],'.png'), res = 300, units = 'in', width = 6, height = 6)
-#   plot(x = StreamStationList[[i]]$Date, y = StreamStationList[[i]]$X_00060_00003, type = 'o', pch = 16, cex = 0.3,
-#        xlab = 'Year', ylab = 'Daily Mean Streamflow (cfs)', main = paste0('Station #', StreamStationList[[i]]$site_no[1]),
-#        ylim = c(0, 7000), xlim = c(as.Date("1950-01-01"), as.Date("2020-01-01")))
-#   #Add colors
-#   for (c in 1:length(colCodes)){
-#     par(new = TRUE)
-#     plot(x = StreamStationList[[i]]$Date[StreamStationList[[i]]$X_00060_00003_cd == ErrCodes[c]], y = StreamStationList[[i]]$X_00060_00003[StreamStationList[[i]]$X_00060_00003_cd == ErrCodes[c]], pch = 16, cex = 0.3,
-#          col = colCodes[c],
-#          ylim = c(0, 7000), xlim = c(as.Date("1950-01-01"), as.Date("2020-01-01")), axes = FALSE, xlab = '', ylab = '')
-#   }
-#   legend('topleft', legend = ErrCodes, col = colCodes, pch = 16)
-#   dev.off()
-#   
-#   png(paste0('StreamflowExceedance_', StreamStationList[[i]]$site_no[1],'.png'), res = 300, units = 'in', width = 6, height = 6)
-#   qqnorm(StreamStationList[[i]]$X_00060_00003, pch = 1, 
-#          ylab = 'Daily Mean Streamflow (cfs)', main = paste0('Non-Exceedance Probability for Daily Mean Streamflow \n Station #', StreamStationList[[i]]$site_no[1]))
-#   dev.off()
-# }
-# rm(i, c, colCodes)
+#Fixme: handle missing data, as with streamflow 
+#        this may be unnecessary because regular sampling is not completed for WQ data
 
 #Fixme: Search for flow-normalized outliers
 
-#Fixme: write water quality data to files
+# REMAINDER OF SCRIPT IN DEVELOPMENT----
+# Process Phosphorus Data----
+#Gather the records for each gauge into a list of dataframes
+PhosStationList = list()
+#Find all of the phosphorus station file indices in directory
+Ind_f_PhosStat = list.files()[grep(pattern = 'Phosphorus_', x = list.files(), ignore.case = FALSE, fixed = TRUE)]
+for (i in 1:length(Ind_f_PhosStat)){
+  #Read file
+  f = read.table(Ind_f_PhosStat[i], header = TRUE, sep = '\t', stringsAsFactors = FALSE)
+  #Add to list
+  PhosStationList = c(PhosStationList, list(f))
+}
+rm(f, Ind_f_PhosStat, i)
 
-# Process Phosphorous Data----
+#Cycle through all of the unique combinations of ResultSampleFractionText and CharacteristicName and return separate text files for each variable
+for (i in 1:length(PhosStationList)){
+  #Find all of the unique CharacteristicName, ResultSampleFractionText combinations
+  us = unique(PhosStationList[[i]][,c("CharacteristicName", "ResultSampleFractionText")])
+  #Write separate files for each combination
+  for (u in 1:nrow(us)){
+    #Check for NA values in us
+    if(is.na(us[u,1])){
+      u_Ind1 = which(is.na(PhosStationList[[i]][, c("CharacteristicName", "ResultSampleFractionText")[1]]))
+    }else{
+      u_Ind1 = which(PhosStationList[[i]][, c("CharacteristicName", "ResultSampleFractionText")[1]] == us[u,1])
+    }
+    if(is.na(us[u,2])){
+      u_Ind2 = which(is.na(PhosStationList[[i]][, c("CharacteristicName", "ResultSampleFractionText")[2]]))
+    }else{
+      u_Ind2 = which(PhosStationList[[i]][, c("CharacteristicName", "ResultSampleFractionText")[2]] == us[u,2])
+    }
+    #Gather only the indices for this unique combination
+    u_Ind = u_Ind1[u_Ind1 %in% u_Ind2]
+    
+    #Check that ActivityMediaName = Water for stream-only Phosphorus data
+    w_Ind = which(PhosStationList[[i]][u_Ind,"ActivityMediaName"] != "Water")
+    if (length(w_Ind) > 0){
+      print(paste('Some of the samples are taken in media ', unique(PhosStationList[[i]]$ActivityMediaName), ' for station ', PhosStationList[[i]]$MonitoringLocationIdentifier[1]))
+    }
+    #Note: subbing ~ in for / because files will not save with / in the name.
+    write.table(PhosStationList[[i]][u_Ind,], 
+                paste0(getwd(), '/Phosphorus_', PhosStationList[[i]]$MonitoringLocationIdentifier[1], "_cn", gsub(pattern = "/", x = us[u,1], replacement = "~", fixed = TRUE), '_rt', us[u,2], ".txt"), 
+                sep = "\t")
+  }
+}
+rm(us, u, i, u_Ind, u_Ind1, u_Ind2, w_Ind)
+
+#Read in the CharacteristicName for Phosphorus measurements only
+cn_Phos = grep(x = list.files(), pattern = '_cnPhosphorus', ignore.case = TRUE)
+# For now, taking only ResultSampleFractionText = total nitrogen
+cn_Nitro1 = grep(x = list.files()[cn_Nitro], pattern = 'Total', ignore.case = TRUE)
+#Total nitrogen files only
+f_TN = list.files()[cn_Nitro][cn_Nitro1]
+rm(cn_Nitro, cn_Nitro1)
+#Make a list of all of the total nitrogen gauge datasets
+TN = list()
+for (i in 1:length(f_TN)){
+  f = read.table(f_TN[i], header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+  
+  #Place the measurements in chronological order
+  f = f[order(f$ActivityStartDate),]
+  
+  #Check that the units are all the same for each measurement
+  us = unique(f$ResultMeasure.MeasureUnitCode)
+  if (length(us) > 1){
+    print(paste('Warning: more than one measurement unit for station ', f$MonitoringLocationIdentifier[1], '. Fix manually.'))
+  }
+  
+  #Check for detection limits
+  dl = unique(f$DetectionQuantitationLimitMeasure.MeasureValue)
+  #remove NAs
+  dl = dl[!is.na(dl)]
+  if(length(dl) != 0){
+    print(paste('Warning: detection limits for station ', f$MonitoringLocationIdentifier[1], '. Fix manually.'))
+  }
+  
+  #add data to list
+  TN = c(TN, 
+         list(f))
+}
+rm(i, f, dl, us)
+
+#  Plot TN timeseries----
+for (i in 1:length(TN)){
+  png(paste0('TN_Timeseries_', TN[[i]]$MonitoringLocationIdentifier[1],'.png'), res = 300, units = 'in', width = 6, height = 6)
+  plot(y = TN[[i]]$ResultMeasureValue, x = as.Date(TN[[i]]$ActivityStartDate), type = 'o', pch = 16, cex = 0.3,
+       xlab = 'Year', 
+       ylab = paste0(TN[[i]]$ResultSampleFractionText[1], " ", TN[[i]]$CharacteristicName[1], " (", TN[[i]]$ResultMeasure.MeasureUnitCode[1], ")"), 
+       main = paste0('Station #', TN[[i]]$MonitoringLocationIdentifier[1]),
+       ylim = c(0, 10), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")))
+  dev.off()
+}
+rm(i)
+
+#Fixme: handle missing data, as with streamflow 
+#        this may be unnecessary because regular sampling is not completed for WQ data
+
+#Fixme: Search for flow-normalized outliers
+
+
+#Fixme: handle missing data, as with streamflow 
+#        this may be unnecessary because regular sampling is not completed for WQ data
+
+#Fixme: Search for flow-normalized outliers
+
+#Write water quality data to files----
+writeOGR(WQstations_ROI_N, dsn = getwd(), layer = 'NitrogenSites', driver = "ESRI Shapefile")
+list.save(x = TN, file = 'TN.yaml', type = "YAML")
+writeOGR(WQstations_ROI_P, dsn = getwd(), layer = 'PhosphorusSites', driver = "ESRI Shapefile")
+list.save(x = TP, file = 'TP.yaml', type = "YAML")
+
 
 # BES Water Quality Gauge Data----
 setwd("C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\WaterChemistry")
