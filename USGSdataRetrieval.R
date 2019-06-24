@@ -500,6 +500,12 @@ dev.off()
 uniqueWQNums_N = unique(WQstations_ROI_N$MonitoringLocationIdentifier)
 uniqueWQNums_P = unique(WQstations_ROI_P$MonitoringLocationIdentifier)
 
+#Make directories for storing Nitrogen and Phosphorous data
+wd_N = paste0(getwd(), '/Nitrogen')
+wd_P = paste0(getwd(), '/Phosphorus')
+dir.create(path = wd_N)
+dir.create(path = wd_P)
+
 # NOTE: These downloads occasionally fail when run in parallel and return internal server errors.
 # If that happens to you, try running in serial and see if you still get the errors (i.e. change dopar to do).
 # I'm not sure what to do if you still get them. Running in serial has worked for me.
@@ -509,6 +515,7 @@ uniqueWQNums_P = unique(WQstations_ROI_P$MonitoringLocationIdentifier)
 cl = makeCluster(detectCores() - 1)
 registerDoParallel(cl)
 n = foreach(i = uniqueWQNums_N, .packages = 'dataRetrieval') %dopar% {
+  setwd(wd_N)
   # Read all of the data for the provided station number
   stationData <- readWQPqw(siteNumbers = i, parameterCd = "")
   write.table(stationData, 
@@ -516,6 +523,7 @@ n = foreach(i = uniqueWQNums_N, .packages = 'dataRetrieval') %dopar% {
               sep = "\t")
 }
 p = foreach(i = uniqueWQNums_P, .packages = 'dataRetrieval') %dopar% {
+  setwd(wd_P)
   # Read all of the data for the provided station number
   stationData <- readWQPqw(siteNumbers = i, parameterCd = "")
   write.table(stationData, 
@@ -539,6 +547,7 @@ if (any(!is.null(unlist(p)))){
 }
 
 # Process Nitrogen Data----
+setwd(wd_N)
 #Gather the records for each gauge into a list of dataframes
 NitroStationList = list()
 #Find all of the Nitrogen station file indices in directory
@@ -552,7 +561,6 @@ for (i in 1:length(Ind_f_NitroStat)){
 rm(f, Ind_f_NitroStat, i)
 
 #Cycle through all of the unique combinations of ResultSampleFractionText and CharacteristicName and return separate text files for each variable
-# Record the ResultMeasureValue and ResultMeasure.MeasureUnitCode, ResultValueTypeName, MeasureQualifierCode, DetectionQuantitationLimitTypeName DetectionQuantitationLimitMeasure.MeasureValue DetectionQuantitationLimitMeasure.MeasureUnitCode
 for (i in 1:length(NitroStationList)){
   #Find all of the unique CharacteristicName, ResultSampleFractionText combinations
   us = unique(NitroStationList[[i]][,c("CharacteristicName", "ResultSampleFractionText")])
@@ -637,8 +645,8 @@ rm(i)
 
 #Fixme: Search for flow-normalized outliers
 
-# REMAINDER OF SCRIPT IN DEVELOPMENT----
 # Process Phosphorus Data----
+setwd(wd_P)
 #Gather the records for each gauge into a list of dataframes
 PhosStationList = list()
 #Find all of the phosphorus station file indices in directory
@@ -686,15 +694,15 @@ rm(us, u, i, u_Ind, u_Ind1, u_Ind2, w_Ind)
 
 #Read in the CharacteristicName for Phosphorus measurements only
 cn_Phos = grep(x = list.files(), pattern = '_cnPhosphorus', ignore.case = TRUE)
-# For now, taking only ResultSampleFractionText = total nitrogen
-cn_Nitro1 = grep(x = list.files()[cn_Nitro], pattern = 'Total', ignore.case = TRUE)
+# For now, taking only ResultSampleFractionText = total Phosphorous
+cn_Phos1 = grep(x = list.files()[cn_Phos], pattern = 'Total', ignore.case = TRUE)
 #Total nitrogen files only
-f_TN = list.files()[cn_Nitro][cn_Nitro1]
-rm(cn_Nitro, cn_Nitro1)
+f_TP = list.files()[cn_Phos][cn_Phos1]
+rm(cn_Phos, cn_Phos1)
 #Make a list of all of the total nitrogen gauge datasets
-TN = list()
-for (i in 1:length(f_TN)){
-  f = read.table(f_TN[i], header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+TP = list()
+for (i in 1:length(f_TP)){
+  f = read.table(f_TP[i], header = TRUE, sep = "\t", stringsAsFactors = FALSE)
   
   #Place the measurements in chronological order
   f = f[order(f$ActivityStartDate),]
@@ -714,19 +722,43 @@ for (i in 1:length(f_TN)){
   }
   
   #add data to list
-  TN = c(TN, 
+  TP = c(TP, 
          list(f))
 }
 rm(i, f, dl, us)
 
-#  Plot TN timeseries----
-for (i in 1:length(TN)){
-  png(paste0('TN_Timeseries_', TN[[i]]$MonitoringLocationIdentifier[1],'.png'), res = 300, units = 'in', width = 6, height = 6)
-  plot(y = TN[[i]]$ResultMeasureValue, x = as.Date(TN[[i]]$ActivityStartDate), type = 'o', pch = 16, cex = 0.3,
+#  Plot TP timeseries----
+for (i in 1:length(TP)){
+  png(paste0('TP_Timeseries_', TP[[i]]$MonitoringLocationIdentifier[1],'.png'), res = 300, units = 'in', width = 6, height = 6)
+  plot(y = TP[[i]]$ResultMeasureValue, x = as.Date(TP[[i]]$ActivityStartDate), type = 'o', pch = 16, cex = 0.3,
        xlab = 'Year', 
-       ylab = paste0(TN[[i]]$ResultSampleFractionText[1], " ", TN[[i]]$CharacteristicName[1], " (", TN[[i]]$ResultMeasure.MeasureUnitCode[1], ")"), 
-       main = paste0('Station #', TN[[i]]$MonitoringLocationIdentifier[1]),
-       ylim = c(0, 10), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")))
+       ylab = paste0(TP[[i]]$ResultSampleFractionText[1], " ", TP[[i]]$CharacteristicName[1], " (", TP[[i]]$ResultMeasure.MeasureUnitCode[1], ")"), 
+       main = paste0('Station #', TP[[i]]$MonitoringLocationIdentifier[1]),
+       ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")))
+  
+  #Check for and add detection limits
+  dl = unique(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue)
+  #remove NAs
+  dl = dl[!is.na(dl)]
+  if(length(dl) != 0){
+    #Add detection limits
+    #Lower detection limit
+    par(new = TRUE)
+    plot(y = TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Low", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TP[[i]]$ActivityStartDate[grep(pattern = "Low", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
+         xlab = '', 
+         ylab = "",
+         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         col = 'blue')
+    #Upper detection limit
+    par(new = TRUE)
+    plot(y = TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Up", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TP[[i]]$ActivityStartDate[grep(pattern = "Up", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
+         xlab = '', 
+         ylab = "",
+         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         col = 'red')
+    
+    legend('topright', title = 'Detection Limits', legend = c('Upper', 'Lower'), col = c('red', 'blue'), pch = 16)
+  }
   dev.off()
 }
 rm(i)
@@ -742,7 +774,7 @@ rm(i)
 
 #Fixme: Search for flow-normalized outliers
 
-#Write water quality data to files----
+# Write water quality data to files----
 writeOGR(WQstations_ROI_N, dsn = getwd(), layer = 'NitrogenSites', driver = "ESRI Shapefile")
 list.save(x = TN, file = 'TN.yaml', type = "YAML")
 writeOGR(WQstations_ROI_P, dsn = getwd(), layer = 'PhosphorusSites', driver = "ESRI Shapefile")
@@ -750,15 +782,15 @@ list.save(x = TP, file = 'TP.yaml', type = "YAML")
 
 
 # BES Water Quality Gauge Data----
-setwd("C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\WaterChemistry")
+setwd("C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\WaterChemistry")
 #BES Water quality sample time series
 BES_WQ = read.csv('BES-stream-chemistry-data-for-WWW-feb-2018---core-sites-only_JDSprocessed.csv', stringsAsFactors = FALSE)
 #BES gauge number reference table
 USGS_GaugeMatch = read.csv('Abbreviations_SampleRecordLengths.csv', stringsAsFactors = FALSE)
 #Remove spaces from the names of the sites
 USGS_GaugeMatch$Abbreviation = gsub(pattern = ' ', replacement = '', x = USGS_GaugeMatch$Abbreviation, fixed = TRUE)
-#add leading zeros to gauge numbers
-USGS_GaugeMatch$USGSGaugeNum = paste0("0", USGS_GaugeMatch$USGSGaugeNum)
+#add leading zeros to gauge numbers that are not NA
+USGS_GaugeMatch$USGSGaugeNum[!is.na(USGS_GaugeMatch$USGSGaugeNum)] = paste0("0", USGS_GaugeMatch$USGSGaugeNum[!is.na(USGS_GaugeMatch$USGSGaugeNum)])
 BES_WQ$USGSgauge = NA
 USGSnums = unique(USGS_GaugeMatch$USGSGaugeNum[-grep(pattern = 'NA', x = USGS_GaugeMatch$USGSGaugeNum)])
 
@@ -767,17 +799,43 @@ BES_WQ_Sites = list()
 uniqueSites = unique(BES_WQ$Site)
 for (i in 1:length(uniqueSites)){
   f = BES_WQ[BES_WQ$Site == uniqueSites[i],]
+  #Assign gauge number if it has one
   if(f$Site[1] %in% USGS_GaugeMatch$Abbreviation){
     f$USGSgauge = USGS_GaugeMatch$USGSGaugeNum[USGS_GaugeMatch$Abbreviation == f$Site[1]]
+  }else{
+    f$USGSgauge = NA
+  }
+  
+  f$Dated = NA
+  
+  #Fix the date format
+  #4-digit year - any number greater than current year on computer is going to be assumed 19XX
+  curr2DigYear = substring(as.character(as.numeric(strsplit(date(), split = " ", fixed = TRUE)[[1]][5])), first = 3, last = 4)
+  for (y in 1:length(f$Date)){
+    txtyr = strsplit(f$Date[y], split = '-', fixed = TRUE)[[1]]
+    txtyr[3] = ifelse(as.numeric(txtyr[3]) > as.numeric(curr2DigYear), str_c('19', txtyr[3]), str_c('20', txtyr[3]))
+    txtyr = as.Date(str_c(txtyr[1], '/', txtyr[2], '/', txtyr[3]), format = '%d/%B/%Y')
+    f$Dated[y] = as.character(txtyr)
   }
   BES_WQ_Sites = c(BES_WQ_Sites, list(f))
 }
+rm(i, f, txtyr)
 
 #Plot time series for each of the sites
 #Nitrogen
-png('NitrogenBESgauges.png', res = 300, height = 6, width = 6, units = 'in')
-plot(BES_WQ_Sites[[1]]$Date, BES_WQ_Sites[[1]]$TN..mg.N.L.)
-dev.off()
+for (i in 1:length(BES_WQ_Sites)){
+  if (any(!is.na(BES_WQ_Sites[[i]]$TN..mg.N.L.))){
+    png(paste0('BES_N_Timeseries_', BES_WQ_Sites[[i]]$Site[1], '_',  BES_WQ_Sites[[i]]$USGSgauge[1], '_', i, '.png'), res = 300, units = 'in', width = 6, height = 6)
+    plot(y = BES_WQ_Sites[[i]]$TN..mg.N.L., x = as.Date(BES_WQ_Sites[[i]]$Dated), type = 'o', pch = 16, cex = 0.3,
+         xlab = 'Year', 
+         ylab = 'Total Nitrogen (mg N/L)', 
+         main = paste0('Station #', BES_WQ_Sites[[i]]$USGSgauge[1], ' ', BES_WQ_Sites[[i]]$Site[1]),
+         ylim = c(0, max(BES_WQ_Sites[[i]]$TN..mg.N.L., na.rm=TRUE)))
+    #xlim = c(as.Date("1980-01-01"), as.Date("2019-06-01")))
+    dev.off()
+  }
+}
+rm(i)
 
 #Associate each of the sites to a station, if available
 
