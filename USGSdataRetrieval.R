@@ -82,6 +82,8 @@
 dir_ROI = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\BES-Watersheds-Land-Cover-Analysis"  
 #Color functions - from JDS github repo: Geothermal_ESDA
 dir_ColFuns = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges"
+#EnGauge repository
+dir_EnGauge = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge"
 #USGS streamflow gauges
 dir_sfgauges = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges"
 #DEM - specify as a vector of directories if there are multiple tiles to be mosaicked together.
@@ -138,68 +140,24 @@ library(rlist)
 #Color functions for plots (R script from Jared Smith's Geothermal_ESDA Github Repo)
 setwd(dir_ColFuns)
 source('ColorFunctions.R')
+#Functions from repository
+setwd(dir_EnGauge)
+source('missingDates.R')
+source('addZerosToGaugeNames.R')
+source('processDEM.R')
 
 #Streamflow----
 setwd(dir_sfgauges)
-# Read USGS station data from .csv file (Method 2)----
-AllStations <- read.csv(f_StreamGaugeData, stringsAsFactors = FALSE)
-
-#Add a leading 0 to the NWIS gauges to look up their values on the server
-# Some of the gauges are not numbers so only add 0 to number gauges
-# NOTE: This step may not be necessary for your dataset.
-# NOTE: suppressing warnings for NAs introduced by coercion, which is intended.
-#       Users should check that other warnings are not also being suppressed.
-#Fixme: Function for leading zeros to NWIS gauges
-StationStart = substr(AllStations$GaugeNum, start = 1, stop = 1)
-for (i in 1:nrow(AllStations)){
-  if(AllStations$Source[i] == 'NWIS'){
-    if (suppressWarnings(is.na(as.numeric(StationStart[i])))){
-      #This station starts with a character. Retain original name
-      AllStations$GaugeNum[i] <- AllStations$GaugeNum[i]
-    }else{
-      #Add a leading 0
-      AllStations$GaugeNum[i] <- paste0("0", AllStations$GaugeNum[i])
-    }
-  }
-}
-rm(StationStart, i)
-
-#  Collect data for each NWIS gauge----
-NWISstations = AllStations[AllStations$Source == 'NWIS',]
-
-#  Add Gauge locations to that dataset---- 
-#   Also contains altitudes of the gauges, which should be crosss-checked with DEM data
-#   NOTE: you may have to change the commands to match your file.
-if(exists("f_StreamGaugeSites")){
-  GaugesLocs = read.table(f_StreamGaugeSites, sep = "\t", header = TRUE, stringsAsFactors = FALSE)
-}else{
-  GaugesLocs = readNWISsite(NWISstations$GaugeNum)
-}
-
-# Make spatial dataframe
+# Method 1: Get gauges using whatNWISsites()----
+AllStations_fn = whatNWISsites(statecode = "MD", parameterCd = '00060')
+AllStations_fn = readNWISsite(AllStations_fn$site_no)
+#Convert to spatial dataframe
 # NOTE: Your data may be all one coordinate system, and therefore not need to split into 2 datasets
 #       before joining into 1 dataset.
 # NOTE: your coordinate system may be different (epsg code)
 # Some of the data are NAD27 projection and others are NAD83 projection. Split the dataset to handle each
 #Fixme: function for splitting coordinate systems and returning one same-coordinate system file
-GaugesLocs_NAD27 = GaugesLocs[GaugesLocs$coord_datum_cd == 'NAD27', ]
-coordinates(GaugesLocs_NAD27) = c('dec_long_va', 'dec_lat_va')
-proj4string(GaugesLocs_NAD27) = CRS('+init=epsg:4267')
-GaugesLocs_NAD83 = GaugesLocs[GaugesLocs$coord_datum_cd == 'NAD83', ]
-coordinates(GaugesLocs_NAD83) = c('dec_long_va', 'dec_lat_va')
-proj4string(GaugesLocs_NAD83) = CRS('+init=epsg:4269')
-#Transform to NAD83 UTM Zone 18N
-GaugeLocs_NAD27 = spTransform(GaugesLocs_NAD27, CRS(pCRS))
-GaugeLocs_NAD83 = spTransform(GaugesLocs_NAD83, CRS(pCRS))
-#Join to one dataset again
-GaugeLocs = rbind(GaugeLocs_NAD27, GaugeLocs_NAD83)
-#Remove separate datasets
-rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugesLocs, GaugesLocs_NAD27, GaugesLocs_NAD83)
-
-# Get gauges using whatNWISsites() (Method 1)----
-AllStations_fn = whatNWISsites(statecode = "MD", parameterCd = '00060')
-AllStations_fn = readNWISsite(AllStations_fn$site_no)
-#Convert to spatial dataframe
+#       Would require being able to look up epsg codes.
 GaugesLocs_NAD27 = AllStations_fn[AllStations_fn$coord_datum_cd == 'NAD27', ]
 coordinates(GaugesLocs_NAD27) = c('dec_long_va', 'dec_lat_va')
 proj4string(GaugesLocs_NAD27) = CRS('+init=epsg:4267')
@@ -214,26 +172,48 @@ GaugeLocs_fn = rbind(GaugeLocs_NAD27, GaugeLocs_NAD83)
 #Remove separate datasets
 rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugesLocs_NAD27, GaugesLocs_NAD83)
 
+# Method 2: Read USGS station data from .csv file----
+AllStations <- read.csv(f_StreamGaugeData, stringsAsFactors = FALSE)
+
+#Add a leading 0 to the NWIS gauges to look up their values on the server
+# NOTE: This step may not be necessary for your dataset.
+# NOTE: suppressing warnings for NAs introduced by coercion, which is intended.
+#       Users should check that other warnings are not also being suppressed.
+AllStations = addZeros(AllStations)
+
+#  Select data for only NWIS gauges----
+NWISstations = AllStations[AllStations$Source == 'NWIS',]
+
+#  Add Gauge locations to that dataset---- 
+#   Also contains altitudes of the gauges, which should be crosss-checked with DEM data
+#   NOTE: you may have to change the commands to match your file.
+if(exists("f_StreamGaugeSites")){
+  GaugesLocs = read.table(f_StreamGaugeSites, sep = "\t", header = TRUE, stringsAsFactors = FALSE)
+}else{
+  GaugesLocs = readNWISsite(NWISstations$GaugeNum)
+}
+
+# Make spatial dataframe
+GaugesLocs_NAD27 = GaugesLocs[GaugesLocs$coord_datum_cd == 'NAD27', ]
+coordinates(GaugesLocs_NAD27) = c('dec_long_va', 'dec_lat_va')
+proj4string(GaugesLocs_NAD27) = CRS('+init=epsg:4267')
+GaugesLocs_NAD83 = GaugesLocs[GaugesLocs$coord_datum_cd == 'NAD83', ]
+coordinates(GaugesLocs_NAD83) = c('dec_long_va', 'dec_lat_va')
+proj4string(GaugesLocs_NAD83) = CRS('+init=epsg:4269')
+#Transform to NAD83 UTM Zone 18N
+GaugeLocs_NAD27 = spTransform(GaugesLocs_NAD27, CRS(pCRS))
+GaugeLocs_NAD83 = spTransform(GaugesLocs_NAD83, CRS(pCRS))
+#Join to one dataset again
+GaugeLocs = rbind(GaugeLocs_NAD27, GaugeLocs_NAD83)
+#Remove separate datasets
+rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugesLocs, GaugesLocs_NAD27, GaugesLocs_NAD83)
+
 # Add DEM elevation to the gauge datasets----
 #  Gather all of the DEM files together and mosaic into one file
-#Fixme: function for DEM mosaikinng from separate tiles
-for (d in 1:length(dir_DEM)){
-  if (d > 1){
-    DEM2 = raster(x = paste0(dir_DEM[d], "/", f_DEM[d]))
-    DEM = mosaic(DEM, DEM2, fun = mean)
-  }else{
-    DEM = raster(x = paste0(dir_DEM[d], "/", f_DEM[d]))
-  }
-}
-rm(d, DEM2)
-#Project to project coordinate system
-DEM = projectRaster(DEM, crs = CRS(pCRS))
+DEM = processDEM(dir_DEMs = dir_DEM, f_DEMs = f_DEM, pCRS = pCRS)
 #Add the DEM elevation to the gauge dataset
-elev = extract(x = DEM, y = GaugeLocs)
-GaugeLocs$ElevDEM = elev
-elev = extract(x = DEM, y = GaugeLocs_fn)
-GaugeLocs_fn$ElevDEM = elev
-rm(elev)
+GaugeLocs$ElevDEM = extract(x = DEM, y = GaugeLocs)
+GaugeLocs_fn$ElevDEM = extract(x = DEM, y = GaugeLocs_fn)
 
 #  Compare the DEM elevation to the listed elevation----
 png('CompareGaugeElev.png', res = 300, units = 'in', width = 5, height = 5)
@@ -263,7 +243,7 @@ plot(GaugeLocs_fn[which(abs(GaugeLocs_fn$ElevDEM/.3048 - GaugeLocs_fn$alt_va) >=
 plot(GaugeLocs_fn[which(abs(GaugeLocs_fn$ElevDEM/.3048 - GaugeLocs_fn$alt_va) >= 200),], col = 'green', add =T)
 
 
-#  Add coordinates, elevation, and other data to the NWISstations data----
+#  Method 2 only: Add coordinates, elevation, and other data to the NWISstations data----
 for (i in 1:nrow(NWISstations)){
   #NOTE: if your data are not both character, errors stating the following will appear:
   # Error in data.frame(..., check.names = FALSE) : 
@@ -380,7 +360,7 @@ Pars = c(Par.cfsFlow, Par.Nflow, Par.Long, Par.Lat)
 # Download the within-ROI stream gauge data in parallel----
 #  Use only the unique gauge numbers in the dataset 
 #  (repeats occur when multiple variables are available for a gauge)
-uniqueNums = unique(NWIS_ROI$GaugeNum)
+uniqueNums = unique(NWIS_ROI_fn$site_no)
 cl = makeCluster(detectCores() - 1)
 registerDoParallel(cl)
 a = foreach(i = uniqueNums, .packages = 'dataRetrieval') %dopar% {
@@ -402,7 +382,7 @@ if (any(!is.null(unlist(a)))){
   rm(a)
 }
 
-# Gather the records for each gauge into a list of dataframes----
+#  Gather the records for each gauge into a list of dataframes----
 StreamStationList = list()
 #Also record their error codes for use in plotting later
 ErrCodes = vector('character')
@@ -454,51 +434,26 @@ for (i in 1:length(StreamStationList)){
 }
 rm(i, c, colCodes, codes)
 
-# Identify missing data and add the total number of missing days to the NWIS_ROI file----
-#Fixme: make this a function
-NWIS_ROI$MissingData = NA
-for (i in 1:length(StreamStationList)){
-  #Missing data that are reported as NA cells
-  NWIS_ROI$MissingData[which(as.numeric(NWIS_ROI$GaugeNum) == as.numeric(StreamStationList[[i]]$site_no[1]))] = length(which(is.na(StreamStationList[[i]]$X_00060_00003)))
-  #Add to those the missing data resulting from gaps > 1 day in the record
-  # NOTE: this assumes data are daily streamflow
-  gaps = c(with(data = StreamStationList[[i]], as.numeric(Date[-1]) - as.numeric(Date[-nrow(StreamStationList[[i]])])))
-  
-  NWIS_ROI$MissingData[which(as.numeric(NWIS_ROI$GaugeNum) == as.numeric(StreamStationList[[i]]$site_no[1]))] = NWIS_ROI$MissingData[which(as.numeric(NWIS_ROI$GaugeNum) == as.numeric(StreamStationList[[i]]$site_no[1]))] + sum(gaps[which(gaps > 1)])
-  
-  #Fill in the missing data dates with NA values to have a complete time series for all records
-  Inds = which(gaps > 1)
-  if (length(Inds) > 0){
-    for (j in 1:length(Inds)){
-      NumNAs = as.numeric(StreamStationList[[i]][(Inds[j]+1),]$Date - StreamStationList[[i]][Inds[j],]$Date) - 1
-      DateNAs = seq(StreamStationList[[i]][Inds[j],]$Date+1, StreamStationList[[i]][Inds[j]+1,]$Date-1, 1)
-      #Assign NumNAs new rows to this dataframe with NA streamflow
-      for (k in 1:NumNAs){
-        r = cbind(StreamStationList[[i]][1,1:2], DateNAs[k], NA, NA)
-        colnames(r) = colnames(StreamStationList[[i]]) 
-        StreamStationList[[i]] = rbind(StreamStationList[[i]], r)
-      }
-    }
-  }
-  #Sort the streamflow series by date
-  StreamStationList[[i]] = StreamStationList[[i]][order(StreamStationList[[i]]$Date),]
-}
-rm(gaps, Inds, NumNAs, DateNAs, r, i, j, k)
+# Identify missing dates and fill them into the timeseries----
+Fills = FillMissingDates(Dataset = NWIS_ROI_fn, StationList = StreamStationList, Var = 'X_00060_00003')
+NWIS_ROI_fn = Fills$Dataset
+StreamStationList = Fills$StationList
+rm(Fills)
 
 #Fixme: Missing data fill in with numerical value estimates using prediction in ungauged basins methods for large gaps
 #Fixme: check for high and low flow outliers in each record, and compare spatially to other gauges on those dates
 # Can include both FFA and daily flow outlier analysis
 
-# Make a map of points colored by their record lengths, corrected for the total amount of missing data----
-NWIS_ROI$RecordLength = NWIS_ROI$RecordLengthMinusGaps = NA
+# Make a map of gauge locations colored by their record lengths, corrected for the total amount of missing data----
+NWIS_ROI_fn$RecordLength = NWIS_ROI_fn$RecordLengthMinusGaps = NA
 for (i in 1:length(StreamStationList)){
-  NWIS_ROI$RecordLength[which(as.numeric(NWIS_ROI$GaugeNum) == as.numeric(StreamStationList[[i]]$site_no[1]))] = as.numeric((max(StreamStationList[[i]]$Date) - min(StreamStationList[[i]]$Date)))
+  NWIS_ROI_fn$RecordLength[which(as.numeric(NWIS_ROI_fn$site_no) == as.numeric(StreamStationList[[i]]$site_no[1]))] = as.numeric((max(StreamStationList[[i]]$Date) - min(StreamStationList[[i]]$Date)))
 }
 rm(i)
-NWIS_ROI$RecordLengthMinusGaps = NWIS_ROI$RecordLength - NWIS_ROI$MissingData
+NWIS_ROI_fn$RecordLengthMinusGaps = NWIS_ROI_fn$RecordLength - NWIS_ROI_fn$MissingData
 #in years
-NWIS_ROI$RecordLength = NWIS_ROI$RecordLength/365.25
-NWIS_ROI$RecordLengthMinusGaps = NWIS_ROI$RecordLengthMinusGaps/365.25
+NWIS_ROI_fn$RecordLength = NWIS_ROI_fn$RecordLength/365.25
+NWIS_ROI_fn$RecordLengthMinusGaps = NWIS_ROI_fn$RecordLengthMinusGaps/365.25
 
 #Color by decades
 scaleRange = c(0,70)
@@ -507,7 +462,7 @@ Pal = rev(rainbow((scaleRange[2] - scaleRange[1])/scaleBy))
 png('StremflowGauges_RecordLengths.png', res = 300, units = 'in', width = 6, height = 6)
 plot(ROI)
 # Gauges colored by their record lengths
-plot(NWIS_ROI, pch = 16, col = colFun(NWIS_ROI$RecordLengthMinusGaps), add = TRUE)
+plot(NWIS_ROI_fn, pch = 16, col = colFun(NWIS_ROI_fn$RecordLengthMinusGaps), add = TRUE)
 # Add coordinates
 axis(side = 1)
 axis(side = 2)
@@ -520,7 +475,7 @@ dev.off()
 setwd(dir_DEM_out)
 writeRaster(x = DEM, filename = f_DEM_mosiac, format = "GTiff")
 setwd(dir_sfgauges)
-writeOGR(obj = NWIS_ROI, dsn = getwd(), driver = 'ESRI Shapefile', layer = f_NWIS_ROI_out)
+writeOGR(obj = NWIS_ROI_fn, dsn = getwd(), driver = 'ESRI Shapefile', layer = f_NWIS_ROI_out)
 writeOGR(obj = NWISstations, dsn = getwd(), driver = 'ESRI Shapefile', layer = f_NWIS_bb_out)
 #Stream gauges had missing dates added to the files. Write new files.
 for (i in names(StreamStationList)){
