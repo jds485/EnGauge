@@ -74,8 +74,12 @@
 # See git commit history for all later contributions
 
 #Fixme: make each method a separate function or script
+#Fixme: add methods for handling detection limits in time series
 #Fixme: Also has a component for downloading weather station data 
 #       stored on the USGS database (which includes NOAA ACIS data)
+#Fixme: check for duplicate observations, as recommended by several USGS statisticians
+#  First check for number of unique records equl to the total length of records. 
+#  Then if they're different use removeDuplicates() 
 
 #Set directory names----
 #Region of interest shapefile
@@ -145,6 +149,7 @@ setwd(dir_EnGauge)
 source('missingDates.R')
 source('addZerosToGaugeNames.R')
 source('processDEM.R')
+source('extractWQdata.R')
 
 #Streamflow----
 setwd(dir_sfgauges)
@@ -649,6 +654,12 @@ setwd(wd_N)
 NitroStationList = list()
 #Find all of the Nitrogen station file indices in directory
 Ind_f_NitroStat = list.files()[grep(pattern = 'Nitrogen_', x = list.files(), ignore.case = FALSE, fixed = TRUE)]
+#Check that the length is equal to the length of the WQstations_ROI_N file
+if(length(Ind_f_NitroStat) > nrow(WQstations_ROI_N)){
+  stop('Number of nitrogen station data files is greater than number of nitrogen sites')
+  #Calling a non-existant function to get R to stop running the script
+  blah()
+}
 for (i in 1:length(Ind_f_NitroStat)){
   #Read file
   f = read.table(Ind_f_NitroStat[i], header = TRUE, sep = '\t', stringsAsFactors = FALSE)
@@ -657,38 +668,9 @@ for (i in 1:length(Ind_f_NitroStat)){
 }
 rm(f, Ind_f_NitroStat, i)
 
-#Cycle through all of the unique combinations of ResultSampleFractionText and CharacteristicName and return separate text files for each variable
-for (i in 1:length(NitroStationList)){
-  #Find all of the unique CharacteristicName, ResultSampleFractionText combinations
-  us = unique(NitroStationList[[i]][,c("CharacteristicName", "ResultSampleFractionText")])
-  #Write separate files for each combination
-  for (u in 1:nrow(us)){
-    #Check for NA values in us
-    if(is.na(us[u,1])){
-      u_Ind1 = which(is.na(NitroStationList[[i]][, c("CharacteristicName", "ResultSampleFractionText")[1]]))
-    }else{
-      u_Ind1 = which(NitroStationList[[i]][, c("CharacteristicName", "ResultSampleFractionText")[1]] == us[u,1])
-    }
-    if(is.na(us[u,2])){
-      u_Ind2 = which(is.na(NitroStationList[[i]][, c("CharacteristicName", "ResultSampleFractionText")[2]]))
-    }else{
-      u_Ind2 = which(NitroStationList[[i]][, c("CharacteristicName", "ResultSampleFractionText")[2]] == us[u,2])
-    }
-    #Gather only the indices for this unique combination
-    u_Ind = u_Ind1[u_Ind1 %in% u_Ind2]
-    
-    #Check that ActivityMediaName = Water for stream-only nitrogen data
-    w_Ind = which(NitroStationList[[i]][u_Ind,"ActivityMediaName"] != "Water")
-    if (length(w_Ind) > 0){
-      print(paste('Some of the samples are taken in media ', unique(NitroStationList[[i]]$ActivityMediaName), ' for station ', NitroStationList[[i]]$MonitoringLocationIdentifier[1]))
-    }
-    #Note: subbing ~ in for / because files will not save with / in the name.
-    write.table(NitroStationList[[i]][u_Ind,], 
-                paste0(getwd(), '/Nitrogen_', NitroStationList[[i]]$MonitoringLocationIdentifier[1], "_cn", gsub(pattern = "/", x = us[u,1], replacement = "~", fixed = TRUE), '_rt', us[u,2], ".txt"), 
-                sep = "\t")
-  }
-}
-rm(us, u, i, u_Ind, u_Ind1, u_Ind2)
+#Cycle through all of the unique combinations of ResultSampleFractionText and CharacteristicName 
+# and write separate text files for each variable
+extractWQdata(NitroStationList)
 
 #Read in the CharacteristicName for nitrogen measurements only
 cn_Nitro = grep(x = list.files(), pattern = '_cnNitrogen', ignore.case = TRUE)
@@ -742,12 +724,26 @@ rm(i)
 
 #Fixme: Search for flow-normalized outliers
 
+#  Plot histograms of data with detection limits----
+for (i in 1:length(TN)){
+  png(paste0('TN_hist_', TN[[i]]$MonitoringLocationIdentifier, '.png'), res = 300, units = 'in', width = 5, height = 5)
+  hist(c(log10(TN[[i]]$ResultMeasureValue), log10(TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue)),
+       xlab = 'log10(Total Nitrogen [mg/L as N])', main = TN[[i]]$MonitoringLocationIdentifier[1])
+  dev.off()
+}
+rm(i)
 # Process Phosphorus Data----
 setwd(wd_P)
 #Gather the records for each gauge into a list of dataframes
 PhosStationList = list()
 #Find all of the phosphorus station file indices in directory
 Ind_f_PhosStat = list.files()[grep(pattern = 'Phosphorus_', x = list.files(), ignore.case = FALSE, fixed = TRUE)]
+#Check that the length is equal to the length of the WQstations_ROI_N file
+if(length(Ind_f_PhosStat) > nrow(WQstations_ROI_P)){
+  stop('Number of phosphorus station data files is greater than number of nitrogen sites')
+  #Calling a non-existant function to get R to stop running the script
+  blah()
+}
 for (i in 1:length(Ind_f_PhosStat)){
   #Read file
   f = read.table(Ind_f_PhosStat[i], header = TRUE, sep = '\t', stringsAsFactors = FALSE)
@@ -757,37 +753,7 @@ for (i in 1:length(Ind_f_PhosStat)){
 rm(f, Ind_f_PhosStat, i)
 
 #Cycle through all of the unique combinations of ResultSampleFractionText and CharacteristicName and return separate text files for each variable
-for (i in 1:length(PhosStationList)){
-  #Find all of the unique CharacteristicName, ResultSampleFractionText combinations
-  us = unique(PhosStationList[[i]][,c("CharacteristicName", "ResultSampleFractionText")])
-  #Write separate files for each combination
-  for (u in 1:nrow(us)){
-    #Check for NA values in us
-    if(is.na(us[u,1])){
-      u_Ind1 = which(is.na(PhosStationList[[i]][, c("CharacteristicName", "ResultSampleFractionText")[1]]))
-    }else{
-      u_Ind1 = which(PhosStationList[[i]][, c("CharacteristicName", "ResultSampleFractionText")[1]] == us[u,1])
-    }
-    if(is.na(us[u,2])){
-      u_Ind2 = which(is.na(PhosStationList[[i]][, c("CharacteristicName", "ResultSampleFractionText")[2]]))
-    }else{
-      u_Ind2 = which(PhosStationList[[i]][, c("CharacteristicName", "ResultSampleFractionText")[2]] == us[u,2])
-    }
-    #Gather only the indices for this unique combination
-    u_Ind = u_Ind1[u_Ind1 %in% u_Ind2]
-    
-    #Check that ActivityMediaName = Water for stream-only Phosphorus data
-    w_Ind = which(PhosStationList[[i]][u_Ind,"ActivityMediaName"] != "Water")
-    if (length(w_Ind) > 0){
-      print(paste('Some of the samples are taken in media ', unique(PhosStationList[[i]]$ActivityMediaName), ' for station ', PhosStationList[[i]]$MonitoringLocationIdentifier[1]))
-    }
-    #Note: subbing ~ in for / because files will not save with / in the name.
-    write.table(PhosStationList[[i]][u_Ind,], 
-                paste0(getwd(), '/Phosphorus_', PhosStationList[[i]]$MonitoringLocationIdentifier[1], "_cn", gsub(pattern = "/", x = us[u,1], replacement = "~", fixed = TRUE), '_rt', us[u,2], ".txt"), 
-                sep = "\t")
-  }
-}
-rm(us, u, i, u_Ind, u_Ind1, u_Ind2, w_Ind)
+extractWQdata(StationList = PhosStationList)
 
 #Read in the CharacteristicName for Phosphorus measurements only
 cn_Phos = grep(x = list.files(), pattern = '_cnPhosphorus', ignore.case = TRUE)
@@ -796,7 +762,7 @@ cn_Phos1 = grep(x = list.files()[cn_Phos], pattern = 'Total', ignore.case = TRUE
 #Total nitrogen files only
 f_TP = list.files()[cn_Phos][cn_Phos1]
 rm(cn_Phos, cn_Phos1)
-#Make a list of all of the total nitrogen gauge datasets
+#Make a list of all of the total phosphorus gauge datasets
 TP = list()
 for (i in 1:length(f_TP)){
   f = read.table(f_TP[i], header = TRUE, sep = "\t", stringsAsFactors = FALSE)
@@ -865,15 +831,20 @@ rm(i)
 
 #Fixme: Search for flow-normalized outliers
 
-
-#Fixme: handle missing data, as with streamflow 
-#        this may be unnecessary because regular sampling is not completed for WQ data
-
-#Fixme: Search for flow-normalized outliers
+#  Plot histograms of data with detection limits----
+for (i in 1:length(TP)){
+  png(paste0('TP_hist_', TP[[i]]$MonitoringLocationIdentifier, '.png'), res = 300, units = 'in', width = 5, height = 5)
+  hist(c(log10(TP[[i]]$ResultMeasureValue), log10(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue)),
+       xlab = 'log10(Total Phosphorus [mg/L as P])', main = TP[[i]]$MonitoringLocationIdentifier[1])
+  dev.off()
+}
+rm(i)
 
 # Write water quality data to files----
+setwd(dir = wd_N)
 writeOGR(WQstations_ROI_N, dsn = getwd(), layer = 'NitrogenSites', driver = "ESRI Shapefile")
 list.save(x = TN, file = 'TN.yaml', type = "YAML")
+setwd(dir = wd_P)
 writeOGR(WQstations_ROI_P, dsn = getwd(), layer = 'PhosphorusSites', driver = "ESRI Shapefile")
 list.save(x = TP, file = 'TP.yaml', type = "YAML")
 
