@@ -487,7 +487,67 @@ rm(i)
 
 #Water Quality----
 setwd(dir_wq)
-# Read water quality station data----
+# Method 1: Read water quality station data using the USGS function----
+#  Find sites that have any N and P water quality data in a state within the ROI
+#Phosphorus
+phosSites <- whatWQPsites(statecode="MD", characteristicName="Phosphorus")
+#Nitrogen
+NitroSites <- whatWQPsites(statecode="MD", characteristicName="Nitrogen")
+
+#Make spatial data
+#Nitrogen
+GaugesLocs_NAD27 = NitroSites[NitroSites$HorizontalCoordinateReferenceSystemDatumName == 'NAD27', ]
+coordinates(GaugesLocs_NAD27) = c('LongitudeMeasure', 'LatitudeMeasure')
+proj4string(GaugesLocs_NAD27) = CRS('+init=epsg:4267')
+GaugesLocs_NAD83 = NitroSites[NitroSites$HorizontalCoordinateReferenceSystemDatumName == 'NAD83', ]
+coordinates(GaugesLocs_NAD83) = c('LongitudeMeasure', 'LatitudeMeasure')
+proj4string(GaugesLocs_NAD83) = CRS('+init=epsg:4269')
+GaugesLocs_WGS84 = NitroSites[NitroSites$HorizontalCoordinateReferenceSystemDatumName == 'WGS84', ]
+coordinates(GaugesLocs_WGS84) = c('LongitudeMeasure', 'LatitudeMeasure')
+proj4string(GaugesLocs_WGS84) = CRS('+init=epsg:4326')
+#Assuming that all the unknown coordinate systems are NAD83
+GaugesLocs_U = NitroSites[NitroSites$HorizontalCoordinateReferenceSystemDatumName == 'UNKWN', ]
+coordinates(GaugesLocs_U) = c('LongitudeMeasure', 'LatitudeMeasure')
+proj4string(GaugesLocs_U) = CRS('+init=epsg:4269')
+#Transform to NAD83 UTM Zone 18N
+GaugeLocs_NAD27 = spTransform(GaugesLocs_NAD27, CRS(pCRS))
+GaugeLocs_NAD83 = spTransform(GaugesLocs_NAD83, CRS(pCRS))
+GaugeLocs_WGS84 = spTransform(GaugesLocs_WGS84, CRS(pCRS))
+GaugeLocs_U = spTransform(GaugesLocs_U, CRS(pCRS))
+#Join to one dataset again
+GaugeLocs_WQN = rbind(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugeLocs_WGS84, GaugeLocs_U)
+#Remove separate datasets
+rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugesLocs_NAD27, GaugesLocs_NAD83, GaugeLocs_WGS84, GaugeLocs_U, GaugesLocs_U, GaugesLocs_WGS84)
+
+#Phosphorus
+GaugesLocs_NAD27 = phosSites[phosSites$HorizontalCoordinateReferenceSystemDatumName == 'NAD27', ]
+coordinates(GaugesLocs_NAD27) = c('LongitudeMeasure', 'LatitudeMeasure')
+proj4string(GaugesLocs_NAD27) = CRS('+init=epsg:4267')
+GaugesLocs_NAD83 = phosSites[phosSites$HorizontalCoordinateReferenceSystemDatumName == 'NAD83', ]
+coordinates(GaugesLocs_NAD83) = c('LongitudeMeasure', 'LatitudeMeasure')
+proj4string(GaugesLocs_NAD83) = CRS('+init=epsg:4269')
+GaugesLocs_WGS84 = phosSites[phosSites$HorizontalCoordinateReferenceSystemDatumName == 'WGS84', ]
+coordinates(GaugesLocs_WGS84) = c('LongitudeMeasure', 'LatitudeMeasure')
+proj4string(GaugesLocs_WGS84) = CRS('+init=epsg:4326')
+#Assuming that all the unknown coordinate systems are NAD83
+GaugesLocs_U = phosSites[phosSites$HorizontalCoordinateReferenceSystemDatumName == 'UNKWN', ]
+coordinates(GaugesLocs_U) = c('LongitudeMeasure', 'LatitudeMeasure')
+proj4string(GaugesLocs_U) = CRS('+init=epsg:4269')
+#Transform to NAD83 UTM Zone 18N
+GaugeLocs_NAD27 = spTransform(GaugesLocs_NAD27, CRS(pCRS))
+GaugeLocs_NAD83 = spTransform(GaugesLocs_NAD83, CRS(pCRS))
+GaugeLocs_WGS84 = spTransform(GaugesLocs_WGS84, CRS(pCRS))
+GaugeLocs_U = spTransform(GaugesLocs_U, CRS(pCRS))
+#Join to one dataset again
+GaugeLocs_WQP = rbind(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugeLocs_WGS84, GaugeLocs_U)
+#Remove separate datasets
+rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugesLocs_NAD27, GaugesLocs_NAD83, GaugeLocs_WGS84, GaugeLocs_U, GaugesLocs_U, GaugesLocs_WGS84)
+
+#Clip to ROI
+WQstations_ROI_N = GaugeLocs_WQN[ROI,]
+WQstations_ROI_P = GaugeLocs_WQP[ROI,]
+
+# Method 2: Read water quality station data from file----
 WQstations = read.csv(f_WQgauges, stringsAsFactors = FALSE)
 #Convert to spatial data
 coordinates(WQstations) = c('LongitudeMeasure', 'LatitudeMeasure')
@@ -510,19 +570,12 @@ rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugeLocs_WGS84, GaugesLocs_NAD27, GaugesLo
 #Clip to ROI
 WQstations_ROI = WQGaugeLocs[ROI,]
 
-#  Find sites that have any N and P water quality data in a state within the ROI----
-#   Accepts any state postal code, but only one at a time.
-#Phosphorus
-phosSites <- whatWQPsites(statecode="MD", characteristicName="Phosphorus")
-#Nitrogen
-NitroSites <- whatWQPsites(statecode="MD", characteristicName="Nitrogen")
-
 #Select only those sites in the ROI that have nitrogen data
 WQstations_ROI_N = WQstations_ROI[WQstations_ROI$MonitoringLocationIdentifier %in% NitroSites$MonitoringLocationIdentifier,]
 #Select only those sites in the ROI that have Phosphorus data
 WQstations_ROI_P = WQstations_ROI[WQstations_ROI$MonitoringLocationIdentifier %in% phosSites$MonitoringLocationIdentifier,]
 
-#  Plot TN and TP sampling locations on a map----
+# Plot TN and TP sampling locations on a map----
 png('TNTPsites.png', res = 300, units = 'in', width = 6, height = 6)
 plot(ROI)
 plot(WQstations_ROI_N, pch = 16, add = TRUE, col = 'red')
@@ -537,7 +590,7 @@ north.arrow(xb = 365000, yb = 4346000, len = 700, col = 'black', lab = 'N')
 legend('topright', title = 'Water Quality Sites', legend = c('T Nitrogen Only', 'T Phosphorus Only', 'Both'), col = c('red', 'blue', 'purple'), pch = 16)
 dev.off()
 
-#  Download data for those sites in parallel----
+# Download data for those sites in parallel----
 #   Use only the unique gauge numbers in the dataset 
 #   (repeats occur when multiple variables are available for a gauge)
 uniqueWQNums_N = unique(WQstations_ROI_N$MonitoringLocationIdentifier)
@@ -546,6 +599,7 @@ uniqueWQNums_P = unique(WQstations_ROI_P$MonitoringLocationIdentifier)
 #Make directories for storing Nitrogen and Phosphorous data
 wd_N = paste0(getwd(), '/Nitrogen')
 wd_P = paste0(getwd(), '/Phosphorus')
+#Fixme: this should check if the directory already exists before making it
 dir.create(path = wd_N)
 dir.create(path = wd_P)
 
