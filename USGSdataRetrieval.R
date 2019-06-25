@@ -1,9 +1,27 @@
 #Script to read USGS streamflow and water quality data from gauges
-# Function help at: https://github.com/USGS-R/dataRetrieval 
+# Recommended resource - Package Readme: 
+#  (located somewhere on your computer after installing the package) dataRetrieval.html
+# Function help at: https://github.com/USGS-R/dataRetrieval
 #             Blog: https://owi.usgs.gov/R/training-curriculum/usgs-packages/
 #        Slideshow: https://owi.usgs.gov/R/dataRetrieval.html#1
-# Also has a component for downloading weather station data stored on the USGS database (which includes NOAA ACIS data)
 
+#Streamflow Gauge Retrieval Method 1:
+#The function whatNWISsites() will return gauge numbers
+# with coordinates for a specified state (county, or various other criteria)
+# Search Criteria for whatNWISsites(): Table 1 of https://www.waterqualitydata.us/webservices_documentation/
+#                                       References to "domain service" indicate to look at Table 2.
+#                  characteristicName: https://www.waterqualitydata.us/public_srsnames/
+#                   Likely the most common filtering method. 
+#                  Example: whatNWISsites(statecode="MD", characteristicName="Phosphorus")
+#  Note: their function must use something like grep when characteristicName is specified. 
+#        Searching for Nitrogen returned all instances of Nitrogen on that list.
+#         If you want a specific code only, specify the parameterCd (parameter code)
+#         instead of the characteristic name
+# That function will not return full site information. 
+# For full site information, use readNWISsite() with a vector of gauge numbers returned from whatNWISsites().
+# NOTE: This method seems more reliable, and returned for my ROI more gauges than Method 2
+
+#Streamflow Gauge Retrieval Method 2:
 #You can find USGS gauges of any type in your region of interest on this website:
 # https://cida.usgs.gov/enddat/dataDiscovery.jsp
 # Record the coordinates of the bounding box for your region of interest! They could be important for the next step. 
@@ -13,26 +31,35 @@
 #  Other gauge datasets seem to not require leading zeros.
 
 #Coordinates of gauges are not reported in that download :( 
-# The USGS function readNWISsite() can look up the coordinates, given the gauge numbers.
+# The USGS function readNWISsite() can look up the coordinates and all site info, given the gauge numbers.
 # You can also find coordinates for your gauges on this site if you provide a bounding box of coordinates:
 # https://waterdata.usgs.gov/nwis/inventory?search_criteria=lat_long_bounding_box&submitted_form=introduction
+
+#Comparing altitude of gauge vs. DEM:
 # Obtained coordinates may include altitude of the gauge, which can be important vs. DEM elevation 
 #  (e.g. if there's a cliff at the gauge vs. DEM mean elevation of the pixel)
-#  Select the altitude features that you want from the scroll list on that website to download them
 #  A plot of DEM vs. Gauge reported elevation is made below to visually detect discrepancies
 #   (e.g. USGS data reported in m instead of in ft)
 #  Ensure that the units and the vertical datum are the same for your DEM and all gauge altitudes
 #   DEMs in the US tend to be NAVD88 in m, whereas gauges tend to be referenced to NGVD29 in ft
-#   Differences tend to be minor in the US, except in the West: https://www.ngs.noaa.gov/TOOLS/Vertcon/vertcon.html
+#   Differences after unit conversion tend to be minor in the US, 
+#    except in the West: https://www.ngs.noaa.gov/TOOLS/Vertcon/vertcon.html
 #  Altitude datum codes: https://help.waterdata.usgs.gov/code/alt_datum_cd_query?fmt=html
 #   collection method codes: https://help.waterdata.usgs.gov/code/alt_meth_cd_query?fmt=html
 
-#You can find water quality gauges on this website:
+#Water Quality Retrieval Method 1:
+# You can use the whatWQPsites(), using the same query criteria as the whatNWISsites() function.
+# The whatWQPsites() function returns all site information, same as the waterqualitydata website
+# described in Method 2.
+
+#Water Quality Retrieval Method 2:
+# You can find water quality gauges on this website:
 # https://www.waterqualitydata.us/portal/
 # Download "site data only" to receive a csv file with gauge/site information with coordinates.
 # The MonitoringLocationIdentifier field is used to download data for each gauge/site in the script below.
 
-#You can find data quality codes for USGS datasets here:
+#Data Quality Codes:
+# You can find data quality codes for USGS datasets here:
 # https://help.waterdata.usgs.gov/codes-and-parameters/codes#discharge_cd
 # You should always look at these quality codes, and process your data accordingly.
 # This script colors streamflow time series by error code, but doesn't process further than that.
@@ -40,15 +67,20 @@
 #                  AND: https://help.waterdata.usgs.gov/codes-and-parameters/instantaneous-and-daily-value-status-codes
 #                  Yes, there are 2 separate reference schemes for streamflow data.
 
-#Portions of the function for the streamflow download were provided by:
+#Author Credits:
+# Portions of the function for the streamflow download were provided by:
 # Caitline Barber (Caitline.Barber@tufts.edu) and Jonathan Lamontagne (Jonathan.Lamontagne@tufts.edu)
 # Modified by Jared Smith (js4yd@virginia.edu) in June, 2019, and started git tracking.
 # See git commit history for all later contributions
 
+#Fixme: make each method a separate function or script
+#Fixme: Also has a component for downloading weather station data 
+#       stored on the USGS database (which includes NOAA ACIS data)
+
 #Set directory names----
 #Region of interest shapefile
 dir_ROI = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\BES-Watersheds-Land-Cover-Analysis"  
-#Color functions
+#Color functions - from JDS github repo: Geothermal_ESDA
 dir_ColFuns = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges"
 #USGS streamflow gauges
 dir_sfgauges = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges"
@@ -109,7 +141,7 @@ source('ColorFunctions.R')
 
 #Streamflow----
 setwd(dir_sfgauges)
-# Read USGS station data from .csv file----
+# Read USGS station data from .csv file (Method 2)----
 AllStations <- read.csv(f_StreamGaugeData, stringsAsFactors = FALSE)
 
 #Add a leading 0 to the NWIS gauges to look up their values on the server
@@ -132,39 +164,7 @@ for (i in 1:nrow(AllStations)){
 }
 rm(StationStart, i)
 
-# Statistics to report for each streamflow gauge, if available----
-# All codes defined here: https://help.waterdata.usgs.gov/code/stat_cd_nm_query?stat_nm_cd=%25&fmt=html
-#Fixme: lookup codes from the website
-Stat.minFlow = "00002"
-Stat.avgFlow = "00003"
-Stat.maxFlow = "00001"
-Stat.varFlow = "00010"
-Stat.skewFlow = "00013"
-#Xth percentile
-Stat.P1 = "01010"
-Stat.P5 = "01050"
-Stat.P25 = "01250"
-Stat.P50 = "01500"
-Stat.P75 = "01750"
-Stat.P95 = "01950"
-Stat.P99 = "01990"
-
-#Collect all of the Stat variables into a vector
-#Fixme: is there a way to collect all variables that begin Stat. and collect them into a new vector?
-Stats = c(Stat.minFlow, Stat.P1, Stat.P5, Stat.P25, Stat.P50, Stat.P75, Stat.P95, Stat.P99, Stat.maxFlow, Stat.avgFlow, Stat.varFlow, Stat.skewFlow)
-
-# Parameters to report for each gauge, if available----
-# All codes defined here: https://help.waterdata.usgs.gov/code/parameter_cd_query?fmt=rdb&inline=true&group_cd=%
-#Fixme: lookup codes from the website
-Par.cfsFlow = "00060"
-Par.Nflow = "00600"
-Par.Lat = "91110"
-Par.Long = "91111"
-
-#Fixme: is there a way to collect all variables that begin Par. and collect them into a new vector?
-Pars = c(Par.cfsFlow, Par.Nflow, Par.Long, Par.Lat)
-
-# Collect data for each NWIS gauge----
+#  Collect data for each NWIS gauge----
 NWISstations = AllStations[AllStations$Source == 'NWIS',]
 
 #  Add Gauge locations to that dataset---- 
@@ -196,8 +196,26 @@ GaugeLocs = rbind(GaugeLocs_NAD27, GaugeLocs_NAD83)
 #Remove separate datasets
 rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugesLocs, GaugesLocs_NAD27, GaugesLocs_NAD83)
 
-#  Add DEM elevation in resolution of your choice for modeling----
-#   Gather all of the DEMs together and mosaic into one file
+# Get gauges using whatNWISsites() (Method 1)----
+AllStations_fn = whatNWISsites(statecode = "MD", parameterCd = '00060')
+AllStations_fn = readNWISsite(AllStations_fn$site_no)
+#Convert to spatial dataframe
+GaugesLocs_NAD27 = AllStations_fn[AllStations_fn$coord_datum_cd == 'NAD27', ]
+coordinates(GaugesLocs_NAD27) = c('dec_long_va', 'dec_lat_va')
+proj4string(GaugesLocs_NAD27) = CRS('+init=epsg:4267')
+GaugesLocs_NAD83 = AllStations_fn[AllStations_fn$coord_datum_cd == 'NAD83', ]
+coordinates(GaugesLocs_NAD83) = c('dec_long_va', 'dec_lat_va')
+proj4string(GaugesLocs_NAD83) = CRS('+init=epsg:4269')
+#Transform to NAD83 UTM Zone 18N
+GaugeLocs_NAD27 = spTransform(GaugesLocs_NAD27, CRS(pCRS))
+GaugeLocs_NAD83 = spTransform(GaugesLocs_NAD83, CRS(pCRS))
+#Join to one dataset again
+GaugeLocs_fn = rbind(GaugeLocs_NAD27, GaugeLocs_NAD83)
+#Remove separate datasets
+rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugesLocs_NAD27, GaugesLocs_NAD83)
+
+# Add DEM elevation to the gauge datasets----
+#  Gather all of the DEM files together and mosaic into one file
 #Fixme: function for DEM mosaikinng from separate tiles
 for (d in 1:length(dir_DEM)){
   if (d > 1){
@@ -213,14 +231,23 @@ DEM = projectRaster(DEM, crs = CRS(pCRS))
 #Add the DEM elevation to the gauge dataset
 elev = extract(x = DEM, y = GaugeLocs)
 GaugeLocs$ElevDEM = elev
+elev = extract(x = DEM, y = GaugeLocs_fn)
+GaugeLocs_fn$ElevDEM = elev
 rm(elev)
 
-#   Compare the DEM elevation to the listed elevation----
+#  Compare the DEM elevation to the listed elevation----
 png('CompareGaugeElev.png', res = 300, units = 'in', width = 5, height = 5)
-plot(GaugeLocs$alt_va[is.na(GaugeLocs$alt_va) == FALSE], GaugeLocs$ElevDEM[is.na(GaugeLocs$alt_va) == FALSE]/.3048,
+plot(GaugeLocs$alt_va[which((is.na(GaugeLocs_fn$alt_va) == FALSE) & (is.na(GaugeLocs_fn$ElevDEM) == FALSE))], GaugeLocs$ElevDEM[which((is.na(GaugeLocs_fn$alt_va) == FALSE) & (is.na(GaugeLocs_fn$ElevDEM) == FALSE))]/.3048,
      xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations')
 lines(c(-100,1100), c(-100,1100), col = 'red')
 dev.off()
+
+png('CompareGaugeElev_fn.png', res = 300, units = 'in', width = 5, height = 5)
+plot(GaugeLocs_fn$alt_va[which((is.na(GaugeLocs_fn$alt_va) == FALSE) & (is.na(GaugeLocs_fn$ElevDEM) == FALSE))], GaugeLocs_fn$ElevDEM[which((is.na(GaugeLocs_fn$alt_va) == FALSE)  & (is.na(GaugeLocs_fn$ElevDEM) == FALSE))]/.3048,
+     xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations')
+lines(c(-100,1100), c(-100,1100), col = 'red')
+dev.off()
+
 
 #Fixme: Correct the elevations for those gauges that are very different than the DEM
 # and have collection codes that suggest lower data quality
@@ -230,8 +257,13 @@ plot(GaugeLocs)
 plot(GaugeLocs[which(abs(GaugeLocs$ElevDEM/.3048 - GaugeLocs$alt_va) >= 50),], col = 'red', add =T)
 plot(GaugeLocs[which(abs(GaugeLocs$ElevDEM/.3048 - GaugeLocs$alt_va) >= 100),], col = 'blue', add =T)
 plot(GaugeLocs[which(abs(GaugeLocs$ElevDEM/.3048 - GaugeLocs$alt_va) >= 200),], col = 'green', add =T)
+plot(GaugeLocs_fn)
+plot(GaugeLocs_fn[which(abs(GaugeLocs_fn$ElevDEM/.3048 - GaugeLocs_fn$alt_va) >= 50),], col = 'red', add =T)
+plot(GaugeLocs_fn[which(abs(GaugeLocs_fn$ElevDEM/.3048 - GaugeLocs_fn$alt_va) >= 100),], col = 'blue', add =T)
+plot(GaugeLocs_fn[which(abs(GaugeLocs_fn$ElevDEM/.3048 - GaugeLocs_fn$alt_va) >= 200),], col = 'green', add =T)
 
-#  Add coordinates and elevation data to the NWISstations data----
+
+#  Add coordinates, elevation, and other data to the NWISstations data----
 for (i in 1:nrow(NWISstations)){
   #NOTE: if your data are not both character, errors stating the following will appear:
   # Error in data.frame(..., check.names = FALSE) : 
@@ -240,28 +272,29 @@ for (i in 1:nrow(NWISstations)){
   if (length(Ind) > 1){
     print(paste('More than one gauge number matches the uniqueNum gauge ', i, '. Using only first match.'))
   }
-  test = cbind(NWISstations[i,], GaugeLocs@data[Ind,], GaugeLocs@coords[Ind,][1], GaugeLocs@coords[Ind,][2])
-  colnames(test) = c(colnames(NWISstations), colnames(GaugeLocs@data), colnames(GaugeLocs@coords))
+  cmb = cbind(NWISstations[i,], GaugeLocs@data[Ind,], GaugeLocs@coords[Ind,][1], GaugeLocs@coords[Ind,][2])
+  colnames(cmb) = c(colnames(NWISstations), colnames(GaugeLocs@data), colnames(GaugeLocs@coords))
   if (i == 1){ 
-    NewData = test
+    NewData = cmb
   }else{
-    NewData = rbind(NewData, test)
+    NewData = rbind(NewData, cmb)
   }
 }
 NWISstations = NewData
-rm(i, Ind, NewData, test)
+rm(i, Ind, NewData, cmb)
+
+# Clip to ROI----
+ROI = readOGR(dsn = dir_ROI, layer = f_ROI, stringsAsFactors = FALSE)
+ROI = spTransform(ROI, CRS(pCRS))
 
 #Make NWIS stations a spatial dataframe
 coordinates(NWISstations) = c('dec_long_va', 'dec_lat_va')
 proj4string(NWISstations) = CRS(pCRS)
-
-#Clip the NWIS gauges to the region of interest (shapefile) 
-ROI = readOGR(dsn = dir_ROI, layer = f_ROI, stringsAsFactors = FALSE)
-ROI = spTransform(ROI, CRS(pCRS))
-#Clip the streamflow gauges to the region of interest
 NWIS_ROI = NWISstations[ROI,]
 
-# Plot locations of NWIS gauges----
+NWIS_ROI_fn = GaugeLocs_fn[ROI,]
+
+# Plot locations of gauges----
 png('StremflowGauges.png', res = 300, units = 'in', width = 6, height = 6)
 # All NWIS streamflow gauges in bounding box
 plot(NWISstations, pch = 16, col = 'white')
@@ -279,15 +312,70 @@ north.arrow(xb = 370000, yb = 4346000, len = 700, col = 'black', lab = 'N')
 legend('topleft', title = 'Streamflow Stations', legend = c('In ROI', 'Not in ROI'), pch = 16, col = c('red', 'black'))
 dev.off()
 
-# Compare reported vs. DEM elevation of gauges within the ROI----
+png('StremflowGauges_fn.png', res = 300, units = 'in', width = 6, height = 6)
+# All NWIS streamflow gauges in bounding box
+plot(NWISstations, pch = 16, col = 'white')
+# ROI
+plot(ROI, add = TRUE)
+# All NWIS streamflow gauges in bounding box, in color
+plot(GaugeLocs_fn, pch = 16, add = TRUE)
+# NWIS streamflow gauges in ROI
+plot(NWIS_ROI_fn, pch = 16, col = 'red', add = TRUE)
+# Add coordinates
+axis(side = 1)
+axis(side = 2)
+box()
+north.arrow(xb = 370000, yb = 4346000, len = 700, col = 'black', lab = 'N')
+legend('topleft', title = 'Streamflow Stations', legend = c('In ROI', 'Not in ROI'), pch = 16, col = c('red', 'black'))
+dev.off()
+
+# Plot reported vs. DEM elevation of gauges within the ROI----
 png('CompareGaugeElev.png', res = 300, units = 'in', width = 5, height = 5)
 plot(NWIS_ROI$alt_va, NWIS_ROI$ElevDEM/.3048,
      xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations')
 lines(c(-100,1100), c(-100,1100), col = 'red')
 dev.off()
 
+png('CompareGaugeElev_fn.png', res = 300, units = 'in', width = 5, height = 5)
+plot(NWIS_ROI_fn$alt_va, NWIS_ROI_fn$ElevDEM/.3048,
+     xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations')
+lines(c(-100,1100), c(-100,1100), col = 'red')
+dev.off()
+
 #One of these gauge elevations is a lot lower than DEM. Likely that the gauge was reported in m in USGS database
 #identify(NWIS_ROI$alt_va, NWIS_ROI$ElevDEM/.3048)
+
+# Statistics to download for each streamflow gauge, if available----
+# All codes defined here: https://help.waterdata.usgs.gov/code/stat_cd_nm_query?stat_nm_cd=%25&fmt=html
+#Fixme: lookup codes from the website
+Stat.minFlow = "00002"
+Stat.avgFlow = "00003"
+Stat.maxFlow = "00001"
+Stat.varFlow = "00010"
+Stat.skewFlow = "00013"
+#Xth percentile
+Stat.P1 = "01010"
+Stat.P5 = "01050"
+Stat.P25 = "01250"
+Stat.P50 = "01500"
+Stat.P75 = "01750"
+Stat.P95 = "01950"
+Stat.P99 = "01990"
+
+#Collect all of the Stat variables into a vector
+#Fixme: is there a way to collect all variables that begin Stat. and collect them into a new vector?
+Stats = c(Stat.minFlow, Stat.P1, Stat.P5, Stat.P25, Stat.P50, Stat.P75, Stat.P95, Stat.P99, Stat.maxFlow, Stat.avgFlow, Stat.varFlow, Stat.skewFlow)
+
+# Parameters to download for each gauge, if available----
+# All codes defined here: https://help.waterdata.usgs.gov/code/parameter_cd_query?fmt=rdb&inline=true&group_cd=%
+#Fixme: lookup codes from the website
+Par.cfsFlow = "00060"
+Par.Nflow = "00600"
+Par.Lat = "91110"
+Par.Long = "91111"
+
+#Fixme: is there a way to collect all variables that begin Par. and collect them into a new vector?
+Pars = c(Par.cfsFlow, Par.Nflow, Par.Long, Par.Lat)
 
 # Download the within-ROI stream gauge data in parallel----
 #  Use only the unique gauge numbers in the dataset 
@@ -792,8 +880,11 @@ USGS_GaugeMatch$Abbreviation = gsub(pattern = ' ', replacement = '', x = USGS_Ga
 #add leading zeros to gauge numbers that are not NA
 USGS_GaugeMatch$USGSGaugeNum[!is.na(USGS_GaugeMatch$USGSGaugeNum)] = paste0("0", USGS_GaugeMatch$USGSGaugeNum[!is.na(USGS_GaugeMatch$USGSGaugeNum)])
 BES_WQ$USGSgauge = NA
-USGSnums = unique(USGS_GaugeMatch$USGSGaugeNum[-grep(pattern = 'NA', x = USGS_GaugeMatch$USGSGaugeNum)])
-
+USGSnums = unique(USGS_GaugeMatch$USGSGaugeNum)[-which(is.na(unique(USGS_GaugeMatch$USGSGaugeNum)) == TRUE)]
+#Capitalize all of the site names in the BES and GaugeMatch datasets because there are typos
+USGS_GaugeMatch$Abbreviation = toupper(USGS_GaugeMatch$Abbreviation)
+BES_WQ$Site = toupper(BES_WQ$Site)
+  
 #Filter into separate databases by site and add gauge numbers to database
 BES_WQ_Sites = list()
 uniqueSites = unique(BES_WQ$Site)
@@ -818,8 +909,11 @@ for (i in 1:length(uniqueSites)){
     f$Dated[y] = as.character(txtyr)
   }
   BES_WQ_Sites = c(BES_WQ_Sites, list(f))
+  names(BES_WQ_Sites) = c(names(BES_WQ_Sites)[-length(names(BES_WQ_Sites))], f$USGSgauge[1])
 }
 rm(i, f, txtyr)
+
+names(BES_WQ_Sites)
 
 #Plot time series for each of the sites
 #Nitrogen
@@ -829,7 +923,7 @@ for (i in 1:length(BES_WQ_Sites)){
     plot(y = BES_WQ_Sites[[i]]$TN..mg.N.L., x = as.Date(BES_WQ_Sites[[i]]$Dated), type = 'o', pch = 16, cex = 0.3,
          xlab = 'Year', 
          ylab = 'Total Nitrogen (mg N/L)', 
-         main = paste0('Station #', BES_WQ_Sites[[i]]$USGSgauge[1], ' ', BES_WQ_Sites[[i]]$Site[1]),
+         main = paste0('TN Station #', BES_WQ_Sites[[i]]$USGSgauge[1], ' ', BES_WQ_Sites[[i]]$Site[1]),
          ylim = c(0, max(BES_WQ_Sites[[i]]$TN..mg.N.L., na.rm=TRUE)))
     #xlim = c(as.Date("1980-01-01"), as.Date("2019-06-01")))
     dev.off()
@@ -837,9 +931,55 @@ for (i in 1:length(BES_WQ_Sites)){
 }
 rm(i)
 
-#Associate each of the sites to a station, if available
+#Phosphorus
+for (i in 1:length(BES_WQ_Sites)){
+  if (any(!is.na(BES_WQ_Sites[[i]]$TP..ugP.L.))){
+    png(paste0('BES_P_Timeseries_', BES_WQ_Sites[[i]]$Site[1], '_',  BES_WQ_Sites[[i]]$USGSgauge[1], '_', i, '.png'), res = 300, units = 'in', width = 6, height = 6)
+    plot(y = BES_WQ_Sites[[i]]$TP..ugP.L., x = as.Date(BES_WQ_Sites[[i]]$Dated), type = 'o', pch = 16, cex = 0.3,
+         xlab = 'Year', 
+         ylab = expression(paste('Total Phosphorus (', mu, 'g P/L)')), 
+         main = paste0('TP Station #', BES_WQ_Sites[[i]]$USGSgauge[1], ' ', BES_WQ_Sites[[i]]$Site[1]),
+         ylim = c(0, max(BES_WQ_Sites[[i]]$TP..ugP.L., na.rm=TRUE)))
+    #xlim = c(as.Date("1980-01-01"), as.Date("2019-06-01")))
+    dev.off()
+  }
+}
+rm(i)
+
+#Coordinates of BES sites
+for (i in 1:length(BES_WQ_Sites)){
+  if (!is.na(BES_WQ_Sites[[i]]$USGSgauge[1])){
+    if(!exists('BES_WQ_Sites_locs')){
+      BES_WQ_Sites_locs = GaugeLocs[GaugeLocs$site_no == BES_WQ_Sites[[i]]$USGSgauge[1],]
+    }else{
+      BES_WQ_Sites_locs = rbind(BES_WQ_Sites_locs, GaugeLocs[GaugeLocs$site_no == BES_WQ_Sites[[i]]$USGSgauge[1],])
+    }
+  }
+}
+rm(i)
 
 #Map the station locations and plot them on a map showing BES data and WQP data
+png('TNTP_BES+WQPsites.png', res = 300, units = 'in', width = 6, height = 6)
+plot(ROI)
+plot(WQstations_ROI_N, pch = 16, add = TRUE, col = 'red')
+plot(WQstations_ROI_P, pch = 16, add = TRUE, col = 'blue')
+plot(WQstations_ROI_P[WQstations_ROI_N,], pch = 16, add = TRUE, col = 'purple')
+plot(WQstations_ROI_N[WQstations_ROI_P,], pch = 16, add = TRUE, col = 'purple')
+#BES sites
+plot(BES_WQ_Sites_locs, add = TRUE)
+
+# Add coordinates
+axis(side = 1)
+axis(side = 2)
+box()
+north.arrow(xb = 365000, yb = 4346000, len = 700, col = 'black', lab = 'N')
+legend('topright', title = 'Water Quality Sites', legend = c('T Nitrogen Only', 'T Phosphorus Only', 'Both'), col = c('red', 'blue', 'purple'), pch = 16)
+dev.off()
+
+#Plot the streamflow, N, and P data together for each site
+
+
+#Try plotting the water quality data using R tools----
 
 
 #Weather Stations----
