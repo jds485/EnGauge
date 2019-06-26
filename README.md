@@ -37,8 +37,8 @@ The function whatNWISsites() will return gauge numbers with coordinates for a sp
   Search Criteria for whatNWISsites(): [Table 1 on waterqualitydata website](https://www.waterqualitydata.us/webservices_documentation/)  
    References to "domain service" in Table 1 indicate to look at Table 2 on the same website.  
    [characteristicName options](https://www.waterqualitydata.us/public_srsnames/)  
-    Likely the most common filtering method.  
-    Example: whatNWISsites(statecode="MD", characteristicName="Phosphorus")  
+     Likely the most common filtering method.  
+     Example: whatNWISsites(statecode="MD", characteristicName="Phosphorus")  
    Note: this function must use something like grep when characteristicName is specified. Searching for Phosphorus returned all instances of Phosphorus in the table. If you want a specific type of metric only, specify the parameterCd (parameter code) instead of the characteristicName.  
    This function does not return full site information. For full site information, use readNWISsite() with the vector of gauge numbers that is returned using whatNWISsites().
 
@@ -83,10 +83,10 @@ You can find data quality codes for USGS datasets [here](https://help.waterdata.
 Citation: Smith, J.D., ... (2019). EnGauge. Online Github Repository.
 
 Contact Information:  
-Jared D. Smith: js4yd@virginia.edu  
-Jonathan R. Lamontagne: (Jonathan.Lamontagne@tufts.edu)  
-Caitline A. Barber: (Caitline.Barber@tufts.edu)  
-Julianne D. Quinn: (jdq6nn@virginia.edu)
+Jared D. Smith (js4yd@virginia.edu)  
+Jonathan R. Lamontagne (Jonathan.Lamontagne@tufts.edu)  
+Caitline A. Barber (Caitline.Barber@tufts.edu)  
+Julianne D. Quinn (jdq6nn@virginia.edu)
 
 ## License Information
 You must cite this repository if you use it for your work.
