@@ -614,7 +614,6 @@ uniqueWQNums_P = unique(WQstations_ROI_P$MonitoringLocationIdentifier)
 #Make directories for storing Nitrogen and Phosphorous data
 wd_N = paste0(getwd(), '/Nitrogen')
 wd_P = paste0(getwd(), '/Phosphorus')
-#Fixme: this should check if the directory already exists before making it
 dir.create(path = wd_N, showWarnings = FALSE)
 dir.create(path = wd_P, showWarnings = FALSE)
 
@@ -681,7 +680,7 @@ rm(f, Ind_f_NitroStat, i)
 #  Extract timeseries for each variable for each site----
 #Cycle through all of the unique combinations of ResultSampleFractionText and CharacteristicName 
 # and write separate text files for each variable
-extractWQdata(NitroStationList)
+extractWQdata(NitroStationList, fName = "Nitrogen")
 
 #   Process Total Nitrogen Data----
 #Read in the CharacteristicName for nitrogen measurements only
@@ -749,7 +748,6 @@ north.arrow(xb = 370000, yb = 4347000, len = 700, col = 'black', lab = 'N')
 legend('topright', title = 'Streamflow Stations', legend = c('Zeros in Record', 'Negatives in Record', 'Both', 'Neither'), pch = 16, col = c('red', 'blue', 'purple', 'black'), bty = 'n')
 dev.off()
 
-
 #   Plot TN timeseries----
 for (i in 1:length(TN)){
   png(paste0('TN_Timeseries_', TN[[i]]$MonitoringLocationIdentifier[1],'.png'), res = 300, units = 'in', width = 6, height = 6)
@@ -758,6 +756,30 @@ for (i in 1:length(TN)){
        ylab = paste0(TN[[i]]$ResultSampleFractionText[1], " ", TN[[i]]$CharacteristicName[1], " (", TN[[i]]$ResultMeasure.MeasureUnitCode[1], ")"), 
        main = paste0('Station #', TN[[i]]$MonitoringLocationIdentifier[1]),
        ylim = c(0, 10), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")))
+  dev.off()
+  
+  #With map and timeseries
+  png(paste0('TN_Timeseries_Map_', TN[[i]]$MonitoringLocationIdentifier[1],'.png'), res = 300, units = 'in', width = 10, height = 10)
+  layout(rbind(c(1,2)))
+  
+  plot(y = TN[[i]]$ResultMeasureValue, x = as.Date(TN[[i]]$ActivityStartDate), type = 'o', pch = 16, cex = 0.3,
+       xlab = 'Year', 
+       ylab = paste0(TN[[i]]$ResultSampleFractionText[1], " ", TN[[i]]$CharacteristicName[1], " (", TN[[i]]$ResultMeasure.MeasureUnitCode[1], ")"), 
+       main = paste0('Station #', TN[[i]]$MonitoringLocationIdentifier[1]),
+       ylim = c(0, 10), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")))
+  
+  plot(ROI)
+  #All gauges
+  plot(WQstations_ROI_N, pch = 16, add = TRUE)
+  #Gauge selected for timeseries plot
+  plot(WQstations_ROI_N[WQstations_ROI_N$MonitoringLocationIdentifier == TN[[i]]$MonitoringLocationIdentifier[1],], pch = 16, col = 'red', add = TRUE)
+  # Add coordinates
+  axis(side = 1)
+  axis(side = 2)
+  box()
+  north.arrow(xb = 370000, yb = 4347000, len = 700, col = 'black', lab = 'N')
+  legend('topright', title = 'Nitrogen Stations', legend = c('Selected', 'Other'), pch = 16, col = c('red', 'black'), bty = 'n')
+  title(main = paste0('Station #', TN[[i]]$MonitoringLocationIdentifier[1]))
   dev.off()
 }
 rm(i)
@@ -775,6 +797,7 @@ for (i in 1:length(TN)){
   dev.off()
 }
 rm(i)
+
 # Process Phosphorus Data----
 setwd(wd_P)
 #  Gather the records for each gauge into a list of dataframes----
@@ -797,7 +820,7 @@ rm(f, Ind_f_PhosStat, i)
 
 #  Extract timeseries for each variable for each site----
 #Cycle through all of the unique combinations of ResultSampleFractionText and CharacteristicName and return separate text files for each variable
-extractWQdata(StationList = PhosStationList)
+extractWQdata(StationList = PhosStationList, fName = "Phosphorus")
 
 #   Process Total Phosphorus Data----
 #Read in the CharacteristicName for Phosphorus measurements only
@@ -897,6 +920,54 @@ for (i in 1:length(TP)){
     
     legend('topright', title = 'Detection Limits', legend = c('Upper', 'Lower'), col = c('red', 'blue'), pch = 16)
   }
+  dev.off()
+  
+  #With map and timeseries
+  png(paste0('TP_Timeseries_Map_', TP[[i]]$MonitoringLocationIdentifier[1],'.png'), res = 300, units = 'in', width = 10, height = 10)
+  layout(rbind(c(1,2)))
+  
+  plot(y = TP[[i]]$ResultMeasureValue, x = as.Date(TP[[i]]$ActivityStartDate), type = 'o', pch = 16, cex = 0.3,
+       xlab = 'Year', 
+       ylab = paste0(TP[[i]]$ResultSampleFractionText[1], " ", TP[[i]]$CharacteristicName[1], " (", TP[[i]]$ResultMeasure.MeasureUnitCode[1], ")"), 
+       main = paste0('Station #', TP[[i]]$MonitoringLocationIdentifier[1]),
+       ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")))
+  
+  #Check for and add detection limits
+  dl = unique(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue)
+  #remove NAs
+  dl = dl[!is.na(dl)]
+  if(length(dl) != 0){
+    #Add detection limits
+    #Lower detection limit
+    par(new = TRUE)
+    plot(y = TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Low", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TP[[i]]$ActivityStartDate[grep(pattern = "Low", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
+         xlab = '', 
+         ylab = "",
+         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         col = 'blue')
+    #Upper detection limit
+    par(new = TRUE)
+    plot(y = TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Up", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TP[[i]]$ActivityStartDate[grep(pattern = "Up", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
+         xlab = '', 
+         ylab = "",
+         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         col = 'red')
+    
+    legend('topright', title = 'Detection Limits', legend = c('Upper', 'Lower'), col = c('red', 'blue'), pch = 16)
+  }
+  
+  plot(ROI)
+  #All gauges
+  plot(WQstations_ROI_P, pch = 16, add = TRUE)
+  #Gauge selected for timeseries plot
+  plot(WQstations_ROI_P[WQstations_ROI_P$MonitoringLocationIdentifier == TP[[i]]$MonitoringLocationIdentifier[1],], pch = 16, col = 'red', add = TRUE)
+  # Add coordinates
+  axis(side = 1)
+  axis(side = 2)
+  box()
+  north.arrow(xb = 370000, yb = 4347000, len = 700, col = 'black', lab = 'N')
+  legend('topright', title = 'Phosphorus Stations', legend = c('Selected', 'Other'), pch = 16, col = c('red', 'black'), bty = 'n')
+  title(main = paste0('Station #', TP[[i]]$MonitoringLocationIdentifier[1]))
   dev.off()
 }
 rm(i)
