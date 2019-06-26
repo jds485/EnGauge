@@ -1,5 +1,7 @@
 #Function to extract timeseries for each variable for a water quality site and write to a txt file.
-extractWQdata = function(StationList){
+extractWQdata = function(StationList, 
+                         fName #Name to append to the start of the text file
+                         ){
   for (i in 1:length(StationList)){
     #Find all of the unique CharacteristicName, ResultSampleFractionText combinations
     us = unique(StationList[[i]][,c("CharacteristicName", "ResultSampleFractionText")])
@@ -26,7 +28,7 @@ extractWQdata = function(StationList){
       }
       #Note: subbing ~ in for / because files will not save with / in the name.
       write.table(StationList[[i]][u_Ind,], 
-                  paste0(getwd(), '/Nitrogen_', StationList[[i]]$MonitoringLocationIdentifier[1], "_cn", gsub(pattern = "/", x = us[u,1], replacement = "~", fixed = TRUE), '_rt', us[u,2], ".txt"), 
+                  paste0(getwd(), '/', fName, '_', StationList[[i]]$MonitoringLocationIdentifier[1], "_cn", gsub(pattern = "/", x = us[u,1], replacement = "~", fixed = TRUE), '_rt', us[u,2], ".txt"), 
                   sep = "\t")
     }
   }
