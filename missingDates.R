@@ -25,7 +25,7 @@ FillMissingDates = function(Dataset, #Where the missing date information will be
         DateNAs = seq(StationList[[i]][Inds[j],]$Date+1, StationList[[i]][Inds[j]+1,]$Date-1, 1)
         #Assign NumNAs new rows to this dataframe with NA streamflow
         for (k in 1:NumNAs){
-          r = cbind(StationList[[i]][1,1:2], DateNAs[k], NA, NA)
+          r = cbind(StationList[[i]][1,1:2], DateNAs[k], NA, NA, NA, NA)
           colnames(r) = colnames(StationList[[i]]) 
           StationList[[i]] = rbind(StationList[[i]], r)
         }
