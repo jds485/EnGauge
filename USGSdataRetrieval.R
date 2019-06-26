@@ -73,6 +73,10 @@ library(rgdal)
 library(GISTools)
 library(raster)
 library(rlist)
+library(hydroTSM)
+#Load in a modified fdc.default function that allows for better y axis labeling
+setwd(dir_EnGauge)
+source('fdcDefaultModification.R')
 #Color functions for plots (R script from Jared Smith's Geothermal_ESDA Github Repo)
 setwd(dir_ColFuns)
 source('ColorFunctions.R')
@@ -410,10 +414,17 @@ for (i in 1:length(StreamStationList)){
   legend('topleft', legend = ErrCodes[codes], col = colCodes[codes], pch = 16)
   dev.off()
   
-  #Fixme: get prettier streamflow exceedance graphs from a package
+  #Make y axis limits for flow duration curve
+  at.y <- outer(1:9, 10^(-3:5))
+  lab.y <- ifelse(log10(at.y) %% 1 == 0, sapply(log10(at.y),function(k)
+    as.expression(bquote(10^ .(k)))), NA)
+  
   png(paste0('StreamflowExceedance_', StreamStationList[[i]]$site_no[1],'.png'), res = 300, units = 'in', width = 6, height = 6)
-  qqnorm(StreamStationList[[i]]$X_00060_00003, pch = 1, 
-         ylab = 'Daily Mean Streamflow (cfs)', main = paste0('Non-Exceedance Probability for Daily Mean Streamflow \n Station #', StreamStationList[[i]]$site_no[1]))
+  fdc(x = StreamStationList[[i]]$X_00060_00003, pch = NA, ylab = 'Daily Mean Streamflow (cfs)', 
+      main = paste0('Exceedance Probability for Daily Mean Streamflow \n Station #', StreamStationList[[i]]$site_no[1]),
+      xlim = c(0,1), lQ.thr = NA, hQ.thr = NA, thr.shw = FALSE, yat = -1000)
+  axis(side=2, at=at.y, labels=lab.y, cex.axis=1.2, las=1, tck = -0.01, hadj = 0.7, padj = 0.3)
+  axis(side=2, at=10^seq(-3,5,1), labels=FALSE, tck = -0.025)
   dev.off()
   
   #Streamflow exceedance, timeseries, and map
@@ -421,8 +432,11 @@ for (i in 1:length(StreamStationList)){
   layout(rbind(c(1,2), c(3, 2)))
   
   #Exceedance
-  qqnorm(StreamStationList[[i]]$X_00060_00003, pch = 1, 
-         ylab = 'Daily Mean Streamflow (cfs)', main = paste0('Non-Exceedance Probability for Daily Mean Streamflow \n Station #', StreamStationList[[i]]$site_no[1]))
+  fdc(x = StreamStationList[[i]]$X_00060_00003, pch = NA, ylab = 'Daily Mean Streamflow (cfs)', 
+      main = paste0('Exceedance Probability for Daily Mean Streamflow \n Station #', StreamStationList[[i]]$site_no[1]),
+      xlim = c(0,1), lQ.thr = NA, hQ.thr = NA, thr.shw = FALSE, yat = -1000)
+  axis(side=2, at=at.y, labels=lab.y, cex.axis=1.2, las=1, tck = -0.01, hadj = 0.7, padj = 0.3)
+  axis(side=2, at=10^seq(-3,5,1), labels=FALSE, tck = -0.025)
   
   #Map of sites with the plotted streamflow exceedance site highlighted in red
   plot(ROI)
