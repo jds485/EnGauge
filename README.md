@@ -6,7 +6,7 @@ The repository depends on several packages and functions developed by the USGS t
 It is likely that others have made similar functions to process USGS and other environmental gauge data. If you have scripts to process these datasets, please write to the authors of this repository and ask to contribute or link code repositories!
 
 **Full README In Development**
-======
+---
 ### USGS R libraries include:
 1. dataRetrieval - main package for gauge data retrieval functions from government servers  
   Recommended resource - Package Readme: dataRetrieval.html (located somewhere on your computer after installing the package)  
@@ -72,6 +72,7 @@ You can find data quality codes for USGS datasets [here](https://help.waterdata.
   [codes for streamflow 2](https://help.waterdata.usgs.gov/codes-and-parameters/instantaneous-and-daily-value-status-codes)  
   Yes, there are 2 separate reference schemes for streamflow data.
 
+---
 ### Function files:
 1. addZerosToGaugeNames.R - for adding leading zeros to NWIS streamflow gauge numbers.
 2. extractWQdata.R - for extracting separate timeseries for each variable downloaded for sites in the water quality portal database.
@@ -79,6 +80,7 @@ You can find data quality codes for USGS datasets [here](https://help.waterdata.
 4. processDEM.R - for mosaicking DEM files into one DEM file.
 5. ...
 
+---
 ## Citation and Contact Information
 Citation: Smith, J.D., ... (2019). EnGauge. Online Github Repository.
 
@@ -88,6 +90,7 @@ Jonathan R. Lamontagne (Jonathan.Lamontagne@tufts.edu)
 Caitline A. Barber (Caitline.Barber@tufts.edu)  
 Julianne D. Quinn (jdq6nn@virginia.edu)
 
+---
 ## License Information
 You must cite this repository if you use it for your work.
 ...
