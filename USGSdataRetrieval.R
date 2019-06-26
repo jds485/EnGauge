@@ -1,71 +1,4 @@
 #Script to read USGS streamflow and water quality data from gauges
-# Recommended resource - Package Readme: 
-#  (located somewhere on your computer after installing the package) dataRetrieval.html
-# Function help at: https://github.com/USGS-R/dataRetrieval
-#             Blog: https://owi.usgs.gov/R/training-curriculum/usgs-packages/
-#        Slideshow: https://owi.usgs.gov/R/dataRetrieval.html#1
-
-#Streamflow Gauge Retrieval Method 1:
-#The function whatNWISsites() will return gauge numbers
-# with coordinates for a specified state (county, or various other criteria)
-# Search Criteria for whatNWISsites(): Table 1 of https://www.waterqualitydata.us/webservices_documentation/
-#                                       References to "domain service" indicate to look at Table 2.
-#                  characteristicName: https://www.waterqualitydata.us/public_srsnames/
-#                   Likely the most common filtering method. 
-#                  Example: whatNWISsites(statecode="MD", characteristicName="Phosphorus")
-#  Note: their function must use something like grep when characteristicName is specified. 
-#        Searching for Nitrogen returned all instances of Nitrogen on that list.
-#         If you want a specific code only, specify the parameterCd (parameter code)
-#         instead of the characteristic name
-# That function will not return full site information. 
-# For full site information, use readNWISsite() with a vector of gauge numbers returned from whatNWISsites().
-# NOTE: This method seems more reliable, and returned for my ROI more gauges than Method 2
-
-#Streamflow Gauge Retrieval Method 2:
-#You can find USGS gauges of any type in your region of interest on this website:
-# https://cida.usgs.gov/enddat/dataDiscovery.jsp
-# Record the coordinates of the bounding box for your region of interest! They could be important for the next step. 
-# Select the data you want and copy the resulting table of values into a txt file
-#  txt is important to retain leading zeros on gauge numbers
-# If you inhereted a csv or txt file without leading zeros, a script below can add them to NWIS gauges.
-#  Other gauge datasets seem to not require leading zeros.
-
-#Coordinates of gauges are not reported in that download :( 
-# The USGS function readNWISsite() can look up the coordinates and all site info, given the gauge numbers.
-# You can also find coordinates for your gauges on this site if you provide a bounding box of coordinates:
-# https://waterdata.usgs.gov/nwis/inventory?search_criteria=lat_long_bounding_box&submitted_form=introduction
-
-#Comparing altitude of gauge vs. DEM:
-# Obtained coordinates may include altitude of the gauge, which can be important vs. DEM elevation 
-#  (e.g. if there's a cliff at the gauge vs. DEM mean elevation of the pixel)
-#  A plot of DEM vs. Gauge reported elevation is made below to visually detect discrepancies
-#   (e.g. USGS data reported in m instead of in ft)
-#  Ensure that the units and the vertical datum are the same for your DEM and all gauge altitudes
-#   DEMs in the US tend to be NAVD88 in m, whereas gauges tend to be referenced to NGVD29 in ft
-#   Differences after unit conversion tend to be minor in the US, 
-#    except in the West: https://www.ngs.noaa.gov/TOOLS/Vertcon/vertcon.html
-#  Altitude datum codes: https://help.waterdata.usgs.gov/code/alt_datum_cd_query?fmt=html
-#   collection method codes: https://help.waterdata.usgs.gov/code/alt_meth_cd_query?fmt=html
-
-#Water Quality Retrieval Method 1:
-# You can use the whatWQPsites(), using the same query criteria as the whatNWISsites() function.
-# The whatWQPsites() function returns all site information, same as the waterqualitydata website
-# described in Method 2.
-
-#Water Quality Retrieval Method 2:
-# You can find water quality gauges on this website:
-# https://www.waterqualitydata.us/portal/
-# Download "site data only" to receive a csv file with gauge/site information with coordinates.
-# The MonitoringLocationIdentifier field is used to download data for each gauge/site in the script below.
-
-#Data Quality Codes:
-# You can find data quality codes for USGS datasets here:
-# https://help.waterdata.usgs.gov/codes-and-parameters/codes#discharge_cd
-# You should always look at these quality codes, and process your data accordingly.
-# This script colors streamflow time series by error code, but doesn't process further than that.
-# codes for streamflow: https://help.waterdata.usgs.gov/codes-and-parameters/daily-value-qualification-code-dv_rmk_cd
-#                  AND: https://help.waterdata.usgs.gov/codes-and-parameters/instantaneous-and-daily-value-status-codes
-#                  Yes, there are 2 separate reference schemes for streamflow data.
 
 #Author Credits:
 # Portions of the function for the streamflow download were provided by:
@@ -75,11 +8,8 @@
 
 #Fixme: make each method a separate function or script
 #Fixme: add methods for handling detection limits in time series
-#Fixme: Also has a component for downloading weather station data 
+#Fixme: Add component for downloading weather station data 
 #       stored on the USGS database (which includes NOAA ACIS data)
-#Fixme: check for duplicate observations, as recommended by several USGS statisticians
-#  First check for number of unique records equl to the total length of records. 
-#  Then if they're different use removeDuplicates() 
 
 #Set directory names----
 #Region of interest shapefile
@@ -132,6 +62,8 @@ pCRS = '+init=epsg:26918'
 #Load libraries and functions----
 #USGS function library - note that a more recent version is available through Github
 library(dataRetrieval)
+#USGS EGRET library
+library(EGRET)
 #R libraries
 library(stringi)
 library(stringr)
@@ -150,9 +82,15 @@ source('missingDates.R')
 source('addZerosToGaugeNames.R')
 source('processDEM.R')
 source('extractWQdata.R')
+source('checkDuplicates.R')
+source('checkZerosNegs.R')
 
 #Streamflow----
 setwd(dir_sfgauges)
+#Create directory to save files
+wd_sf = paste0(getwd(), '/Streamflow')
+dir.create(path = wd_sf, showWarnings = FALSE)
+
 # Method 1: Get gauges using whatNWISsites()----
 AllStations_fn = whatNWISsites(statecode = "MD", parameterCd = '00060')
 AllStations_fn = readNWISsite(AllStations_fn$site_no)
@@ -221,13 +159,14 @@ GaugeLocs$ElevDEM = extract(x = DEM, y = GaugeLocs)
 GaugeLocs_fn$ElevDEM = extract(x = DEM, y = GaugeLocs_fn)
 
 #  Compare the DEM elevation to the listed elevation----
-png('CompareGaugeElev.png', res = 300, units = 'in', width = 5, height = 5)
+setwd(wd_sf)
+png('CompareStreamflowGaugeElevToDEM.png', res = 300, units = 'in', width = 5, height = 5)
 plot(GaugeLocs$alt_va[which((is.na(GaugeLocs_fn$alt_va) == FALSE) & (is.na(GaugeLocs_fn$ElevDEM) == FALSE))], GaugeLocs$ElevDEM[which((is.na(GaugeLocs_fn$alt_va) == FALSE) & (is.na(GaugeLocs_fn$ElevDEM) == FALSE))]/.3048,
      xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations')
 lines(c(-100,1100), c(-100,1100), col = 'red')
 dev.off()
 
-png('CompareGaugeElev_fn.png', res = 300, units = 'in', width = 5, height = 5)
+png('CompareStreamflowGaugeElevToDEM_fn.png', res = 300, units = 'in', width = 5, height = 5)
 plot(GaugeLocs_fn$alt_va[which((is.na(GaugeLocs_fn$alt_va) == FALSE) & (is.na(GaugeLocs_fn$ElevDEM) == FALSE))], GaugeLocs_fn$ElevDEM[which((is.na(GaugeLocs_fn$alt_va) == FALSE)  & (is.na(GaugeLocs_fn$ElevDEM) == FALSE))]/.3048,
      xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations')
 lines(c(-100,1100), c(-100,1100), col = 'red')
@@ -280,6 +219,7 @@ NWIS_ROI = NWISstations[ROI,]
 NWIS_ROI_fn = GaugeLocs_fn[ROI,]
 
 # Plot locations of gauges----
+setwd(wd_sf)
 png('StremflowGauges.png', res = 300, units = 'in', width = 6, height = 6)
 # All NWIS streamflow gauges in bounding box
 plot(NWISstations, pch = 16, col = 'white')
@@ -315,20 +255,21 @@ legend('topleft', title = 'Streamflow Stations', legend = c('In ROI', 'Not in RO
 dev.off()
 
 # Plot reported vs. DEM elevation of gauges within the ROI----
-png('CompareGaugeElev.png', res = 300, units = 'in', width = 5, height = 5)
+setwd(wd_sf)
+png('CompareGaugeElevToDEM_ROI.png', res = 300, units = 'in', width = 5, height = 5)
 plot(NWIS_ROI$alt_va, NWIS_ROI$ElevDEM/.3048,
      xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations')
 lines(c(-100,1100), c(-100,1100), col = 'red')
 dev.off()
 
-png('CompareGaugeElev_fn.png', res = 300, units = 'in', width = 5, height = 5)
+png('CompareGaugeElevToDEM_ROI_fn.png', res = 300, units = 'in', width = 5, height = 5)
 plot(NWIS_ROI_fn$alt_va, NWIS_ROI_fn$ElevDEM/.3048,
      xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations')
 lines(c(-100,1100), c(-100,1100), col = 'red')
 dev.off()
 
 #One of these gauge elevations is a lot lower than DEM. Likely that the gauge was reported in m in USGS database
-#identify(NWIS_ROI$alt_va, NWIS_ROI$ElevDEM/.3048)
+#identify(NWIS_ROI_fn$alt_va, NWIS_ROI_fn$ElevDEM/.3048)
 
 # Statistics to download for each streamflow gauge, if available----
 # All codes defined here: https://help.waterdata.usgs.gov/code/stat_cd_nm_query?stat_nm_cd=%25&fmt=html
@@ -365,6 +306,7 @@ Pars = c(Par.cfsFlow, Par.Nflow, Par.Long, Par.Lat)
 # Download the within-ROI stream gauge data in parallel----
 #  Use only the unique gauge numbers in the dataset 
 #  (repeats occur when multiple variables are available for a gauge)
+setwd(wd_sf)
 uniqueNums = unique(NWIS_ROI_fn$site_no)
 cl = makeCluster(detectCores() - 1)
 registerDoParallel(cl)
@@ -409,6 +351,43 @@ for (i in 1:length(StreamStationList)){
 }
 rm(i)
 
+#  Check for duplicate observations----
+# This step is recommended in USGS publications.
+StreamStationList = checkDuplicatesAndRemove(StreamStationList)
+
+#  Check for zeros and negative values in the records----
+StreamStationList = checkZerosNegs(StreamStationList)
+
+#See if any stations have negative values and add to NWIS spatial dataset
+NWIS_ROI_fn = addNegsToSpatialDataset(StationList = StreamStationList, SpatialDataset = NWIS_ROI_fn)
+
+#See if any stations have zero values and add to NWIS spatial dataset
+NWIS_ROI_fn = addZerosToSpatialDataset(StationList = StreamStationList, SpatialDataset = NWIS_ROI_fn)
+
+#   Plot a map of the stations with zero and negative records----
+png(paste0('Streamflow_ZerosNegsMap.png'), res = 300, units = 'in', width = 6, height = 6)
+plot(ROI)
+#All gauges
+plot(NWIS_ROI_fn, pch = 16, add = TRUE)
+#Gauges with zeros
+plot(NWIS_ROI_fn[!is.na(NWIS_ROI_fn$Zero),], pch = 16, col = 'red', add = TRUE)
+#Gauges with negative values
+plot(NWIS_ROI_fn[!is.na(NWIS_ROI_fn$Neg),], pch = 16, col = 'blue', add = TRUE)
+#Gauges with both
+plot(NWIS_ROI_fn[which(!is.na(NWIS_ROI_fn$Neg) & !is.na(NWIS_ROI_fn$Zero)),], pch = 16, col = 'purple', add = TRUE)
+# Add coordinates
+axis(side = 1)
+axis(side = 2)
+box()
+north.arrow(xb = 370000, yb = 4347000, len = 700, col = 'black', lab = 'N')
+legend('topright', title = 'Streamflow Stations', legend = c('Zeros in Record', 'Negatives in Record', 'Both', 'Neither'), pch = 16, col = c('red', 'blue', 'purple', 'black'), bty = 'n')
+dev.off()
+
+# Identify missing dates and fill them into the timeseries----
+Fills = FillMissingDates(Dataset = NWIS_ROI_fn, StationList = StreamStationList, Var = 'X_00060_00003')
+NWIS_ROI_fn = Fills$Dataset
+StreamStationList = Fills$StationList
+rm(Fills)
 # Plot the time series for each gauge, and the eCDF, colored by error code----
 for (i in 1:length(StreamStationList)){
   #Assign colors to the error codes
@@ -436,14 +415,45 @@ for (i in 1:length(StreamStationList)){
   qqnorm(StreamStationList[[i]]$X_00060_00003, pch = 1, 
          ylab = 'Daily Mean Streamflow (cfs)', main = paste0('Non-Exceedance Probability for Daily Mean Streamflow \n Station #', StreamStationList[[i]]$site_no[1]))
   dev.off()
+  
+  #Streamflow exceedance, timeseries, and map
+  png(paste0('StreamflowExceedanceTimeseries_Map_', StreamStationList[[i]]$site_no[1],'.png'), res = 300, units = 'in', width = 10, height = 10)
+  layout(rbind(c(1,2), c(3, 2)))
+  
+  #Exceedance
+  qqnorm(StreamStationList[[i]]$X_00060_00003, pch = 1, 
+         ylab = 'Daily Mean Streamflow (cfs)', main = paste0('Non-Exceedance Probability for Daily Mean Streamflow \n Station #', StreamStationList[[i]]$site_no[1]))
+  
+  #Map of sites with the plotted streamflow exceedance site highlighted in red
+  plot(ROI)
+  #All gauges
+  plot(NWIS_ROI_fn, pch = 16, add = TRUE)
+  #Gauge selected for exceedance plot
+  plot(NWIS_ROI_fn[NWIS_ROI_fn$site_no == StreamStationList[[i]]$site_no[1],], pch = 16, col = 'red', add = TRUE)
+  # Add coordinates
+  axis(side = 1)
+  axis(side = 2)
+  box()
+  north.arrow(xb = 370000, yb = 4347000, len = 700, col = 'black', lab = 'N')
+  legend('topright', title = 'Streamflow Stations', legend = c('Selected', 'Other'), pch = 16, col = c('red', 'black'), bty = 'n')
+  title(main = NWIS_ROI_fn$station_nm[NWIS_ROI_fn$site_no == StreamStationList[[i]]$site_no[1]])
+  
+  #Timeseries
+  plot(x = StreamStationList[[i]]$Date, y = StreamStationList[[i]]$X_00060_00003, type = 'o', pch = 16, cex = 0.3,
+       xlab = 'Year', ylab = 'Daily Mean Streamflow (cfs)', main = paste0('Station #', StreamStationList[[i]]$site_no[1]),
+       ylim = c(min(StreamStationList[[i]]$X_00060_00003, na.rm = TRUE), max(StreamStationList[[i]]$X_00060_00003, na.rm = TRUE)), xlim = c(as.Date("1950-01-01"), as.Date("2020-01-01")))
+  #Add colors
+  for (c in 1:length(colCodes)){
+    par(new = TRUE)
+    plot(x = StreamStationList[[i]]$Date[StreamStationList[[i]]$X_00060_00003_cd == ErrCodes[c]], y = StreamStationList[[i]]$X_00060_00003[StreamStationList[[i]]$X_00060_00003_cd == ErrCodes[c]], pch = 16, cex = 0.3,
+         col = colCodes[c], axes = FALSE, xlab = '', ylab = '',
+         ylim = c(min(StreamStationList[[i]]$X_00060_00003, na.rm = TRUE), max(StreamStationList[[i]]$X_00060_00003, na.rm = TRUE)), xlim = c(as.Date("1950-01-01"), as.Date("2020-01-01")))
+  }
+  legend('topleft', legend = ErrCodes[codes], col = colCodes[codes], pch = 16)
+  
+  dev.off()
 }
 rm(i, c, colCodes, codes)
-
-# Identify missing dates and fill them into the timeseries----
-Fills = FillMissingDates(Dataset = NWIS_ROI_fn, StationList = StreamStationList, Var = 'X_00060_00003')
-NWIS_ROI_fn = Fills$Dataset
-StreamStationList = Fills$StationList
-rm(Fills)
 
 #Fixme: Missing data fill in with numerical value estimates using prediction in ungauged basins methods for large gaps
 #Fixme: check for high and low flow outliers in each record, and compare spatially to other gauges on those dates
@@ -479,7 +489,7 @@ dev.off()
 # Write streamflow datasets to files----
 setwd(dir_DEM_out)
 writeRaster(x = DEM, filename = f_DEM_mosiac, format = "GTiff")
-setwd(dir_sfgauges)
+setwd(wd_sf)
 writeOGR(obj = NWIS_ROI_fn, dsn = getwd(), driver = 'ESRI Shapefile', layer = f_NWIS_ROI_out)
 writeOGR(obj = NWISstations, dsn = getwd(), driver = 'ESRI Shapefile', layer = f_NWIS_bb_out)
 #Stream gauges had missing dates added to the files. Write new files.
@@ -605,8 +615,8 @@ uniqueWQNums_P = unique(WQstations_ROI_P$MonitoringLocationIdentifier)
 wd_N = paste0(getwd(), '/Nitrogen')
 wd_P = paste0(getwd(), '/Phosphorus')
 #Fixme: this should check if the directory already exists before making it
-dir.create(path = wd_N)
-dir.create(path = wd_P)
+dir.create(path = wd_N, showWarnings = FALSE)
+dir.create(path = wd_P, showWarnings = FALSE)
 
 # NOTE: These downloads occasionally fail when run in parallel and return internal server errors.
 # If that happens to you, try running in serial and see if you still get the errors (i.e. change dopar to do).
@@ -650,7 +660,7 @@ if (any(!is.null(unlist(p)))){
 
 # Process Nitrogen Data----
 setwd(wd_N)
-#Gather the records for each gauge into a list of dataframes
+#  Gather the records for each gauge into a list of dataframes----
 NitroStationList = list()
 #Find all of the Nitrogen station file indices in directory
 Ind_f_NitroStat = list.files()[grep(pattern = 'Nitrogen_', x = list.files(), ignore.case = FALSE, fixed = TRUE)]
@@ -668,10 +678,12 @@ for (i in 1:length(Ind_f_NitroStat)){
 }
 rm(f, Ind_f_NitroStat, i)
 
+#  Extract timeseries for each variable for each site----
 #Cycle through all of the unique combinations of ResultSampleFractionText and CharacteristicName 
 # and write separate text files for each variable
 extractWQdata(NitroStationList)
 
+#   Process Total Nitrogen Data----
 #Read in the CharacteristicName for nitrogen measurements only
 cn_Nitro = grep(x = list.files(), pattern = '_cnNitrogen', ignore.case = TRUE)
 # For now, taking only ResultSampleFractionText = total nitrogen
@@ -707,7 +719,38 @@ for (i in 1:length(f_TN)){
 }
 rm(i, f, dl, us)
 
-#  Plot TN timeseries----
+#    Check for duplicate observations----
+TN = checkDuplicatesAndRemove(TN)
+#    Check for zeros and negative values in the records----
+TN = checkZerosNegs(TN, Var = 'ResultMeasureValue')
+
+#See if any stations have negative values and add to WQstations_ROI_N spatial dataset
+WQstations_ROI_N = addNegsToSpatialDataset(StationList = TN, SpatialDataset = WQstations_ROI_N)
+
+#See if any stations have zero values and add to spatial dataset
+WQstations_ROI_N = addZerosToSpatialDataset(StationList = TN, SpatialDataset = WQstations_ROI_N)
+
+#     Plot a map of the stations with zero and negative records----
+png(paste0('TN_WQP_ZerosNegsMap.png'), res = 300, units = 'in', width = 6, height = 6)
+plot(ROI)
+#All gauges
+plot(WQstations_ROI_N, pch = 16, add = TRUE)
+#Gauges with zeros
+plot(WQstations_ROI_N[!is.na(WQstations_ROI_N$Zero),], pch = 16, col = 'red', add = TRUE)
+#Gauges with negative values
+plot(WQstations_ROI_N[!is.na(WQstations_ROI_N$Neg),], pch = 16, col = 'blue', add = TRUE)
+#Gauges with both
+plot(WQstations_ROI_N[which(!is.na(WQstations_ROI_N$Neg) & !is.na(WQstations_ROI_N$Zero)),], pch = 16, col = 'purple', add = TRUE)
+# Add coordinates
+axis(side = 1)
+axis(side = 2)
+box()
+north.arrow(xb = 370000, yb = 4347000, len = 700, col = 'black', lab = 'N')
+legend('topright', title = 'Streamflow Stations', legend = c('Zeros in Record', 'Negatives in Record', 'Both', 'Neither'), pch = 16, col = c('red', 'blue', 'purple', 'black'), bty = 'n')
+dev.off()
+
+
+#   Plot TN timeseries----
 for (i in 1:length(TN)){
   png(paste0('TN_Timeseries_', TN[[i]]$MonitoringLocationIdentifier[1],'.png'), res = 300, units = 'in', width = 6, height = 6)
   plot(y = TN[[i]]$ResultMeasureValue, x = as.Date(TN[[i]]$ActivityStartDate), type = 'o', pch = 16, cex = 0.3,
@@ -724,7 +767,7 @@ rm(i)
 
 #Fixme: Search for flow-normalized outliers
 
-#  Plot histograms of data with detection limits----
+#   Plot histograms of data with detection limits----
 for (i in 1:length(TN)){
   png(paste0('TN_hist_', TN[[i]]$MonitoringLocationIdentifier, '.png'), res = 300, units = 'in', width = 5, height = 5)
   hist(c(log10(TN[[i]]$ResultMeasureValue), log10(TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue)),
@@ -734,7 +777,7 @@ for (i in 1:length(TN)){
 rm(i)
 # Process Phosphorus Data----
 setwd(wd_P)
-#Gather the records for each gauge into a list of dataframes
+#  Gather the records for each gauge into a list of dataframes----
 PhosStationList = list()
 #Find all of the phosphorus station file indices in directory
 Ind_f_PhosStat = list.files()[grep(pattern = 'Phosphorus_', x = list.files(), ignore.case = FALSE, fixed = TRUE)]
@@ -752,9 +795,11 @@ for (i in 1:length(Ind_f_PhosStat)){
 }
 rm(f, Ind_f_PhosStat, i)
 
+#  Extract timeseries for each variable for each site----
 #Cycle through all of the unique combinations of ResultSampleFractionText and CharacteristicName and return separate text files for each variable
 extractWQdata(StationList = PhosStationList)
 
+#   Process Total Phosphorus Data----
 #Read in the CharacteristicName for Phosphorus measurements only
 cn_Phos = grep(x = list.files(), pattern = '_cnPhosphorus', ignore.case = TRUE)
 # For now, taking only ResultSampleFractionText = total Phosphorous
@@ -790,7 +835,37 @@ for (i in 1:length(f_TP)){
 }
 rm(i, f, dl, us)
 
-#  Plot TP timeseries----
+#    Check for duplicate observations----
+TP = checkDuplicatesAndRemove(TP)
+#    Check for zeros and negative values in the records----
+TP = checkZerosNegs(TP, Var = 'ResultMeasureValue')
+
+#See if any stations have negative values and add to WQstations_ROI_P spatial dataset
+WQstations_ROI_P = addNegsToSpatialDataset(StationList = TP, SpatialDataset = WQstations_ROI_P)
+
+#See if any stations have zero values and add to spatial dataset
+WQstations_ROI_P = addZerosToSpatialDataset(StationList = TP, SpatialDataset = WQstations_ROI_P)
+
+#     Plot a map of the stations with zero and negative records----
+png(paste0('TP_WQP_ZerosNegsMap.png'), res = 300, units = 'in', width = 6, height = 6)
+plot(ROI)
+#All gauges
+plot(WQstations_ROI_P, pch = 16, add = TRUE)
+#Gauges with zeros
+plot(WQstations_ROI_P[!is.na(WQstations_ROI_P$Zero),], pch = 16, col = 'red', add = TRUE)
+#Gauges with negative values
+plot(WQstations_ROI_P[!is.na(WQstations_ROI_P$Neg),], pch = 16, col = 'blue', add = TRUE)
+#Gauges with both
+plot(WQstations_ROI_P[which(!is.na(WQstations_ROI_P$Neg) & !is.na(WQstations_ROI_P$Zero)),], pch = 16, col = 'purple', add = TRUE)
+# Add coordinates
+axis(side = 1)
+axis(side = 2)
+box()
+north.arrow(xb = 370000, yb = 4347000, len = 700, col = 'black', lab = 'N')
+legend('topright', title = 'Streamflow Stations', legend = c('Zeros in Record', 'Negatives in Record', 'Both', 'Neither'), pch = 16, col = c('red', 'blue', 'purple', 'black'), bty = 'n')
+dev.off()
+
+#   Plot TP timeseries----
 for (i in 1:length(TP)){
   png(paste0('TP_Timeseries_', TP[[i]]$MonitoringLocationIdentifier[1],'.png'), res = 300, units = 'in', width = 6, height = 6)
   plot(y = TP[[i]]$ResultMeasureValue, x = as.Date(TP[[i]]$ActivityStartDate), type = 'o', pch = 16, cex = 0.3,
@@ -831,7 +906,7 @@ rm(i)
 
 #Fixme: Search for flow-normalized outliers
 
-#  Plot histograms of data with detection limits----
+#   Plot histograms of data with detection limits----
 for (i in 1:length(TP)){
   png(paste0('TP_hist_', TP[[i]]$MonitoringLocationIdentifier, '.png'), res = 300, units = 'in', width = 5, height = 5)
   hist(c(log10(TP[[i]]$ResultMeasureValue), log10(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue)),
