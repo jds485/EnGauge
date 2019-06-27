@@ -18,6 +18,11 @@ It is likely that others have made similar functions to process USGS and other e
   Resources ...
 
 ---
+### Other R Sources and Code Influences
+[hydroTSM vignette](https://cran.r-project.org/web/packages/hydroTSM/vignettes/hydroTSM_Vignette-knitr.pdf)
+[hydroTSM boxplots and flow duration curves](https://rstudio-pubs-static.s3.amazonaws.com/30850_e9f98501a0c3420897eb59de6abae6ab.html)
+
+---
 
 ### Gauge datasets include:
 1. USGS streamflow from the NWIS portal

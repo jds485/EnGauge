@@ -68,11 +68,17 @@ library(EGRET)
 library(stringi)
 library(stringr)
 library(foreach)
+library(parallel)
 library(doParallel)
+library(sp)
 library(rgdal)
+library(maptools)
 library(GISTools)
 library(raster)
 library(rlist)
+library(lattice)
+library(zoo)
+library(lubridate)
 library(hydroTSM)
 #Load in a modified fdc.default function that allows for better y axis labeling
 setwd(dir_EnGauge)
@@ -275,6 +281,20 @@ dev.off()
 #One of these gauge elevations is a lot lower than DEM. Likely that the gauge was reported in m in USGS database
 #identify(NWIS_ROI_fn$alt_va, NWIS_ROI_fn$ElevDEM/.3048)
 
+# Hypsometric plot for DEM in the ROI----
+#Clip DEM to the ROI and make a spatial grid dataframe
+DEM_ROI = as(mask(DEM, ROI), 'SpatialGridDataFrame')
+#Plot curve
+png('HypsometricCurve.png', res = 300, units = 'in', width = 5, height = 5)
+par(mar =c(4,4,1,1))
+hypsometric(DEM_ROI, col = 'black', main = 'Gwynns Falls Hypsometric Curve')
+dev.off()
+
+#Fixme: add gauges to this plot - requires modifying the function.
+# Can shade in the areas above each gauge or select outlet points as horizontal steps
+# Show with a map of where the elevation thresholds are located in the DEM
+#  This would require plotting the line as points that are colored by their elevation values.
+
 # Statistics to download for each streamflow gauge, if available----
 # All codes defined here: https://help.waterdata.usgs.gov/code/stat_cd_nm_query?stat_nm_cd=%25&fmt=html
 #Fixme: lookup codes from the website
@@ -392,7 +412,9 @@ Fills = FillMissingDates(Dataset = NWIS_ROI_fn, StationList = StreamStationList,
 NWIS_ROI_fn = Fills$Dataset
 StreamStationList = Fills$StationList
 rm(Fills)
+
 # Plot the time series for each gauge, and the eCDF, colored by error code----
+#Fixme: add confidence intervals for flow duration curves (fdcu package)
 for (i in 1:length(StreamStationList)){
   #Assign colors to the error codes
   colCodes = rainbow(length(ErrCodes))
@@ -464,9 +486,69 @@ for (i in 1:length(StreamStationList)){
          ylim = c(min(StreamStationList[[i]]$X_00060_00003, na.rm = TRUE), max(StreamStationList[[i]]$X_00060_00003, na.rm = TRUE)), xlim = c(as.Date("1950-01-01"), as.Date("2020-01-01")))
   }
   legend('topleft', legend = ErrCodes[codes], col = colCodes[codes], pch = 16)
-  
   dev.off()
+  
+  #hydroTSM plots
+  #daily timeseries
+  dts = zoo(StreamStationList[[i]]$X_00060_00003, order.by = StreamStationList[[i]]$Date)
+  
+  #monthly timeseries for mean daily flows in a month
+  mts = daily2monthly(dts, FUN = mean, na.rm = TRUE)
+  #plot(mts)
+  #monthly total flows boxplot
+  #boxplot(coredata(mts) ~ factor(format(time(mts), "%b"), levels=unique(format(time(mts), "%b")), ordered=TRUE))
+  # Creating a matrix with monthly values per year in each column 
+  #Buffer the months before and after data are available in mid-year months with NAs because a full year is needed.
+  if(which(month.abb == format(time(mts)[1], '%b')) != 1){
+    #Generate vector of NAs for the length needed to fill in
+    NAvec = rep(NA, (which(month.abb == format(time(mts)[1], '%b')) - 1))
+    mts_plt = c(NAvec, coredata(mts))
+    mts_plt = zoo(x = mts_plt, order.by = c(time(mts)[1] %m-% months(seq(length(NAvec),1,-1)), time(mts)))
+  }else{
+    mts_plt = mts
+  }
+  if(which(month.abb == format(time(mts_plt)[length(mts_plt)], '%b')) != 12){
+    #Generate vector of NAs for the length needed to fill in
+    NAvec = rep(NA, (12 - which(month.abb == format(time(mts_plt)[length(mts_plt)], '%b'))))
+    mts_plt2 = c(coredata(mts_plt), NAvec)
+    mts_plt2 = zoo(x = mts_plt2, order.by = c(time(mts_plt), time(mts_plt)[length(mts_plt)] %m+% months(seq(1,length(NAvec),1))))
+  }else{
+    mts_plt2 = mts_plt
+  }
+  M <- matrix(mts_plt2, ncol=12, byrow=TRUE)
+  colnames(M) <- month.abb[c(which(month.abb == format(time(mts_plt2)[1], '%b')):12, 1:which(month.abb == format(time(mts_plt2)[12], '%b')))[1:12]]
+  rownames(M) <- unique(format(time(mts_plt2), "%Y"))
+  
+  #Rearrange to have January on bottom, December on top
+  #Fixme: make call for water year
+  M = M[,order(c(which(month.abb == format(time(mts_plt2)[1], '%b')):12, 1:which(month.abb == format(time(mts_plt2)[12], '%b')))[1:12])]
+  # Plotting the monthly values as matrixplot 
+  png(paste0('StreamflowMonthly_', StreamStationList[[i]]$site_no[1],'.png'), res = 300, units = 'in', width = 6, height = 3)
+  print(matrixplot(M, ColorRamp="Precipitation", main="Mean Monthly Streamflow"))
+  dev.off()
+
+  #annual timeseries
+  ats = daily2annual(dts, FUN = mean, na.rm = TRUE)
+  #plot(ats)
+  #annual total flows boxplot
+  #boxplot(coredata(ats) ~ factor(format(time(ats), "%b"), levels=unique(format(time(ats), "%b")), ordered=TRUE))
+  
+  #Summary EDA plots
+  png(paste0('StreamflowEDA_', StreamStationList[[i]]$site_no[1],'.png'), res = 300, units = 'in', width = 10, height = 10)
+  hydroplot(dts, FUN = mean, col = 'black', var.unit = 'mean cfs')
+  dev.off()
+  
+  #Seasonal flows
+  png(paste0('StreamflowEDA_Seasonal_', StreamStationList[[i]]$site_no[1],'.png'), res = 300, units = 'in', width = 10, height = 10)
+  hydroplot(dts, FUN = mean, col = 'black', var.unit = 'mean cfs', pfreq = 'seasonal', ylab = 'Mean Streamflow (cfs)')
+  dev.off()
+  
+  #Fixme: annual timeseries trace plots (overlay of annual hydrographs)
+  
+  #Fixme: quantitative summary tables like: seasonalfunction(dts, FUN = mean)
+  
 }
+#Fixme: add to these
 rm(i, c, colCodes, codes)
 
 #Fixme: Missing data fill in with numerical value estimates using prediction in ungauged basins methods for large gaps
@@ -516,6 +598,8 @@ rm(i)
 
 #Water Quality----
 setwd(dir_wq)
+#Fixme: Should have an option to save timeseries as dataframes that have variables as columns and time as rows.
+#  This is challenging because the column names would have to be changed automatically in script to something meaningful.
 # Method 1: Read water quality station data using the USGS function----
 #  Find sites that have any N and P water quality data in a state within the ROI
 #Phosphorus
@@ -696,6 +780,9 @@ rm(f, Ind_f_NitroStat, i)
 # and write separate text files for each variable
 extractWQdata(NitroStationList, fName = "Nitrogen")
 
+#Fixme: should have a function for users to specify for which of the extracted variables they want to have detailed plots.
+# Template is processing of nitrogen and phosphorus data. Phosphorus has detection limits components.
+
 #   Process Total Nitrogen Data----
 #Read in the CharacteristicName for nitrogen measurements only
 cn_Nitro = grep(x = list.files(), pattern = '_cnNitrogen', ignore.case = TRUE)
@@ -762,6 +849,7 @@ north.arrow(xb = 370000, yb = 4347000, len = 700, col = 'black', lab = 'N')
 legend('topright', title = 'Streamflow Stations', legend = c('Zeros in Record', 'Negatives in Record', 'Both', 'Neither'), pch = 16, col = c('red', 'blue', 'purple', 'black'), bty = 'n')
 dev.off()
 
+#    Fixme: Fill in missing dates to timeseries? May not be necessary because water quality data is not collected regulrarly.
 #   Plot TN timeseries----
 for (i in 1:length(TN)){
   png(paste0('TN_Timeseries_', TN[[i]]$MonitoringLocationIdentifier[1],'.png'), res = 300, units = 'in', width = 6, height = 6)
@@ -798,8 +886,7 @@ for (i in 1:length(TN)){
 }
 rm(i)
 
-#Fixme: handle missing data, as with streamflow 
-#        this may be unnecessary because regular sampling is not completed for WQ data
+#Fixme: handle missing data this may be unnecessary because regular sampling is not completed for WQ data
 
 #Fixme: Search for flow-normalized outliers
 
@@ -1024,7 +1111,7 @@ USGSnums = unique(USGS_GaugeMatch$USGSGaugeNum)[-which(is.na(unique(USGS_GaugeMa
 #Capitalize all of the site names in the BES and GaugeMatch datasets because there are typos
 USGS_GaugeMatch$Abbreviation = toupper(USGS_GaugeMatch$Abbreviation)
 BES_WQ$Site = toupper(BES_WQ$Site)
-  
+
 #Filter into separate databases by site and add gauge numbers to database
 BES_WQ_Sites = list()
 uniqueSites = unique(BES_WQ$Site)
