@@ -26,8 +26,12 @@ extractWQdata = function(StationList,
       if (length(w_Ind) > 0){
         print(paste('Some of the samples are taken in media ', unique(StationList[[i]]$ActivityMediaName), ' for station ', StationList[[i]]$MonitoringLocationIdentifier[1]))
       }
+      
+      #place the timeseries in chronological order
+      co = StationList[[i]][u_Ind,][order(StationList[[i]][u_Ind, 'ActivityStartDate']),]
+      
       #Note: subbing ~ in for / because files will not save with / in the name.
-      write.table(StationList[[i]][u_Ind,], 
+      write.table(co, 
                   paste0(getwd(), '/', fName, '_', StationList[[i]]$MonitoringLocationIdentifier[1], "_cn", gsub(pattern = "/", x = us[u,1], replacement = "~", fixed = TRUE), '_rt', us[u,2], ".txt"), 
                   sep = "\t")
     }

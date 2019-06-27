@@ -73,8 +73,8 @@ You can find data quality codes for USGS datasets [here](https://help.waterdata.
 ---
 ### Function files:
 1. addZerosToGaugeNames.R - for adding leading zeros to NWIS streamflow gauge numbers.
-2. extractWQdata.R - for extracting separate timeseries for each variable downloaded for sites in the water quality portal database.
-3. missingDates.R - for filling in missing dates in downloaded timeseries. Missing dates are assigned NA values. Also rearranges timeseries to be listed in chronological order.
+2. extractWQdata.R - for extracting separate timeseries for each variable collected at sites downloaded from the water quality portal database. Also places timeseries in chronological order.
+3. missingDates.R - for filling in missing dates in downloaded timeseries. Missing dates are assigned NA values. Also places timeseries in chronological order.
 4. processDEM.R - for mosaicking DEM files into one DEM file.
 5. checkDuplicates - checks timeseries for duplicate records, and keeps only one of them.
 6. checkZerosNegs - several functions to check timeseries for zero and negative values, and replace with user-specified values.
