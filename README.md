@@ -75,6 +75,8 @@ You can find data quality codes for USGS datasets [here](https://help.waterdata.
   - [codes for streamflow 2](https://help.waterdata.usgs.gov/codes-and-parameters/instantaneous-and-daily-value-status-codes)  
   Yes, there are 2 separate reference schemes for streamflow data.
 
+**5. Plots, EDA, Outlier Detection...
+
 ---
 ### Function files:
 1. addZerosToGaugeNames.R - for adding leading zeros to NWIS streamflow gauge numbers.
@@ -84,7 +86,8 @@ You can find data quality codes for USGS datasets [here](https://help.waterdata.
 5. checkDuplicates - checks timeseries for duplicate records, and keeps only one of them.
 6. checkZerosNegs - several functions to check timeseries for zero and negative values, and replace with user-specified values.
 7. fdcDefaultModification - a modified flow duration curve script from the [hydroTSM R package](https://www.rdocumentation.org/packages/hydroTSM/versions/0.5-1)
-
+8. formatMonthlyMatrix - transforms a monthly timeseries into a matrix with 12 columns for the months and n rows for the years.
+9. matplotDates - modified matplot() function that allows dates to be plotted on the x-axis in date format instead of numeric format.
 
 ---
 ## Citation and Contact Information
