@@ -36,5 +36,5 @@ FillMissingDates = function(Dataset, #Where the missing date information will be
   }
   
   #return the two datasets
-  list(Dataset = Dataset, StationList = StationList)
+  return(list(Dataset = Dataset, StationList = StationList))
 }
