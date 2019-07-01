@@ -993,22 +993,7 @@ if (any(!is.null(unlist(p)))){
 # Process Nitrogen Data----
 setwd(wd_N)
 #  Gather the records for each gauge into a list of dataframes----
-NitroStationList = list()
-#Find all of the Nitrogen station file indices in directory
-Ind_f_NitroStat = list.files()[grep(pattern = 'Nitrogen_', x = list.files(), ignore.case = FALSE, fixed = TRUE)]
-#Check that the length is equal to the length of the WQstations_ROI_N file
-if(length(Ind_f_NitroStat) > nrow(WQstations_ROI_N)){
-  stop('Number of nitrogen station data files is greater than number of nitrogen sites')
-  #Calling a non-existant function to get R to stop running the script
-  blah()
-}
-for (i in 1:length(Ind_f_NitroStat)){
-  #Read file
-  f = read.table(Ind_f_NitroStat[i], header = TRUE, sep = '\t', stringsAsFactors = FALSE)
-  #Add to list
-  NitroStationList = c(NitroStationList, list(f))
-}
-rm(f, Ind_f_NitroStat, i)
+NitroStationList = makeWQStationList(pattern = 'Nitrogen_', wd = wd_N, Sites = WQstations_ROI_N)
 
 #  Extract timeseries for each variable for each site----
 #Cycle through all of the unique combinations of ResultSampleFractionText and CharacteristicName 
@@ -1218,22 +1203,7 @@ rm(i)
 # Process Phosphorus Data----
 setwd(wd_P)
 #  Gather the records for each gauge into a list of dataframes----
-PhosStationList = list()
-#Find all of the phosphorus station file indices in directory
-Ind_f_PhosStat = list.files()[grep(pattern = 'Phosphorus_', x = list.files(), ignore.case = FALSE, fixed = TRUE)]
-#Check that the length is equal to the length of the WQstations_ROI_N file
-if(length(Ind_f_PhosStat) > nrow(WQstations_ROI_P)){
-  stop('Number of phosphorus station data files is greater than number of nitrogen sites')
-  #Calling a non-existant function to get R to stop running the script
-  blah()
-}
-for (i in 1:length(Ind_f_PhosStat)){
-  #Read file
-  f = read.table(Ind_f_PhosStat[i], header = TRUE, sep = '\t', stringsAsFactors = FALSE)
-  #Add to list
-  PhosStationList = c(PhosStationList, list(f))
-}
-rm(f, Ind_f_PhosStat, i)
+PhosStationList = makeWQStationList(pattern = 'Phosphorus_', wd = wd_P, Sites = WQstations_ROI_P)
 
 #  Extract timeseries for each variable for each site----
 #Cycle through all of the unique combinations of ResultSampleFractionText and CharacteristicName and return separate text files for each variable
@@ -1244,7 +1214,7 @@ extractWQdata(StationList = PhosStationList, fName = "Phosphorus")
 cn_Phos = grep(x = list.files(), pattern = '_cnPhosphorus', ignore.case = TRUE)
 # For now, taking only ResultSampleFractionText = total Phosphorous
 cn_Phos1 = grep(x = list.files()[cn_Phos], pattern = 'Total', ignore.case = TRUE)
-#Total nitrogen files only
+#Total phosphorus files only
 f_TP = list.files()[cn_Phos][cn_Phos1]
 rm(cn_Phos, cn_Phos1)
 #Make a list of all of the total phosphorus gauge datasets

@@ -37,3 +37,30 @@ extractWQdata = function(StationList,
     }
   }
 }
+
+#Function to aggregate a specific water quality variable into a list containing elements (data.frame) for each sampling site 
+makeWQStationList = function(pattern, #the grep pattern to search for in the files
+                             wd,       #the directory to search for files
+                             Sites #spatial dataset containing the sites
+                           ){
+  od = getwd()
+  setwd(wd)
+  #Gather the records for each gauge into a list of dataframes
+  StationList = list()
+  #Find all of the Nitrogen station file indices in directory
+  Ind_f = list.files()[grep(pattern = pattern, x = list.files(), ignore.case = FALSE, fixed = TRUE)]
+  #Check that the length is equal to the elements in the Sites file
+  if(length(Ind_f) > nrow(Sites)){
+    stop('Number of station data files is greater than number of sites')
+  }
+  for (i in 1:length(Ind_f)){
+    #Read file
+    f = read.table(Ind_f[i], header = TRUE, sep = '\t', stringsAsFactors = FALSE)
+    #Add to list
+    StationList = c(StationList, list(f))
+  }
+  setwd(od)
+  return(StationList)
+}
+
+
