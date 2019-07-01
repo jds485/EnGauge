@@ -94,6 +94,7 @@ source('checkDuplicates.R')
 source('checkZerosNegs.R')
 source('formatMonthlyMatrix.R')
 source('matplotDates.R')
+source('aggregateTimeseries.R')
 
 #Streamflow----
 setwd(dir_sfgauges)
@@ -408,7 +409,8 @@ dev.off()
 
 # Identify missing dates and fill them into the timeseries----
 # This also places the timeseries in chronological order
-Fills = FillMissingDates(Dataset = NWIS_ROI_fn, StationList = StreamStationList, Var = 'X_00060_00003')
+Fills = FillMissingDates(Dataset = NWIS_ROI_fn, StationList = StreamStationList, Var = 'X_00060_00003', 
+                         Date = 'Date', gapType = 'd', site_no_D = 'site_no', site_no_SL = 'site_no', NoNAcols = 'agency_cd')
 NWIS_ROI_fn = Fills$Dataset
 StreamStationList = Fills$StationList
 rm(Fills)
@@ -508,7 +510,7 @@ for (i in 1:length(StreamStationList)){
   dev.off()
 
   #annual timeseries
-  ats = daily2annual(dts, FUN = mean, na.rm = TRUE)
+  #ats = daily2annual(dts, FUN = mean, na.rm = TRUE)
   #plot(ats)
   #annual total flows boxplot
   #boxplot(coredata(ats) ~ factor(format(time(ats), "%b"), levels=unique(format(time(ats), "%b")), ordered=TRUE))
@@ -526,9 +528,10 @@ for (i in 1:length(StreamStationList)){
   #Fixme: annual timeseries trace plots (overlay of annual hydrographs / shading of 10-25-75-90, plot median sf for water year)
   
   #Fixme: quantitative summary tables like: seasonalfunction(dts, FUN = mean)
+  # hydropairs for correlation plot
   
 }
-rm(i, cc, colCodes, codes, ats, mts, dts, M, at.y, lab.y)
+rm(i, cc, colCodes, codes, mts, dts, M, at.y, lab.y)
 
 # Outlier detection----
 #Fixme: check for high and low flow outliers in each record, and compare spatially to other gauges on those dates
@@ -793,7 +796,7 @@ for (i in 1:length(StreamStationList)){
   NWIS_ROI_fn$RecordLength[which(as.numeric(NWIS_ROI_fn$site_no) == as.numeric(StreamStationList[[i]]$site_no[1]))] = as.numeric((max(StreamStationList[[i]]$Date) - min(StreamStationList[[i]]$Date)))
 }
 rm(i)
-NWIS_ROI_fn$RecordLengthMinusGaps = NWIS_ROI_fn$RecordLength - NWIS_ROI_fn$MissingData
+NWIS_ROI_fn$RecordLengthMinusGaps = NWIS_ROI_fn$RecordLength - NWIS_ROI_fn$MissingData_d
 #in years
 NWIS_ROI_fn$RecordLength = NWIS_ROI_fn$RecordLength/365.25
 NWIS_ROI_fn$RecordLengthMinusGaps = NWIS_ROI_fn$RecordLengthMinusGaps/365.25
@@ -1028,8 +1031,30 @@ TN = list()
 for (i in 1:length(f_TN)){
   f = read.table(f_TN[i], header = TRUE, sep = "\t", stringsAsFactors = FALSE)
   
-  #Place the measurements in chronological order
-  f = f[order(f$ActivityStartDate),]
+  #Remove any NA dates. These entries are useless.
+  f = f[!is.na(f$ActivityStartDate),]
+  
+  #Remove any NA results. These entries are useless.
+  f = f[!is.na(f$ResultMeasureValue),]
+  
+  #Add the full date and time string as available in each record.
+  # NOTE there is a field ActivityStartDateTime that already has this, but it has NAs when the time zone or the time are NA. That's undesireable.
+  f$DateTimeNoNA = str_c(f$ActivityStartDate, ' ', ifelse(is.na(f$ActivityStartTime.Time), '', f$ActivityStartTime.Time), ' ', ifelse(is.na(f$ActivityStartTime.TimeZoneCode), '', f$ActivityStartTime.TimeZoneCode))
+  
+  #Average date and time for those days with an end date and time listed
+  f$AvgDate = (as.Date(f$ActivityEndDate) - as.Date(f$ActivityStartDate))*.5 + as.Date(f$ActivityStartDate)
+  f$AvgDateTime = (as.POSIXct(f$ActivityEndDateTime) - as.POSIXct(f$ActivityStartDateTime))*.5 + as.POSIXct(f$ActivityStartDateTime)
+  
+  #Make a new column for the sort date.
+  f$SortDate = as.Date(f$ActivityStartDate)
+  f$SortDateTime = as.POSIXct(f$ActivityStartDateTime)
+  #Add any average dates to the sort date
+  f$SortDate[!is.na(f$AvgDate)] = as.Date(f$AvgDate[!is.na(f$AvgDate)])
+  f$SortDateTime[!is.na(f$AvgDateTime)] = as.POSIXct(f$AvgDateTime[!is.na(f$AvgDateTime)])
+  
+  #Place the measurements in chronological order by the sort date and time
+  # First order by time (which may have some NA values), then order by date (no NA values)
+  f = f[order(as.POSIXct(f$SortDateTime)),][order(f[order(as.POSIXct(f$SortDateTime)),]$SortDate),]
   
   #Check that the units are all the same for each measurement
   us = unique(f$ResultMeasure.MeasureUnitCode)
@@ -1044,14 +1069,17 @@ for (i in 1:length(f_TN)){
   if(length(dl) != 0){
     print(paste('Warning: detection limits for station', f$MonitoringLocationIdentifier[1], '. Fix manually.'))
   }
-  
+
   #add data to list
   TN = c(TN, list(f))
+  names(TN)[length(TN)] = f$MonitoringLocationIdentifier[1]
 }
 rm(i, f, dl, us)
 
 #    Check for duplicate observations----
-TN = checkDuplicatesAndRemove(TN)
+#Strict check on the specified column names only, disregardinig all other columns. 
+TN = checkDuplicatesAndRemove(TN, colNames = c('ResultMeasureValue', 'SortDateTime'))
+
 #    Check for zeros and negative values in the records----
 TN = checkZerosNegs(TN, Var = 'ResultMeasureValue')
 
@@ -1080,11 +1108,39 @@ north.arrow(xb = 370000, yb = 4347000, len = 700, col = 'black', lab = 'N')
 legend('topright', title = 'Streamflow Stations', legend = c('Zeros in Record', 'Negatives in Record', 'Both', 'Neither'), pch = 16, col = c('red', 'blue', 'purple', 'black'), bty = 'n')
 dev.off()
 
-#    Fixme: Fill in missing dates to timeseries? May not be necessary because water quality data is not collected regulrarly.
+#    Aggregate into average concentrations, if desired---- 
+TN_agg = aggregateTimesteps(StationList = TN, aggVal = c('d', 'm', 'a'))
+TN_d = TN_agg$daily
+TN_m = TN_agg$mthyr
+TN_a = TN_agg$ann
+
+#     Handle missing data in the daily, monthly, and annual aggregated timeseries----
+TN_d2 = FillMissingDates(Dataset = WQstations_ROI_N, StationList = TN_d, Var = 'ResultMeasureValue', 
+                        Date = 'SortDate', gapType = 'd', site_no_D = 'MonitoringLocationIdentifier', 
+                        site_no_SL = 'MonitoringLocationIdentifier', NoNAcols = 'MonitoringLocationIdentifier')
+WQstations_ROI_N = TN_d2$Dataset
+TN_d = TN_d2$StationList
+rm(TN_d2)
+
+TN_m2 = FillMissingDates(Dataset = WQstations_ROI_N, StationList = TN_m, Var = 'ResultMeasureValue', 
+                         Date = 'YrMthDy', gapType = 'm', site_no_D = 'MonitoringLocationIdentifier', 
+                         site_no_SL = 'MonitoringLocationIdentifier', NoNAcols = c('MonitoringLocationIdentifier'))
+WQstations_ROI_N = TN_m2$Dataset
+TN_m = TN_m2$StationList
+rm(TN_m2)
+
+TN_a2 = FillMissingDates(Dataset = WQstations_ROI_N, StationList = TN_a, Var = 'ResultMeasureValue', 
+                         Date = 'YrMthDy', gapType = 'a', site_no_D = 'MonitoringLocationIdentifier', 
+                         site_no_SL = 'MonitoringLocationIdentifier', NoNAcols = c('MonitoringLocationIdentifier'))
+WQstations_ROI_N = TN_a2$Dataset
+TN_a = TN_a2$StationList
+rm(TN_a2)
+  
 #   Plot TN timeseries----
+#Fixme: allow for plotting instantaneous time using POSIX format for date and time. Currently plots all by date, instead of an average by day.
 for (i in 1:length(TN)){
   png(paste0('TN_Timeseries_', TN[[i]]$MonitoringLocationIdentifier[1],'.png'), res = 300, units = 'in', width = 6, height = 6)
-  plot(y = TN[[i]]$ResultMeasureValue, x = as.Date(TN[[i]]$ActivityStartDate), type = 'o', pch = 16, cex = 0.3,
+  plot(y = TN[[i]]$ResultMeasureValue, x = as.Date(TN[[i]]$SortDate), type = 'o', pch = 16, cex = 0.3,
        xlab = 'Year', 
        ylab = paste0(TN[[i]]$ResultSampleFractionText[1], " ", TN[[i]]$CharacteristicName[1], " (", TN[[i]]$ResultMeasure.MeasureUnitCode[1], ")"), 
        main = paste0('Station #', TN[[i]]$MonitoringLocationIdentifier[1]),
@@ -1095,7 +1151,7 @@ for (i in 1:length(TN)){
   png(paste0('TN_Timeseries_Map_', TN[[i]]$MonitoringLocationIdentifier[1],'.png'), res = 300, units = 'in', width = 10, height = 10)
   layout(rbind(c(1,2)))
   
-  plot(y = TN[[i]]$ResultMeasureValue, x = as.Date(TN[[i]]$ActivityStartDate), type = 'o', pch = 16, cex = 0.3,
+  plot(y = TN[[i]]$ResultMeasureValue, x = as.Date(TN[[i]]$SortDate), type = 'o', pch = 16, cex = 0.3,
        xlab = 'Year', 
        ylab = paste0(TN[[i]]$ResultSampleFractionText[1], " ", TN[[i]]$CharacteristicName[1], " (", TN[[i]]$ResultMeasure.MeasureUnitCode[1], ")"), 
        main = paste0('Station #', TN[[i]]$MonitoringLocationIdentifier[1]),
@@ -1114,10 +1170,37 @@ for (i in 1:length(TN)){
   legend('topright', title = 'Nitrogen Stations', legend = c('Selected', 'Other'), pch = 16, col = c('red', 'black'), bty = 'n')
   title(main = paste0('Station #', TN[[i]]$MonitoringLocationIdentifier[1]))
   dev.off()
+  
+  #Fixme: 20 is temporary - the whole if statement should be made more sophisticated.
+  if (length(which(!is.na(TN_d[[i]]$ResultMeasureValue)))>20){
+    #hydroTSM plots----
+    #Fixme: these plots require that the dates are unique, but these datasets have some hourly data.
+    # Placed fixme above to make a daily dataset summary from the hourly datasets.
+    #daily timeseries
+    dts = zoo(TN_d[[i]]$ResultMeasureValue, order.by = TN_d[[i]]$SortDate)
+    
+    #monthly timeseries for mean daily flows in a month
+    mts = zoo(TN_m[[i]]$ResultMeasureValue, order.by = as.Date(TN_m[[i]]$YrMthDy))
+    #Monthly matrix
+    M = formatMonthlyMatrix(mts)
+    # Plotting the monthly values as matrixplot 
+    png(paste0('TNMonthly_', TN[[i]]$MonitoringLocationIdentifier[1],'.png'), res = 300, units = 'in', width = 6, height = 3)
+    print(matrixplot(M, ColorRamp="Precipitation", main="Mean Monthly Nitrogen"))
+    dev.off()
+    
+    #Summary EDA plots
+    png(paste0('TN_EDA_', TN[[i]]$MonitoringLocationIdentifier[1],'.png'), res = 300, units = 'in', width = 10, height = 10)
+    hydroplot(dts, FUN = mean, col = 'black', var.unit = 'mean mg/L as N')
+    dev.off()
+    
+    #Seasonal flows
+    #Fixme: check that every season is represented before using this.
+    png(paste0('TN_EDA_Seasonal_', TN[[i]]$MonitoringLocationIdentifier[1],'.png'), res = 300, units = 'in', width = 10, height = 10)
+    hydroplot(dts, FUN = mean, col = 'black', var.unit = 'mean mg/L as N', pfreq = 'seasonal', ylab = 'Mean Nitrogen (mg/L)')
+    dev.off()
+  }
 }
-rm(i)
-
-#Fixme: handle missing data this may be unnecessary because regular sampling is not completed for WQ data
+rm(i, dts, mts, M)
 
 #Fixme: Search for flow-normalized outliers
 
@@ -1129,6 +1212,8 @@ for (i in 1:length(TN)){
   dev.off()
 }
 rm(i)
+
+#Fixme: note any changes in rounding that occur from measurement device precision (USGS recommended)
 
 # Process Phosphorus Data----
 setwd(wd_P)
