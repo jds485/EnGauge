@@ -88,7 +88,7 @@ You can find data quality codes for USGS datasets [here](https://help.waterdata.
 7. fdcDefaultModification - a modified flow duration curve script from the [hydroTSM R package](https://www.rdocumentation.org/packages/hydroTSM/versions/0.5-1)
 8. formatMonthlyMatrix - transforms a monthly timeseries into a matrix with 12 columns for the months and n rows for the years.
 9. matplotDates - modified matplot() function that allows dates to be plotted on the x-axis in date format instead of numeric format.
-
+10. aggregateTimeseries - function to summarize timeseries data by day, month, or year from its original format.
 ---
 ## Citation and Contact Information
 Citation: Smith, J.D., ... (2019). EnGauge. Online Github Repository. https://github.com/jds485/EnGauge
