@@ -1004,62 +1004,8 @@ extractWQdata(NitroStationList, fName = "Nitrogen")
 # Template is processing of nitrogen and phosphorus data. Phosphorus has detection limits components.
 
 #   Process Total Nitrogen Data----
-#Read in the CharacteristicName for nitrogen measurements only
-cn_Nitro = grep(x = list.files(), pattern = '_cnNitrogen', ignore.case = TRUE)
-# For now, taking only ResultSampleFractionText = total nitrogen
-cn_Nitro1 = grep(x = list.files()[cn_Nitro], pattern = 'Total', ignore.case = TRUE)
-#Total nitrogen files only
-f_TN = list.files()[cn_Nitro][cn_Nitro1]
-rm(cn_Nitro, cn_Nitro1)
-#Make a list of all of the total nitrogen gauge datasets
-TN = list()
-for (i in 1:length(f_TN)){
-  f = read.table(f_TN[i], header = TRUE, sep = "\t", stringsAsFactors = FALSE)
-  
-  #Remove any NA dates. These entries are useless.
-  f = f[!is.na(f$ActivityStartDate),]
-  
-  #Remove any NA results. These entries are useless.
-  f = f[!is.na(f$ResultMeasureValue),]
-  
-  #Add the full date and time string as available in each record.
-  # NOTE there is a field ActivityStartDateTime that already has this, but it has NAs when the time zone or the time are NA. That's undesireable.
-  f$DateTimeNoNA = str_c(f$ActivityStartDate, ' ', ifelse(is.na(f$ActivityStartTime.Time), '', f$ActivityStartTime.Time), ' ', ifelse(is.na(f$ActivityStartTime.TimeZoneCode), '', f$ActivityStartTime.TimeZoneCode))
-  
-  #Average date and time for those days with an end date and time listed
-  f$AvgDate = (as.Date(f$ActivityEndDate) - as.Date(f$ActivityStartDate))*.5 + as.Date(f$ActivityStartDate)
-  f$AvgDateTime = (as.POSIXct(f$ActivityEndDateTime) - as.POSIXct(f$ActivityStartDateTime))*.5 + as.POSIXct(f$ActivityStartDateTime)
-  
-  #Make a new column for the sort date.
-  f$SortDate = as.Date(f$ActivityStartDate)
-  f$SortDateTime = as.POSIXct(f$ActivityStartDateTime)
-  #Add any average dates to the sort date
-  f$SortDate[!is.na(f$AvgDate)] = as.Date(f$AvgDate[!is.na(f$AvgDate)])
-  f$SortDateTime[!is.na(f$AvgDateTime)] = as.POSIXct(f$AvgDateTime[!is.na(f$AvgDateTime)])
-  
-  #Place the measurements in chronological order by the sort date and time
-  # First order by time (which may have some NA values), then order by date (no NA values)
-  f = f[order(as.POSIXct(f$SortDateTime)),][order(f[order(as.POSIXct(f$SortDateTime)),]$SortDate),]
-  
-  #Check that the units are all the same for each measurement
-  us = unique(f$ResultMeasure.MeasureUnitCode)
-  if (length(us) > 1){
-    print(paste('Warning: more than one measurement unit for station ', f$MonitoringLocationIdentifier[1], '. Fix manually.'))
-  }
-  
-  #Check for detection limits
-  dl = unique(f$DetectionQuantitationLimitMeasure.MeasureValue)
-  #remove NAs
-  dl = dl[!is.na(dl)]
-  if(length(dl) != 0){
-    print(paste('Warning: detection limits for station', f$MonitoringLocationIdentifier[1], '. Fix manually.'))
-  }
-
-  #add data to list
-  TN = c(TN, list(f))
-  names(TN)[length(TN)] = f$MonitoringLocationIdentifier[1]
-}
-rm(i, f, dl, us)
+#List of all Total Nitrogen gauge datasets
+TN = selectWQDataType(wd = wd_P, charName = '_cnNitrogen', resName = 'Total')
 
 #    Check for duplicate observations----
 #Strict check on the specified column names only, disregardinig all other columns. 
@@ -1098,6 +1044,7 @@ TN_agg = aggregateTimesteps(StationList = TN, aggVal = c('d', 'm', 'a'))
 TN_d = TN_agg$daily
 TN_m = TN_agg$mthyr
 TN_a = TN_agg$ann
+rm(TN_agg)
 
 #     Handle missing data in the daily, monthly, and annual aggregated timeseries----
 TN_d2 = FillMissingDates(Dataset = WQstations_ROI_N, StationList = TN_d, Var = 'ResultMeasureValue', 
@@ -1130,6 +1077,40 @@ for (i in 1:length(TN)){
        ylab = paste0(TN[[i]]$ResultSampleFractionText[1], " ", TN[[i]]$CharacteristicName[1], " (", TN[[i]]$ResultMeasure.MeasureUnitCode[1], ")"), 
        main = paste0('Station #', TN[[i]]$MonitoringLocationIdentifier[1]),
        ylim = c(0, 10), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")))
+  
+  #Check for and add detection limits
+  dl = unique(TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue)
+  #remove NAs
+  dl = dl[!is.na(dl)]
+  if(length(dl) != 0){
+    #Add detection limits
+    #Lower detection limit
+    par(new = TRUE)
+    plot(y = TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Low", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TN[[i]]$SortDate[grep(pattern = "Low", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
+         xlab = '', 
+         ylab = "",
+         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         col = 'blue')
+    #Upper detection limit
+    par(new = TRUE)
+    plot(y = TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Up", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TN[[i]]$SortDate[grep(pattern = "Up", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
+         xlab = '', 
+         ylab = "",
+         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         col = 'red')
+    
+    legend('topright', title = 'Detection Limits', legend = c('Upper', 'Lower'), col = c('red', 'blue'), pch = 16)
+  }
+  if(length(as.Date(TN[[i]]$SortDate[which(is.na(TN[[i]]$ResultMeasureValue) & is.na(TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))])) > 0){
+    #Plot where there are NA days that do not correspond to detection limits
+    par(new = TRUE)
+    plot(y = rep(0, length(as.Date(TN[[i]]$SortDate[which(is.na(TN[[i]]$ResultMeasureValue) & is.na(TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]))), x = as.Date(TN[[i]]$SortDate[which(is.na(TN[[i]]$ResultMeasureValue) & is.na(TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]), pch = 4, cex = 0.3,
+         xlab = '', 
+         ylab = "",
+         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         col = 'grey')
+    legend('right', legend = 'NA values', col = 'grey', pch = 4)
+  }
   dev.off()
   
   #With map and timeseries
@@ -1141,7 +1122,37 @@ for (i in 1:length(TN)){
        ylab = paste0(TN[[i]]$ResultSampleFractionText[1], " ", TN[[i]]$CharacteristicName[1], " (", TN[[i]]$ResultMeasure.MeasureUnitCode[1], ")"), 
        main = paste0('Station #', TN[[i]]$MonitoringLocationIdentifier[1]),
        ylim = c(0, 10), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")))
+  if(length(dl) != 0){
+    #Add detection limits
+    #Lower detection limit
+    par(new = TRUE)
+    plot(y = TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Low", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TN[[i]]$SortDate[grep(pattern = "Low", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
+         xlab = '', 
+         ylab = "",
+         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         col = 'blue')
+    #Upper detection limit
+    par(new = TRUE)
+    plot(y = TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Up", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TN[[i]]$SortDate[grep(pattern = "Up", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
+         xlab = '', 
+         ylab = "",
+         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         col = 'red')
+    
+    legend('topright', title = 'Detection Limits', legend = c('Upper', 'Lower'), col = c('red', 'blue'), pch = 16)
+  }
+  if(length(as.Date(TN[[i]]$SortDate[which(is.na(TN[[i]]$ResultMeasureValue) & is.na(TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))])) > 0){
+    #Plot where there are NA days that do not correspond to detection limits
+    par(new = TRUE)
+    plot(y = rep(0, length(as.Date(TN[[i]]$SortDate[which(is.na(TN[[i]]$ResultMeasureValue) & is.na(TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]))), x = as.Date(TN[[i]]$SortDate[which(is.na(TN[[i]]$ResultMeasureValue) & is.na(TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]), pch = 4, cex = 0.3,
+         xlab = '', 
+         ylab = "",
+         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         col = 'grey')
+    legend('right', legend = 'NA values', col = 'grey', pch = 4)
+  }
   
+  #map
   plot(ROI)
   #All gauges
   plot(WQstations_ROI_N, pch = 16, add = TRUE)
@@ -1159,8 +1170,6 @@ for (i in 1:length(TN)){
   #Fixme: 20 is temporary - the whole if statement should be made more sophisticated.
   if (length(which(!is.na(TN_d[[i]]$ResultMeasureValue)))>20){
     #hydroTSM plots----
-    #Fixme: these plots require that the dates are unique, but these datasets have some hourly data.
-    # Placed fixme above to make a daily dataset summary from the hourly datasets.
     #daily timeseries
     dts = zoo(TN_d[[i]]$ResultMeasureValue, order.by = TN_d[[i]]$SortDate)
     
@@ -1185,7 +1194,7 @@ for (i in 1:length(TN)){
     dev.off()
   }
 }
-rm(i, dts, mts, M)
+rm(i, dts, mts, M, dl)
 
 #Fixme: Search for flow-normalized outliers
 
@@ -1210,42 +1219,14 @@ PhosStationList = makeWQStationList(pattern = 'Phosphorus_', wd = wd_P, Sites = 
 extractWQdata(StationList = PhosStationList, fName = "Phosphorus")
 
 #   Process Total Phosphorus Data----
-#Read in the CharacteristicName for Phosphorus measurements only
-cn_Phos = grep(x = list.files(), pattern = '_cnPhosphorus', ignore.case = TRUE)
-# For now, taking only ResultSampleFractionText = total Phosphorous
-cn_Phos1 = grep(x = list.files()[cn_Phos], pattern = 'Total', ignore.case = TRUE)
-#Total phosphorus files only
-f_TP = list.files()[cn_Phos][cn_Phos1]
-rm(cn_Phos, cn_Phos1)
-#Make a list of all of the total phosphorus gauge datasets
-TP = list()
-for (i in 1:length(f_TP)){
-  f = read.table(f_TP[i], header = TRUE, sep = "\t", stringsAsFactors = FALSE)
-  
-  #Place the measurements in chronological order
-  f = f[order(f$ActivityStartDate),]
-  
-  #Check that the units are all the same for each measurement
-  us = unique(f$ResultMeasure.MeasureUnitCode)
-  if (length(us) > 1){
-    print(paste('Warning: more than one measurement unit for station ', f$MonitoringLocationIdentifier[1], '. Fix manually.'))
-  }
-  
-  #Check for detection limits
-  dl = unique(f$DetectionQuantitationLimitMeasure.MeasureValue)
-  #remove NAs
-  dl = dl[!is.na(dl)]
-  if(length(dl) != 0){
-    print(paste('Warning: detection limits for station ', f$MonitoringLocationIdentifier[1], '. Fix manually.'))
-  }
-  
-  #add data to list
-  TP = c(TP, list(f))
-}
-rm(i, f, dl, us)
+#List of all Total Phosphorus gauge datasets
+TP = selectWQDataType(wd = wd_P, charName = '_cnPhosphorus', resName = 'Total')
+
+#Some stations have detection limits
 
 #    Check for duplicate observations----
-TP = checkDuplicatesAndRemove(TP)
+#Strict check on the specified column names only, disregardinig all other columns.
+TP = checkDuplicatesAndRemove(TP, colNames = c('ResultMeasureValue', 'SortDateTime'))
 #    Check for zeros and negative values in the records----
 TP = checkZerosNegs(TP, Var = 'ResultMeasureValue')
 
@@ -1274,10 +1255,39 @@ north.arrow(xb = 370000, yb = 4347000, len = 700, col = 'black', lab = 'N')
 legend('topright', title = 'Streamflow Stations', legend = c('Zeros in Record', 'Negatives in Record', 'Both', 'Neither'), pch = 16, col = c('red', 'blue', 'purple', 'black'), bty = 'n')
 dev.off()
 
+#    Aggregate into average concentrations, if desired---- 
+TP_agg = aggregateTimesteps(StationList = TP, aggVal = c('d', 'm', 'a'))
+TP_d = TP_agg$daily
+TP_m = TP_agg$mthyr
+TP_a = TP_agg$ann
+rm(TP_agg)
+
+#     Handle missing data in the daily, monthly, and annual aggregated timeseries----
+TP_d2 = FillMissingDates(Dataset = WQstations_ROI_P, StationList = TP_d, Var = 'ResultMeasureValue', 
+                         Date = 'SortDate', gapType = 'd', site_no_D = 'MonitoringLocationIdentifier', 
+                         site_no_SL = 'MonitoringLocationIdentifier', NoNAcols = 'MonitoringLocationIdentifier')
+WQstations_ROI_P = TP_d2$Dataset
+TP_d = TP_d2$StationList
+rm(TP_d2)
+
+TP_m2 = FillMissingDates(Dataset = WQstations_ROI_P, StationList = TP_m, Var = 'ResultMeasureValue', 
+                         Date = 'YrMthDy', gapType = 'm', site_no_D = 'MonitoringLocationIdentifier', 
+                         site_no_SL = 'MonitoringLocationIdentifier', NoNAcols = c('MonitoringLocationIdentifier'))
+WQstations_ROI_P = TP_m2$Dataset
+TP_m = TP_m2$StationList
+rm(TP_m2)
+
+TP_a2 = FillMissingDates(Dataset = WQstations_ROI_P, StationList = TP_a, Var = 'ResultMeasureValue', 
+                         Date = 'YrMthDy', gapType = 'a', site_no_D = 'MonitoringLocationIdentifier', 
+                         site_no_SL = 'MonitoringLocationIdentifier', NoNAcols = c('MonitoringLocationIdentifier'))
+WQstations_ROI_P = TP_a2$Dataset
+TP_a = TP_a2$StationList
+rm(TP_a2)
+
 #   Plot TP timeseries----
 for (i in 1:length(TP)){
   png(paste0('TP_Timeseries_', TP[[i]]$MonitoringLocationIdentifier[1],'.png'), res = 300, units = 'in', width = 6, height = 6)
-  plot(y = TP[[i]]$ResultMeasureValue, x = as.Date(TP[[i]]$ActivityStartDate), type = 'o', pch = 16, cex = 0.3,
+  plot(y = TP[[i]]$ResultMeasureValue, x = as.Date(TP[[i]]$SortDate), type = 'o', pch = 16, cex = 0.3,
        xlab = 'Year', 
        ylab = paste0(TP[[i]]$ResultSampleFractionText[1], " ", TP[[i]]$CharacteristicName[1], " (", TP[[i]]$ResultMeasure.MeasureUnitCode[1], ")"), 
        main = paste0('Station #', TP[[i]]$MonitoringLocationIdentifier[1]),
@@ -1291,14 +1301,14 @@ for (i in 1:length(TP)){
     #Add detection limits
     #Lower detection limit
     par(new = TRUE)
-    plot(y = TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Low", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TP[[i]]$ActivityStartDate[grep(pattern = "Low", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
+    plot(y = TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Low", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TP[[i]]$SortDate[grep(pattern = "Low", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
          ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
          col = 'blue')
     #Upper detection limit
     par(new = TRUE)
-    plot(y = TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Up", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TP[[i]]$ActivityStartDate[grep(pattern = "Up", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
+    plot(y = TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Up", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TP[[i]]$SortDate[grep(pattern = "Up", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
          ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
@@ -1306,13 +1316,23 @@ for (i in 1:length(TP)){
     
     legend('topright', title = 'Detection Limits', legend = c('Upper', 'Lower'), col = c('red', 'blue'), pch = 16)
   }
+  if(length(as.Date(TP[[i]]$SortDate[which(is.na(TP[[i]]$ResultMeasureValue) & is.na(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))])) > 0){
+    #Plot where there are NA days that do not correspond to detection limits
+    par(new = TRUE)
+    plot(y = rep(0, length(as.Date(TP[[i]]$SortDate[which(is.na(TP[[i]]$ResultMeasureValue) & is.na(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]))), x = as.Date(TP[[i]]$SortDate[which(is.na(TP[[i]]$ResultMeasureValue) & is.na(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]), pch = 4, cex = 0.3,
+         xlab = '', 
+         ylab = "",
+         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         col = 'grey')
+    legend('right', legend = 'NA values', col = 'grey', pch = 4)
+  }
   dev.off()
   
   #With map and timeseries
   png(paste0('TP_Timeseries_Map_', TP[[i]]$MonitoringLocationIdentifier[1],'.png'), res = 300, units = 'in', width = 10, height = 10)
   layout(rbind(c(1,2)))
   
-  plot(y = TP[[i]]$ResultMeasureValue, x = as.Date(TP[[i]]$ActivityStartDate), type = 'o', pch = 16, cex = 0.3,
+  plot(y = TP[[i]]$ResultMeasureValue, x = as.Date(TP[[i]]$SortDate), type = 'o', pch = 16, cex = 0.3,
        xlab = 'Year', 
        ylab = paste0(TP[[i]]$ResultSampleFractionText[1], " ", TP[[i]]$CharacteristicName[1], " (", TP[[i]]$ResultMeasure.MeasureUnitCode[1], ")"), 
        main = paste0('Station #', TP[[i]]$MonitoringLocationIdentifier[1]),
@@ -1326,20 +1346,30 @@ for (i in 1:length(TP)){
     #Add detection limits
     #Lower detection limit
     par(new = TRUE)
-    plot(y = TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Low", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TP[[i]]$ActivityStartDate[grep(pattern = "Low", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
+    plot(y = TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Low", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TP[[i]]$SortDate[grep(pattern = "Low", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
          ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
          col = 'blue')
     #Upper detection limit
     par(new = TRUE)
-    plot(y = TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Up", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TP[[i]]$ActivityStartDate[grep(pattern = "Up", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
+    plot(y = TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Up", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TP[[i]]$SortDate[grep(pattern = "Up", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
          ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
          col = 'red')
     
     legend('topright', title = 'Detection Limits', legend = c('Upper', 'Lower'), col = c('red', 'blue'), pch = 16)
+  }
+  if(length(as.Date(TP[[i]]$SortDate[which(is.na(TP[[i]]$ResultMeasureValue) & is.na(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))])) > 0){
+    #Plot where there are NA days that do not correspond to detection limits
+    par(new = TRUE)
+    plot(y = rep(0, length(as.Date(TP[[i]]$SortDate[which(is.na(TP[[i]]$ResultMeasureValue) & is.na(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]))), x = as.Date(TP[[i]]$SortDate[which(is.na(TP[[i]]$ResultMeasureValue) & is.na(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]), pch = 4, cex = 0.3,
+         xlab = '', 
+         ylab = "",
+         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         col = 'grey')
+    legend('right', legend = 'NA values', col = 'grey', pch = 4)
   }
   
   plot(ROI)
@@ -1355,11 +1385,35 @@ for (i in 1:length(TP)){
   legend('topright', title = 'Phosphorus Stations', legend = c('Selected', 'Other'), pch = 16, col = c('red', 'black'), bty = 'n')
   title(main = paste0('Station #', TP[[i]]$MonitoringLocationIdentifier[1]))
   dev.off()
+  
+  #Fixme: 20 is temporary - the whole if statement should be made more sophisticated.
+  if (length(which(!is.na(TP_d[[i]]$ResultMeasureValue)))>20){
+    #hydroTSM plots----
+    #daily timeseries
+    dts = zoo(TP_d[[i]]$ResultMeasureValue, order.by = TP_d[[i]]$SortDate)
+    
+    #monthly timeseries for mean daily flows in a month
+    mts = zoo(TP_m[[i]]$ResultMeasureValue, order.by = as.Date(TP_m[[i]]$YrMthDy))
+    #Monthly matrix
+    M = formatMonthlyMatrix(mts)
+    # Plotting the monthly values as matrixplot 
+    png(paste0('TPMonthly_', TP[[i]]$MonitoringLocationIdentifier[1],'.png'), res = 300, units = 'in', width = 6, height = 3)
+    print(matrixplot(M, ColorRamp="Precipitation", main="Mean Monthly Nitrogen"))
+    dev.off()
+    
+    #Summary EDA plots
+    png(paste0('TP_EDA_', TP[[i]]$MonitoringLocationIdentifier[1],'.png'), res = 300, units = 'in', width = 10, height = 10)
+    hydroplot(dts, FUN = mean, col = 'black', var.unit = 'mean mg/L as N')
+    dev.off()
+    
+    #Seasonal flows
+    #Fixme: check that every season is represented before using this.
+    png(paste0('TP_EDA_Seasonal_', TP[[i]]$MonitoringLocationIdentifier[1],'.png'), res = 300, units = 'in', width = 10, height = 10)
+    hydroplot(dts, FUN = mean, col = 'black', var.unit = 'mean mg/L as N', pfreq = 'seasonal', ylab = 'Mean Nitrogen (mg/L)')
+    dev.off()
+  }
 }
-rm(i)
-
-#Fixme: handle missing data, as with streamflow 
-#        this may be unnecessary because regular sampling is not completed for WQ data
+rm(i, dts, mts, M, dl)
 
 #Fixme: Search for flow-normalized outliers
 
