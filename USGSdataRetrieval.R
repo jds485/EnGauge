@@ -830,6 +830,7 @@ for (i in names(StreamStationList)){
               sep = "\t", row.names = FALSE)
 }
 rm(i)
+list.save(x = StreamStationList, file = 'SF.yaml', type = "YAML")
 
 #Water Quality----
 setwd(dir_wq)
@@ -1005,7 +1006,7 @@ extractWQdata(NitroStationList, fName = "Nitrogen")
 
 #   Process Total Nitrogen Data----
 #List of all Total Nitrogen gauge datasets
-TN = selectWQDataType(wd = wd_P, charName = '_cnNitrogen', resName = 'Total')
+TN = selectWQDataType(wd = wd_N, charName = '_cnNitrogen', resName = 'Total')
 
 #    Check for duplicate observations----
 #Strict check on the specified column names only, disregardinig all other columns. 
@@ -1430,141 +1431,104 @@ rm(i)
 setwd(dir = wd_N)
 writeOGR(WQstations_ROI_N, dsn = getwd(), layer = 'NitrogenSites', driver = "ESRI Shapefile")
 list.save(x = TN, file = 'TN.yaml', type = "YAML")
+list.save(x = TN_d, file = 'TN_d.yaml', type = "YAML")
+list.save(x = TN_m, file = 'TN_m.yaml', type = "YAML")
+list.save(x = TN_a, file = 'TN_a.yaml', type = "YAML")
 setwd(dir = wd_P)
 writeOGR(WQstations_ROI_P, dsn = getwd(), layer = 'PhosphorusSites', driver = "ESRI Shapefile")
 list.save(x = TP, file = 'TP.yaml', type = "YAML")
+list.save(x = TP_d, file = 'TP_d.yaml', type = "YAML")
+list.save(x = TP_m, file = 'TP_m.yaml', type = "YAML")
+list.save(x = TP_a, file = 'TP_a.yaml', type = "YAML")
 
 
-# BES Water Quality Gauge Data----
-setwd("C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\WaterChemistry")
-#BES Water quality sample time series
-BES_WQ = read.csv('BES-stream-chemistry-data-for-WWW-feb-2018---core-sites-only_JDSprocessed.csv', stringsAsFactors = FALSE)
-#BES gauge number reference table
-USGS_GaugeMatch = read.csv('Abbreviations_SampleRecordLengths.csv', stringsAsFactors = FALSE)
-#Remove spaces from the names of the sites
-USGS_GaugeMatch$Abbreviation = gsub(pattern = ' ', replacement = '', x = USGS_GaugeMatch$Abbreviation, fixed = TRUE)
-#add leading zeros to gauge numbers that are not NA
-USGS_GaugeMatch$USGSGaugeNum[!is.na(USGS_GaugeMatch$USGSGaugeNum)] = paste0("0", USGS_GaugeMatch$USGSGaugeNum[!is.na(USGS_GaugeMatch$USGSGaugeNum)])
-BES_WQ$USGSgauge = NA
-USGSnums = unique(USGS_GaugeMatch$USGSGaugeNum)[-which(is.na(unique(USGS_GaugeMatch$USGSGaugeNum)) == TRUE)]
-#Capitalize all of the site names in the BES and GaugeMatch datasets because there are typos
-USGS_GaugeMatch$Abbreviation = toupper(USGS_GaugeMatch$Abbreviation)
-BES_WQ$Site = toupper(BES_WQ$Site)
-
-#Filter into separate databases by site and add gauge numbers to database
-BES_WQ_Sites = list()
-uniqueSites = unique(BES_WQ$Site)
-for (i in 1:length(uniqueSites)){
-  f = BES_WQ[which(BES_WQ$Site == uniqueSites[i]),]
-  #Assign gauge number if it has one
-  if(f$Site[1] %in% USGS_GaugeMatch$Abbreviation){
-    f$USGSgauge = USGS_GaugeMatch$USGSGaugeNum[which(USGS_GaugeMatch$Abbreviation == f$Site[1])]
-  }else{
-    f$USGSgauge = NA
-  }
-  
-  f$Dated = NA
-  
-  #Fix the date format
-  #4-digit year - any number greater than current year on computer is going to be assumed 19XX
-  curr2DigYear = substring(as.character(as.numeric(strsplit(date(), split = " ", fixed = TRUE)[[1]][5])), first = 3, last = 4)
-  for (y in 1:length(f$Date)){
-    txtyr = strsplit(f$Date[y], split = '-', fixed = TRUE)[[1]]
-    txtyr[3] = ifelse(as.numeric(txtyr[3]) > as.numeric(curr2DigYear), str_c('19', txtyr[3]), str_c('20', txtyr[3]))
-    txtyr = as.Date(str_c(txtyr[1], '/', txtyr[2], '/', txtyr[3]), format = '%d/%B/%Y')
-    f$Dated[y] = as.character(txtyr)
-  }
-  BES_WQ_Sites = c(BES_WQ_Sites, list(f))
-  names(BES_WQ_Sites) = c(names(BES_WQ_Sites)[-length(names(BES_WQ_Sites))], f$USGSgauge[1])
-}
-rm(i, f, txtyr)
-
-names(BES_WQ_Sites)
-
-#Plot time series for each of the sites
-#Nitrogen
-for (i in 1:length(BES_WQ_Sites)){
-  if (any(!is.na(BES_WQ_Sites[[i]]$TN..mg.N.L.))){
-    png(paste0('BES_N_Timeseries_', BES_WQ_Sites[[i]]$Site[1], '_',  BES_WQ_Sites[[i]]$USGSgauge[1], '_', i, '.png'), res = 300, units = 'in', width = 6, height = 6)
-    plot(y = BES_WQ_Sites[[i]]$TN..mg.N.L., x = as.Date(BES_WQ_Sites[[i]]$Dated), type = 'o', pch = 16, cex = 0.3,
-         xlab = 'Year', 
-         ylab = 'Total Nitrogen (mg N/L)', 
-         main = paste0('TN Station #', BES_WQ_Sites[[i]]$USGSgauge[1], ' ', BES_WQ_Sites[[i]]$Site[1]),
-         ylim = c(0, max(BES_WQ_Sites[[i]]$TN..mg.N.L., na.rm=TRUE)))
-    #xlim = c(as.Date("1980-01-01"), as.Date("2019-06-01")))
-    dev.off()
-  }
-}
-rm(i)
-
-#Phosphorus
-for (i in 1:length(BES_WQ_Sites)){
-  if (any(!is.na(BES_WQ_Sites[[i]]$TP..ugP.L.))){
-    png(paste0('BES_P_Timeseries_', BES_WQ_Sites[[i]]$Site[1], '_',  BES_WQ_Sites[[i]]$USGSgauge[1], '_', i, '.png'), res = 300, units = 'in', width = 6, height = 6)
-    plot(y = BES_WQ_Sites[[i]]$TP..ugP.L., x = as.Date(BES_WQ_Sites[[i]]$Dated), type = 'o', pch = 16, cex = 0.3,
-         xlab = 'Year', 
-         ylab = expression(paste('Total Phosphorus (', mu, 'g P/L)')), 
-         main = paste0('TP Station #', BES_WQ_Sites[[i]]$USGSgauge[1], ' ', BES_WQ_Sites[[i]]$Site[1]),
-         ylim = c(0, max(BES_WQ_Sites[[i]]$TP..ugP.L., na.rm=TRUE)))
-    #xlim = c(as.Date("1980-01-01"), as.Date("2019-06-01")))
-    dev.off()
-  }
-}
-rm(i)
-
-#Coordinates of BES sites
-for (i in 1:length(BES_WQ_Sites)){
-  if (!is.na(BES_WQ_Sites[[i]]$USGSgauge[1])){
-    if(!exists('BES_WQ_Sites_locs')){
-      BES_WQ_Sites_locs = GaugeLocs[which(GaugeLocs$site_no == BES_WQ_Sites[[i]]$USGSgauge[1]),]
-    }else{
-      BES_WQ_Sites_locs = rbind(BES_WQ_Sites_locs, GaugeLocs[which(GaugeLocs$site_no == BES_WQ_Sites[[i]]$USGSgauge[1]),])
-    }
-  }
-}
-rm(i)
-
-#Map the station locations and plot them on a map showing BES data and WQP data
-png('TNTP_BES+WQPsites.png', res = 300, units = 'in', width = 6, height = 6)
-plot(ROI)
-plot(WQstations_ROI_N, pch = 16, add = TRUE, col = 'red')
-plot(WQstations_ROI_P, pch = 16, add = TRUE, col = 'blue')
-plot(WQstations_ROI_P[WQstations_ROI_N,], pch = 16, add = TRUE, col = 'purple')
-plot(WQstations_ROI_N[WQstations_ROI_P,], pch = 16, add = TRUE, col = 'purple')
-#BES sites
-plot(BES_WQ_Sites_locs, add = TRUE)
-
-# Add coordinates
-axis(side = 1)
-axis(side = 2)
-box()
-north.arrow(xb = 365000, yb = 4346000, len = 700, col = 'black', lab = 'N')
-legend('topright', title = 'Water Quality Sites', legend = c('T Nitrogen Only', 'T Phosphorus Only', 'Both'), col = c('red', 'blue', 'purple'), pch = 16)
-dev.off()
-
-#Plot the streamflow, N, and P data together for each site
-
-
-#Try plotting the water quality data using R tools----
-
-
+#Fixme: Try plotting the water quality data using R tools like EGRET----
 #Weather Stations----
-#Fixme: some AllStations data are climate stations
-#       add DEM elevation to dataset and compare
+setwd(dir_sfgauges)
 #Load file containing hyperlinks to the climate data
-ClimGauges = read.csv("NOAA_HyperlinksToGauges.csv", stringsAsFactors = FALSE)
+ClimGauges = read.csv("NOAA_HyperlinksToGauges.csv", stringsAsFactors = FALSE, header = FALSE)
+
+#Make new directory for weather data
+wd_clim = paste0(getwd(), '\\Weather')
+dir.create(wd_clim)
+setwd(wd_clim)
+
+#Fixme: some AllStations data are climate stations when loaded from the csv file from the website specified in the readme.
+#Fixme: add DEM elevation to dataset and compare
+
+#Load from NWIS
+TempCStations = whatNWISsites(statecode = "MD", parameterCd = '00020')
+TempFStations = whatNWISsites(statecode = "MD", parameterCd = '00021')
+TotalPrecipStations = whatNWISsites(statecode = "MD", parameterCd = '00045')
+TempCStations = readNWISsite(TempCStations$site_no)
+TempFStations = readNWISsite(TempFStations$site_no)
+TotalPrecipStations = readNWISsite(TotalPrecipStations$site_no)
+
+#Make spatial data
+GaugesLocs_NAD27 = TempCStations[which(TempCStations$coord_datum_cd == 'NAD27'), ]
+coordinates(GaugesLocs_NAD27) = c('dec_long_va', 'dec_lat_va')
+proj4string(GaugesLocs_NAD27) = CRS('+init=epsg:4267')
+GaugesLocs_NAD83 = TempCStations[which(TempCStations$coord_datum_cd == 'NAD83'), ]
+coordinates(GaugesLocs_NAD83) = c('dec_long_va', 'dec_lat_va')
+proj4string(GaugesLocs_NAD83) = CRS('+init=epsg:4269')
+#Transform to NAD83 UTM Zone 18N
+GaugeLocs_NAD27 = spTransform(GaugesLocs_NAD27, CRS(pCRS))
+GaugeLocs_NAD83 = spTransform(GaugesLocs_NAD83, CRS(pCRS))
+#Join to one dataset again
+TempCStations = rbind(GaugeLocs_NAD27, GaugeLocs_NAD83)
+#Remove separate datasets
+rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugesLocs_NAD27, GaugesLocs_NAD83)
+
+GaugesLocs_NAD83 = TempFStations[which(TempFStations$coord_datum_cd == 'NAD83'), ]
+coordinates(GaugesLocs_NAD83) = c('dec_long_va', 'dec_lat_va')
+proj4string(GaugesLocs_NAD83) = CRS('+init=epsg:4269')
+#Transform to NAD83 UTM Zone 18N
+GaugeLocs_NAD83 = spTransform(GaugesLocs_NAD83, CRS(pCRS))
+#Join to one dataset again
+TempFStations = GaugeLocs_NAD83
+#Remove separate datasets
+rm(GaugeLocs_NAD83, GaugesLocs_NAD83)
+
+GaugesLocs_NAD27 = TotalPrecipStations[which(TotalPrecipStations$coord_datum_cd == 'NAD27'), ]
+coordinates(GaugesLocs_NAD27) = c('dec_long_va', 'dec_lat_va')
+proj4string(GaugesLocs_NAD27) = CRS('+init=epsg:4267')
+GaugesLocs_NAD83 = TotalPrecipStations[which(TotalPrecipStations$coord_datum_cd == 'NAD83'), ]
+coordinates(GaugesLocs_NAD83) = c('dec_long_va', 'dec_lat_va')
+proj4string(GaugesLocs_NAD83) = CRS('+init=epsg:4269')
+#Transform to NAD83 UTM Zone 18N
+GaugeLocs_NAD27 = spTransform(GaugesLocs_NAD27, CRS(pCRS))
+GaugeLocs_NAD83 = spTransform(GaugesLocs_NAD83, CRS(pCRS))
+#Join to one dataset again
+TotalPrecipStations = rbind(GaugeLocs_NAD27, GaugeLocs_NAD83)
+#Remove separate datasets
+rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugesLocs_NAD27, GaugesLocs_NAD83)
 
 #Read the hyperlinks and place data into separate text files per gauge
+#List of climate stations named by the station number
+ClimateStationList = list()
 for (i in 1:nrow(ClimGauges)){
-  ClimStationData = read.table(ClimGauges[i])
-  #Station names are either after NWIS= or AWIC=
-  if (length(grep(pattern = 'NWIS=', ClimGauges[i])) == 0){
-    StationName = strsplit(x = strsplit(x = ClimGauges[i], split = "NWIS=", fixed = TRUE)[2], split = "%", fixed = TRUE)[1]
+  #First save the file as a *.txt
+  if (is.na(strsplit(strsplit(ClimGauges[i,], split = 'NWIS=')[[1]][2], split = '%', fixed = TRUE)[[1]][1])){
+    #ACIS stations
+    fname = paste0(strsplit(strsplit(ClimGauges[i,], split = 'ACIS=')[[1]][2], split = '%', fixed = TRUE)[[1]][1], '.txt')
   }else{
-    StationName = strsplit(x = strsplit(x = ClimGauges[i], split = "AWIC=", fixed = TRUE)[2], split = "%", fixed = TRUE)[1]
+    #NWIS stations
+    fname = paste0(strsplit(strsplit(ClimGauges[i,], split = 'NWIS=')[[1]][2], split = '%', fixed = TRUE)[[1]][1], '.txt')
   }
-  #Fixme: the filename should be the gauge name. Need to find that in the datasets or URL
-  write.table(ClimStationData,
-              paste0(getwd(), '/Clim_', StationName, ".txt"), 
-              sep = "\t", row.names = FALSE)
+  
+  download.file(url = ClimGauges[i,], destfile = fname, mode = 'wb', method = "curl")
+  ClimStationData = read.table(fname, header = TRUE, stringsAsFactors = FALSE, sep = '\t')
+  #Reformat the time to standard format
+  ClimStationData$time = as.POSIXct(ClimStationData$time, format = '%m/%d/%Y %H:%M')
+  
+  #Place the measurements in chronological order by the sort date and time
+  ClimStationData = ClimStationData[order(as.POSIXct(ClimStationData$time)),]
+  
+  #Add to list
+  ClimateStationList = c(ClimateStationList, list(ClimStationData))
+  names(ClimateStationList)[length(ClimateStationList)] = strsplit(fname, split = '.txt', fixed = TRUE)[[1]][1]
 }
+rm(i, ClimStationData, fname)
+
+#Get the site information for each of those gauges
+
