@@ -1,5 +1,6 @@
 #Identify missing dates and fill them into the timeseries----
 #Fixme: make parallelization general for different operating systems
+#       and make it return values for StationList and Dataset correctly
 
 FillMissingDates = function(Dataset, #Where the missing date information will be added as counts 
                             StationList, #list of streamflow stations to check for missing dates
@@ -27,9 +28,10 @@ FillMissingDates = function(Dataset, #Where the missing date information will be
     Dataset$MissingData_a = NA
   }
   
-  cl = makeCluster(detectCores() - 1)
-  registerDoParallel(cl)
-  foreach (i = 1:length(StationList)) %dopar%{
+  #cl = makeCluster(detectCores() - 1)
+  #registerDoParallel(cl)
+  #foreach (i = 1:length(StationList)) %dopar%{
+  for (i in 1:length(StationList)){
     #Sort the streamflow series by date
     StationList[[i]] = StationList[[i]][order(StationList[[i]][ , Date]),]
     
@@ -40,7 +42,7 @@ FillMissingDates = function(Dataset, #Where the missing date information will be
     # NOTE: this assumes data are provided in a format such that sequential records are already at the gap desired (e.g. 1 day for daily)
     if (gapType == 'd'){
       agaps = as.numeric(StationList[[i]][-1, Date]) - as.numeric(StationList[[i]][-nrow(StationList[[i]]), Date])
-      Dataset$MissingData_d[which(Dataset[, site_no_D]@data == StationList[[i]][1, site_no_SL])] = NAs + sum(agaps[which(agaps > 1)])
+      Dataset$MissingData_d[which(Dataset[, site_no_D]@data == StationList[[i]][1, site_no_SL])] = NAs + sum(agaps[which(agaps > 1)]-1)
       
       #Fill in the missing data dates with NA values to have a complete time series for all records
       Inds = which(agaps > 1)
@@ -114,7 +116,7 @@ FillMissingDates = function(Dataset, #Where the missing date information will be
     #Sort the streamflow series by date again because NAs were added out of chronological order
     StationList[[i]] = StationList[[i]][order(StationList[[i]][ , Date]),]
   }
-  stopCluster(cl)
+  #stopCluster(cl)
   
   #return the two datasets
   return(list(Dataset = Dataset, StationList = StationList))
