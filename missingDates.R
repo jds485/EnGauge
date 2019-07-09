@@ -1,4 +1,5 @@
 #Identify missing dates and fill them into the timeseries----
+#Fixme: make parallelization general for different operating systems
 
 FillMissingDates = function(Dataset, #Where the missing date information will be added as counts 
                             StationList, #list of streamflow stations to check for missing dates
@@ -26,7 +27,9 @@ FillMissingDates = function(Dataset, #Where the missing date information will be
     Dataset$MissingData_a = NA
   }
   
-  for (i in 1:length(StationList)){
+  cl = makeCluster(detectCores() - 1)
+  registerDoParallel(cl)
+  foreach (i = 1:length(StationList)) %dopar%{
     #Sort the streamflow series by date
     StationList[[i]] = StationList[[i]][order(StationList[[i]][ , Date]),]
     
@@ -108,10 +111,10 @@ FillMissingDates = function(Dataset, #Where the missing date information will be
         }
       }
     }
-    
     #Sort the streamflow series by date again because NAs were added out of chronological order
     StationList[[i]] = StationList[[i]][order(StationList[[i]][ , Date]),]
   }
+  stopCluster(cl)
   
   #return the two datasets
   return(list(Dataset = Dataset, StationList = StationList))
