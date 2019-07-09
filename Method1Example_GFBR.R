@@ -897,7 +897,7 @@ legend('topright', title = 'Streamflow Stations', legend = c('Zeros in Record', 
 dev.off()
 
 #    Aggregate into average concentrations, if desired---- 
-TN_agg = aggregateTimesteps(StationList = TN, aggVal = c('d', 'm', 'a'))
+TN_agg = aggregateTimesteps(StationList = TN, aggVal = c('d', 'm', 'a'), aggVar = 'ResultMeasureValue', date = 'SortDate', site = 'MonitoringLocationIdentifier')
 TN_d = TN_agg$daily
 TN_m = TN_agg$mthyr
 TN_a = TN_agg$ann
@@ -1113,7 +1113,7 @@ legend('topright', title = 'Streamflow Stations', legend = c('Zeros in Record', 
 dev.off()
 
 #    Aggregate into average concentrations, if desired---- 
-TP_agg = aggregateTimesteps(StationList = TP, aggVal = c('d', 'm', 'a'))
+TP_agg = aggregateTimesteps(StationList = TP, aggVal = c('d', 'm', 'a'), aggVar = 'ResultMeasureValue', date = 'SortDate', site = 'MonitoringLocationIdentifier')
 TP_d = TP_agg$daily
 TP_m = TP_agg$mthyr
 TP_a = TP_agg$ann
