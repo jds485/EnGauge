@@ -58,11 +58,11 @@ FillMissingDates = function(Dataset, #Where the missing date information will be
       }
     }else if (gapType == 'm'){
       #Get theoretical gaps for each month, given the starting location
-      tgaps = as.Date(StationList[[i]]$YrMthDy) %m+% rep(months(1), length(as.numeric(as.Date(StationList[[i]]$YrMthDy)))) - as.Date(StationList[[i]]$YrMthDy)
+      tgaps = as.Date(StationList[[i]][, Date]) %m+% rep(months(1), length(as.numeric(as.Date(StationList[[i]][, Date])))) - as.Date(StationList[[i]][, Date])
       #Last entry doesn't have a gap. Remove.
       tgaps = tgaps[-length(tgaps)]
       #Actual gap
-      agaps = as.numeric(as.Date(StationList[[i]]$YrMthDy)[-1]) - as.numeric(as.Date(StationList[[i]]$YrMthDy)[-nrow(StationList[[i]])])
+      agaps = as.numeric(as.Date(StationList[[i]][, Date])[-1]) - as.numeric(as.Date(StationList[[i]][, Date])[-nrow(StationList[[i]])])
       
       Dataset$MissingData_m[which(Dataset[, site_no_D]@data == StationList[[i]][1, site_no_SL])] = NAs + length(agaps[which(agaps > tgaps)])
       
@@ -84,11 +84,11 @@ FillMissingDates = function(Dataset, #Where the missing date information will be
       }
     }else if (gapType == 'a'){
       #Get theoretical gaps for each year, given the starting location
-      tgaps = as.Date(StationList[[i]]$YrMthDy) + years(1) - as.Date(StationList[[i]]$YrMthDy)
+      tgaps = as.Date(StationList[[i]][, Date]) + years(1) - as.Date(StationList[[i]][, Date])
       #Last entry doesn't have a gap. Remove.
       tgaps = tgaps[-length(tgaps)]
       #Actual gap
-      agaps = as.numeric(as.Date(StationList[[i]]$YrMthDy)[-1]) - as.numeric(as.Date(StationList[[i]]$YrMthDy)[-nrow(StationList[[i]])])
+      agaps = as.numeric(as.Date(StationList[[i]][, Date])[-1]) - as.numeric(as.Date(StationList[[i]][, Date])[-nrow(StationList[[i]])])
       
       Dataset$MissingData_a[which(Dataset[, site_no_D]@data == StationList[[i]][1, site_no_SL])] = NAs + length(agaps[which(agaps > tgaps)])
       
@@ -177,11 +177,11 @@ FillMissingDates_par = function(Dataset, #Where the missing date information wil
       }
     }else if (gapType == 'm'){
       #Get theoretical gaps for each month, given the starting location
-      tgaps = as.Date(f$YrMthDy) %m+% rep(months(1), length(as.numeric(as.Date(f$YrMthDy)))) - as.Date(f$YrMthDy)
+      tgaps = as.Date(f[, Date]) %m+% rep(months(1), length(as.numeric(as.Date(f[, Date])))) - as.Date(f[, Date])
       #Last entry doesn't have a gap. Remove.
       tgaps = tgaps[-length(tgaps)]
       #Actual gap
-      agaps = as.numeric(as.Date(f$YrMthDy)[-1]) - as.numeric(as.Date(f$YrMthDy)[-nrow(f)])
+      agaps = as.numeric(as.Date(f[, Date])[-1]) - as.numeric(as.Date(f[, Date])[-nrow(f)])
       
       Dataset$MissingData_m[which(Dataset[, site_no_D]@data == f[1, site_no_SL])] = NAs + length(agaps[which(agaps > tgaps)])
       
@@ -203,11 +203,11 @@ FillMissingDates_par = function(Dataset, #Where the missing date information wil
       }
     }else if (gapType == 'a'){
       #Get theoretical gaps for each year, given the starting location
-      tgaps = as.Date(f$YrMthDy) + years(1) - as.Date(f$YrMthDy)
+      tgaps = as.Date(f[, Date]) + years(1) - as.Date(f[, Date])
       #Last entry doesn't have a gap. Remove.
       tgaps = tgaps[-length(tgaps)]
       #Actual gap
-      agaps = as.numeric(as.Date(f$YrMthDy)[-1]) - as.numeric(as.Date(f$YrMthDy)[-nrow(f)])
+      agaps = as.numeric(as.Date(f[, Date])[-1]) - as.numeric(as.Date(f[, Date])[-nrow(f)])
       
       Dataset$MissingData_a[which(Dataset[, site_no_D]@data == f[1, site_no_SL])] = NAs + length(agaps[which(agaps > tgaps)])
       
