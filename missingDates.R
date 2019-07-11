@@ -146,7 +146,7 @@ FillMissingDates_par = function(Dataset, #Where the missing date information wil
   
   cl = makeCluster(detectCores() - 1)
   registerDoParallel(cl)
-  lst = foreach (i = 1:length(StationList), .combine = 'c') %dopar%{
+  lst = foreach (i = 1:length(StationList), .combine = 'c', .packages = 'lubridate') %dopar%{
     #Sort the streamflow series by date
     f = StationList[[i]][order(StationList[[i]][ , Date]),]
     
