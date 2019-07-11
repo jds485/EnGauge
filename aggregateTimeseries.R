@@ -1,7 +1,6 @@
 #Function to aggregate timeseries into average values.
 
 #Fixme: make an option to supply any function for aggregating.
-#Fixme: This is currently only for WQP data. Make a generic aggregation field name in the function call
 
 aggregateTimesteps = function(StationList, #named list of station timeseries
                               aggVal, #text: d, m, a. Daily, Monthly, Annual
