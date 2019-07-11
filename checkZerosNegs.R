@@ -34,23 +34,31 @@ checkZerosNegs = function(StationList, #List of station records in dataframes
   return(StationList)
 }
 
-addNegsToSpatialDataset = function(StationList, SpatialDataset){
+addNegsToSpatialDataset = function(StationList, 
+                                   SpatialDataset,
+                                   site_D, #site ID name in Dataset
+                                   site_SL #site ID name in StationList
+                                   ){
   SpatialDataset$Neg = NA
   for (i in 1:length(StationList)){
     if(length(which(!is.na(StationList[[i]]$Neg))) > 0){
       print(paste('Number of negatives =', length(which(!is.na(StationList[[i]]$Neg)))))
-      SpatialDataset$Neg[SpatialDataset$site_no == StationList[[i]]$site_no[1]] = length(which(!is.na(StationList[[i]]$Neg)))
+      SpatialDataset$Neg[SpatialDataset[, site_D] == StationList[[i]][1, site_SL]] = length(which(!is.na(StationList[[i]]$Neg)))
     }
   }
   return(SpatialDataset)
 }
 
-addZerosToSpatialDataset = function(StationList, SpatialDataset){
+addZerosToSpatialDataset = function(StationList, 
+                                    SpatialDataset,
+                                    site_D, #site ID name in Dataset
+                                    site_SL #site ID name in StationList
+                                    ){
   SpatialDataset$Zero = NA
   for (i in 1:length(StationList)){
     if(length(which(!is.na(StationList[[i]]$Zero))) > 0){
       print(paste('Number of zeros =', length(which(!is.na(StationList[[i]]$Zero)))))
-      SpatialDataset$Zero[SpatialDataset$site_no == StationList[[i]]$site_no[1]] = length(which(!is.na(StationList[[i]]$Zero)))
+      SpatialDataset$Zero[SpatialDataset[, site_D] == StationList[[i]][1, site_SL]] = length(which(!is.na(StationList[[i]]$Zero)))
     }
   }
   return(SpatialDataset)

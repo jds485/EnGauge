@@ -268,10 +268,10 @@ StreamStationList = checkDuplicatesAndRemove(StreamStationList)
 StreamStationList = checkZerosNegs(StreamStationList)
 
 #See if any stations have negative values and add to NWIS spatial dataset
-NWIS_ROI_fn = addNegsToSpatialDataset(StationList = StreamStationList, SpatialDataset = NWIS_ROI_fn)
+NWIS_ROI_fn = addNegsToSpatialDataset(StationList = StreamStationList, SpatialDataset = NWIS_ROI_fn, site_D = 'site_no', site_SL = 'site_no')
 
 #See if any stations have zero values and add to NWIS spatial dataset
-NWIS_ROI_fn = addZerosToSpatialDataset(StationList = StreamStationList, SpatialDataset = NWIS_ROI_fn)
+NWIS_ROI_fn = addZerosToSpatialDataset(StationList = StreamStationList, SpatialDataset = NWIS_ROI_fn, site_D = 'site_no', site_SL = 'site_no')
 
 #   Plot a map of the stations with zero and negative records----
 png(paste0('Streamflow_ZerosNegsMap.png'), res = 300, units = 'in', width = 6, height = 6)
@@ -872,10 +872,10 @@ TN = checkDuplicatesAndRemove(TN, colNames = c('ResultMeasureValue', 'SortDateTi
 TN = checkZerosNegs(TN, Var = 'ResultMeasureValue')
 
 #See if any stations have negative values and add to WQstations_ROI_N spatial dataset
-WQstations_ROI_N = addNegsToSpatialDataset(StationList = TN, SpatialDataset = WQstations_ROI_N)
+WQstations_ROI_N = addNegsToSpatialDataset(StationList = TN, SpatialDataset = WQstations_ROI_N, site_D = 'MonitoringLocationIdentifier', site_SL = 'MonitoringLocationIdentifier')
 
 #See if any stations have zero values and add to spatial dataset
-WQstations_ROI_N = addZerosToSpatialDataset(StationList = TN, SpatialDataset = WQstations_ROI_N)
+WQstations_ROI_N = addZerosToSpatialDataset(StationList = TN, SpatialDataset = WQstations_ROI_N, site_D = 'MonitoringLocationIdentifier', site_SL = 'MonitoringLocationIdentifier')
 
 #     Plot a map of the stations with zero and negative records----
 png(paste0('TN_WQP_ZerosNegsMap.png'), res = 300, units = 'in', width = 6, height = 6)
@@ -1088,10 +1088,10 @@ TP = checkDuplicatesAndRemove(TP, colNames = c('ResultMeasureValue', 'SortDateTi
 TP = checkZerosNegs(TP, Var = 'ResultMeasureValue')
 
 #See if any stations have negative values and add to WQstations_ROI_P spatial dataset
-WQstations_ROI_P = addNegsToSpatialDataset(StationList = TP, SpatialDataset = WQstations_ROI_P)
+WQstations_ROI_P = addNegsToSpatialDataset(StationList = TP, SpatialDataset = WQstations_ROI_P, site_D = 'MonitoringLocationIdentifier', site_SL = 'MonitoringLocationIdentifier')
 
 #See if any stations have zero values and add to spatial dataset
-WQstations_ROI_P = addZerosToSpatialDataset(StationList = TP, SpatialDataset = WQstations_ROI_P)
+WQstations_ROI_P = addZerosToSpatialDataset(StationList = TP, SpatialDataset = WQstations_ROI_P, site_D = 'MonitoringLocationIdentifier', site_SL = 'MonitoringLocationIdentifier')
 
 #     Plot a map of the stations with zero and negative records----
 png(paste0('TP_WQP_ZerosNegsMap.png'), res = 300, units = 'in', width = 6, height = 6)
