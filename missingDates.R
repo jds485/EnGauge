@@ -175,6 +175,8 @@ FillMissingDates_par = function(Dataset, #Where the missing date information wil
           }
         }
       }
+      #Sort the streamflow series by date again because NAs were added out of chronological order
+      list(f[order(f[ , Date]),], Dataset$MissingData_d[which(Dataset[, site_no_D]@data == f[1, site_no_SL])])
     }else if (gapType == 'm'){
       #Get theoretical gaps for each month, given the starting location
       tgaps = as.Date(f[, Date]) %m+% rep(months(1), length(as.numeric(as.Date(f[, Date])))) - as.Date(f[, Date])
@@ -201,6 +203,8 @@ FillMissingDates_par = function(Dataset, #Where the missing date information wil
           }
         }
       }
+      #Sort the streamflow series by date again because NAs were added out of chronological order
+      list(f[order(f[ , Date]),], Dataset$MissingData_m[which(Dataset[, site_no_D]@data == f[1, site_no_SL])])
     }else if (gapType == 'a'){
       #Get theoretical gaps for each year, given the starting location
       tgaps = as.Date(f[, Date]) + years(1) - as.Date(f[, Date])
@@ -227,9 +231,9 @@ FillMissingDates_par = function(Dataset, #Where the missing date information wil
           }
         }
       }
+      #Sort the streamflow series by date again because NAs were added out of chronological order
+      list(f[order(f[ , Date]),], Dataset$MissingData_a[which(Dataset[, site_no_D]@data == f[1, site_no_SL])])
     }
-    #Sort the streamflow series by date again because NAs were added out of chronological order
-    list(f[order(f[ , Date]),], Dataset$MissingData_d[which(Dataset[, site_no_D]@data == f[1, site_no_SL])])
   }
   stopCluster(cl)
   

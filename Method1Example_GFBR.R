@@ -294,7 +294,7 @@ dev.off()
 
 # Identify missing dates and fill them into the timeseries----
 # This also places the timeseries in chronological order
-Fills = FillMissingDates(Dataset = NWIS_ROI_fn, StationList = StreamStationList, Var = 'X_00060_00003', 
+Fills = FillMissingDates_par(Dataset = NWIS_ROI_fn, StationList = StreamStationList, Var = 'X_00060_00003', 
                          Date = 'Date', gapType = 'd', site_no_D = 'site_no', site_no_SL = 'site_no', NoNAcols = 'agency_cd')
 NWIS_ROI_fn = Fills$Dataset
 StreamStationList = Fills$StationList
@@ -904,14 +904,14 @@ TN_a = TN_agg$ann
 rm(TN_agg)
 
 #     Handle missing data in the daily, monthly, and annual aggregated timeseries----
-TN_d2 = FillMissingDates(Dataset = WQstations_ROI_N, StationList = TN_d, Var = 'ResultMeasureValue', 
+TN_d2 = FillMissingDates_par(Dataset = WQstations_ROI_N, StationList = TN_d, Var = 'ResultMeasureValue', 
                          Date = 'SortDate', gapType = 'd', site_no_D = 'MonitoringLocationIdentifier', 
                          site_no_SL = 'MonitoringLocationIdentifier', NoNAcols = 'MonitoringLocationIdentifier')
 WQstations_ROI_N = TN_d2$Dataset
 TN_d = TN_d2$StationList
 rm(TN_d2)
 
-TN_m2 = FillMissingDates(Dataset = WQstations_ROI_N, StationList = TN_m, Var = 'ResultMeasureValue', 
+TN_m2 = FillMissingDates_par(Dataset = WQstations_ROI_N, StationList = TN_m, Var = 'ResultMeasureValue', 
                          Date = 'YrMthDy', gapType = 'm', site_no_D = 'MonitoringLocationIdentifier', 
                          site_no_SL = 'MonitoringLocationIdentifier', NoNAcols = c('MonitoringLocationIdentifier'))
 WQstations_ROI_N = TN_m2$Dataset
@@ -1120,14 +1120,14 @@ TP_a = TP_agg$ann
 rm(TP_agg)
 
 #     Handle missing data in the daily, monthly, and annual aggregated timeseries----
-TP_d2 = FillMissingDates(Dataset = WQstations_ROI_P, StationList = TP_d, Var = 'ResultMeasureValue', 
+TP_d2 = FillMissingDates_par(Dataset = WQstations_ROI_P, StationList = TP_d, Var = 'ResultMeasureValue', 
                          Date = 'SortDate', gapType = 'd', site_no_D = 'MonitoringLocationIdentifier', 
                          site_no_SL = 'MonitoringLocationIdentifier', NoNAcols = 'MonitoringLocationIdentifier')
 WQstations_ROI_P = TP_d2$Dataset
 TP_d = TP_d2$StationList
 rm(TP_d2)
 
-TP_m2 = FillMissingDates(Dataset = WQstations_ROI_P, StationList = TP_m, Var = 'ResultMeasureValue', 
+TP_m2 = FillMissingDates_par(Dataset = WQstations_ROI_P, StationList = TP_m, Var = 'ResultMeasureValue', 
                          Date = 'YrMthDy', gapType = 'm', site_no_D = 'MonitoringLocationIdentifier', 
                          site_no_SL = 'MonitoringLocationIdentifier', NoNAcols = c('MonitoringLocationIdentifier'))
 WQstations_ROI_P = TP_m2$Dataset
