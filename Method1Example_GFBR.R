@@ -1263,18 +1263,18 @@ for (i in 1:length(TP)){
     M = formatMonthlyMatrix(mts)
     # Plotting the monthly values as matrixplot 
     png(paste0('TPMonthly_', TP[[i]]$MonitoringLocationIdentifier[1],'.png'), res = 300, units = 'in', width = 6, height = 3)
-    print(matrixplot(M, ColorRamp="Precipitation", main="Mean Monthly Nitrogen"))
+    print(matrixplot(M, ColorRamp="Precipitation", main="Mean Monthly Phosphorus"))
     dev.off()
     
     #Summary EDA plots
     png(paste0('TP_EDA_', TP[[i]]$MonitoringLocationIdentifier[1],'.png'), res = 300, units = 'in', width = 10, height = 10)
-    hydroplot(dts, FUN = mean, col = 'black', var.unit = 'mean mg/L as N')
+    hydroplot(dts, FUN = mean, col = 'black', var.unit = 'mean ug/L as P')
     dev.off()
     
     #Seasonal flows
     #Fixme: check that every season is represented before using this.
     png(paste0('TP_EDA_Seasonal_', TP[[i]]$MonitoringLocationIdentifier[1],'.png'), res = 300, units = 'in', width = 10, height = 10)
-    hydroplot(dts, FUN = mean, col = 'black', var.unit = 'mean mg/L as N', pfreq = 'seasonal', ylab = 'Mean Nitrogen (mg/L)')
+    hydroplot(dts, FUN = mean, col = 'black', var.unit = 'mean ug/L as P', pfreq = 'seasonal', ylab = 'Mean Phosphorus (ug/L)')
     dev.off()
   }
 }
