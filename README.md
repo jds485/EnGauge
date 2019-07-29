@@ -14,9 +14,6 @@ It is likely that others have made similar functions to process USGS and other e
   [Blog](https://owi.usgs.gov/R/training-curriculum/usgs-packages/)  
   [Slideshow](https://owi.usgs.gov/R/dataRetrieval.html#1)
 
-2. EGRET - package for plotting water quality data  
-  Resources ...
-
 ---
 ### Other R Sources and Code Influences
 [hydroTSM vignette](https://cran.r-project.org/web/packages/hydroTSM/vignettes/hydroTSM_Vignette-knitr.pdf)
@@ -75,7 +72,19 @@ You can find data quality codes for USGS datasets [here](https://help.waterdata.
   - [codes for streamflow 2](https://help.waterdata.usgs.gov/codes-and-parameters/instantaneous-and-daily-value-status-codes)  
   Yes, there are 2 separate reference schemes for streamflow data.
 
-**5. Plots, EDA, Outlier Detection...
+**5. Process Data
+i.	Check for duplicate observations
+ii.	Check for zeros and negative values
+iii.	Fill date gaps (add NA values to dates that are missing from timeseries)
+iv.	Aggregate to daily timesteps
+v.	Spatio-temporal outlier detection
+
+**6. Make Plots
+Maps
+Timeseries
+Boxplots
+Hypsometric Curves for DEMs
+Histograms
 
 ---
 ### Function files:
@@ -93,7 +102,7 @@ You can find data quality codes for USGS datasets [here](https://help.waterdata.
 
 ---
 ## Citation and Contact Information
-Citation: Smith, J.D., ... (2019). EnGauge. Online Github Repository. https://github.com/jds485/EnGauge
+Citation: Smith, J.D. et al. (2019). EnGauge. Online Github Repository. https://github.com/jds485/EnGauge
 
 Contact Information:  
 Jared D. Smith (js4yd@virginia.edu)  
@@ -103,5 +112,4 @@ Julianne D. Quinn (jdq6nn@virginia.edu)
 
 ---
 ## License Information
-You must cite this repository if you use it for your work.
-...
+You must cite this repository if you use it for your work. Please see the license file.
