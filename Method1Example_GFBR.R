@@ -22,7 +22,7 @@ dir_wq = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Dat
 
 #Set input filenames----
 #Region of interest shapefile name
-f_ROI = "BaismanGFMerge"
+f_ROI = "BaismanGFMerge2"
 #DEM - all separate DEM tiles may be added to this as a vector (e.g. c("w001001.adf", "w001002.adf") )
 f_DEM = c("w001001.adf", "w001001.adf")
 
@@ -41,11 +41,14 @@ f_sf_processKey = '_p'
 # EPSG codes from: https://spatialreference.org/ref/?page=2
 pCRS = '+init=epsg:26918'
 
+#Define a small buffer to use for the ROI, in map units
+ROIbuff = 50
+
 #Load libraries and functions----
 #USGS function library - note that a more recent version is available through Github
 library(dataRetrieval)
-#USGS EGRET library
-library(EGRET)
+#USGS EGRET library - currently not used
+#library(EGRET)
 #R libraries
 library(stringi)
 library(stringr)
@@ -77,6 +80,8 @@ source('checkZerosNegs.R')
 source('formatMonthlyMatrix.R')
 source('matplotDates.R')
 source('aggregateTimeseries.R')
+
+#Fixme: Add streams to figures
 
 #Streamflow----
 setwd(dir_sfgauges)
@@ -135,7 +140,10 @@ dev.off()
 ROI = readOGR(dsn = dir_ROI, layer = f_ROI, stringsAsFactors = FALSE)
 ROI = spTransform(ROI, CRS(pCRS))
 
-NWIS_ROI_fn = GaugeLocs_fn[ROI,]
+#buffer
+ROI_buff = buffer(ROI, ROIbuff)
+
+NWIS_ROI_fn = GaugeLocs_fn[ROI_buff,]
 
 # Plot locations of gauges----
 setwd(wd_sf)
@@ -150,7 +158,7 @@ plot(NWIS_ROI_fn, pch = 16, col = 'red', add = TRUE)
 axis(side = 1)
 axis(side = 2)
 box()
-north.arrow(xb = 370000, yb = 4347000, len = 700, col = 'black', lab = 'N')
+north.arrow(xb = 360000, yb = 4349000, len = 700, col = 'black', lab = 'N')
 legend('bottomleft', title = 'Streamflow Stations', legend = c('In ROI', 'Not in ROI'), pch = 16, col = c('red', 'black'))
 dev.off()
 
@@ -302,7 +310,7 @@ rm(Fills)
 
 # Plot the time series for each gauge, and the eCDF, colored by error code----
 #Fixme: add confidence intervals for flow duration curves (fdcu package)
-#Fixme: make axes have the same limits on the seasonal plots
+#Fixme: make axes have the same y-limits on the seasonal plots
 for (i in 1:length(StreamStationList)){
   #Timeseries:----
   #Assign colors to the error codes
@@ -776,9 +784,9 @@ GaugeLocs_WQP = rbind(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugeLocs_WGS84, GaugeLo
 #Remove separate datasets
 rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugesLocs_NAD27, GaugesLocs_NAD83, GaugeLocs_WGS84, GaugeLocs_U, GaugesLocs_U, GaugesLocs_WGS84)
 
-#Clip to ROI
-WQstations_ROI_N = GaugeLocs_WQN[ROI,]
-WQstations_ROI_P = GaugeLocs_WQP[ROI,]
+#Clip to ROI + some small buffer in m
+WQstations_ROI_N = GaugeLocs_WQN[ROI_buff,]
+WQstations_ROI_P = GaugeLocs_WQP[ROI_buff,]
 
 # Plot TN and TP sampling locations on a map----
 png('TNTPsites.png', res = 300, units = 'in', width = 6, height = 6)
@@ -892,7 +900,7 @@ plot(WQstations_ROI_N[which(!is.na(WQstations_ROI_N$Neg) & !is.na(WQstations_ROI
 axis(side = 1)
 axis(side = 2)
 box()
-north.arrow(xb = 370000, yb = 4347000, len = 700, col = 'black', lab = 'N')
+north.arrow(xb = 365000, yb = 4349000, len = 700, col = 'black', lab = 'N')
 legend('topright', title = 'Streamflow Stations', legend = c('Zeros in Record', 'Negatives in Record', 'Both', 'Neither'), pch = 16, col = c('red', 'blue', 'purple', 'black'), bty = 'n')
 dev.off()
 
@@ -904,14 +912,14 @@ TN_a = TN_agg$ann
 rm(TN_agg)
 
 #     Handle missing data in the daily, monthly, and annual aggregated timeseries----
-TN_d2 = FillMissingDates_par(Dataset = WQstations_ROI_N, StationList = TN_d, Var = 'ResultMeasureValue', 
+TN_d2 = FillMissingDates(Dataset = WQstations_ROI_N, StationList = TN_d, Var = 'ResultMeasureValue', 
                          Date = 'SortDate', gapType = 'd', site_no_D = 'MonitoringLocationIdentifier', 
                          site_no_SL = 'MonitoringLocationIdentifier', NoNAcols = 'MonitoringLocationIdentifier')
 WQstations_ROI_N = TN_d2$Dataset
 TN_d = TN_d2$StationList
 rm(TN_d2)
 
-TN_m2 = FillMissingDates_par(Dataset = WQstations_ROI_N, StationList = TN_m, Var = 'ResultMeasureValue', 
+TN_m2 = FillMissingDates(Dataset = WQstations_ROI_N, StationList = TN_m, Var = 'ResultMeasureValue', 
                          Date = 'YrMthDy', gapType = 'm', site_no_D = 'MonitoringLocationIdentifier', 
                          site_no_SL = 'MonitoringLocationIdentifier', NoNAcols = c('MonitoringLocationIdentifier'))
 WQstations_ROI_N = TN_m2$Dataset
@@ -1024,7 +1032,7 @@ for (i in 1:length(TN)){
   title(main = paste0('Station #', TN[[i]]$MonitoringLocationIdentifier[1]))
   dev.off()
   
-  #Fixme: 20 is temporary - the whole if statement should be made more sophisticated.
+  #Fixme: 20 is temporary - the whole if statement should be improved.
   if (length(which(!is.na(TN_d[[i]]$ResultMeasureValue)))>20){
     #hydroTSM plots----
     #daily timeseries
@@ -1108,7 +1116,7 @@ plot(WQstations_ROI_P[which(!is.na(WQstations_ROI_P$Neg) & !is.na(WQstations_ROI
 axis(side = 1)
 axis(side = 2)
 box()
-north.arrow(xb = 370000, yb = 4347000, len = 700, col = 'black', lab = 'N')
+north.arrow(xb = 365000, yb = 4349000, len = 700, col = 'black', lab = 'N')
 legend('topright', title = 'Streamflow Stations', legend = c('Zeros in Record', 'Negatives in Record', 'Both', 'Neither'), pch = 16, col = c('red', 'blue', 'purple', 'black'), bty = 'n')
 dev.off()
 
@@ -1120,14 +1128,14 @@ TP_a = TP_agg$ann
 rm(TP_agg)
 
 #     Handle missing data in the daily, monthly, and annual aggregated timeseries----
-TP_d2 = FillMissingDates_par(Dataset = WQstations_ROI_P, StationList = TP_d, Var = 'ResultMeasureValue', 
+TP_d2 = FillMissingDates(Dataset = WQstations_ROI_P, StationList = TP_d, Var = 'ResultMeasureValue', 
                          Date = 'SortDate', gapType = 'd', site_no_D = 'MonitoringLocationIdentifier', 
                          site_no_SL = 'MonitoringLocationIdentifier', NoNAcols = 'MonitoringLocationIdentifier')
 WQstations_ROI_P = TP_d2$Dataset
 TP_d = TP_d2$StationList
 rm(TP_d2)
 
-TP_m2 = FillMissingDates_par(Dataset = WQstations_ROI_P, StationList = TP_m, Var = 'ResultMeasureValue', 
+TP_m2 = FillMissingDates(Dataset = WQstations_ROI_P, StationList = TP_m, Var = 'ResultMeasureValue', 
                          Date = 'YrMthDy', gapType = 'm', site_no_D = 'MonitoringLocationIdentifier', 
                          site_no_SL = 'MonitoringLocationIdentifier', NoNAcols = c('MonitoringLocationIdentifier'))
 WQstations_ROI_P = TP_m2$Dataset
@@ -1243,7 +1251,7 @@ for (i in 1:length(TP)){
   title(main = paste0('Station #', TP[[i]]$MonitoringLocationIdentifier[1]))
   dev.off()
   
-  #Fixme: 20 is temporary - the whole if statement should be made more sophisticated.
+  #Fixme: 20 is temporary - the whole if statement should be improved.
   if (length(which(!is.na(TP_d[[i]]$ResultMeasureValue)))>20){
     #hydroTSM plots----
     #daily timeseries
