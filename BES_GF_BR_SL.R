@@ -1605,6 +1605,7 @@ min(as.Date(BES_TN_d_load$BARN$SortDate, origin="1970-01-01"))
 max(as.Date(BES_TN_d_load$BARN$SortDate, origin="1970-01-01"))
 
 #Total number of samples
+#Fixme: edit the hard coded numbers
 length(which(!is.na(BES_TN_d_load$BARN$TN..mg.N.L.)))
 #Want to have at least 15-20% of record for validation
 876*.85
@@ -1825,6 +1826,7 @@ options(scipen = 0)
 
 #Elevation of BWI and MD Sci Center----
 #No lapse rate correction made for these stations. 
+#Fixme: hard coded numbers
 #MD Sci Center
 NOAAstations_locs@data[874,]
 #BWI
@@ -1886,3 +1888,91 @@ dev.off()
 cor(StreamStationList$`01583580`$X_00060_00003[Ind1:Ind2], StreamStationList$`01583570`$X_00060_00003[Ind17:Ind27])
 
 a = lm(StreamStationList$`01583580`$X_00060_00003[Ind1:Ind2] ~ StreamStationList$`01583570`$X_00060_00003[Ind17:Ind27])
+
+
+#Estimate WRTDS interpolation tables----
+#Load the streamflow data into WRTDS format
+Daily = readUserDaily(filePath = "C:\\Users\\jsmif\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs", fileName = 'BaismanStreamflow_Cal.txt', hasHeader = TRUE, separator = '\t', qUnit = 1, verbose = FALSE)
+#Read the TN data
+Sample = readUserSample(filePath = "C:\\Users\\jsmif\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs", fileName = 'TN_Cal_WRTDS.txt', hasHeader = TRUE, separator = '\t', verbose = FALSE)
+#Set the required information
+INFO = readUserInfo(filePath = "C:\\Users\\jsmif\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs", fileName = 'WRTDS_INFO.csv', interactive = FALSE)
+eList = mergeReport(INFO = INFO, Daily = Daily, Sample = Sample)
+saveResults("C:\\Users\\jsmif\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs\\", eList)
+
+WRTDSmod = modelEstimation(eList = eList, windowY = 7, windowQ = 2, windowS = .5, minNumObs = 100, minNumUncen = 50, edgeAdjust = TRUE)
+
+setwd("C:\\Users\\jsmif\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs\\")
+png('ConcFluxTime.png', res = 300, units ='in', width = 12, height = 6)
+layout(rbind(c(1,2)))
+plotConcTimeDaily(WRTDSmod)
+plotFluxTimeDaily(WRTDSmod)
+dev.off()
+
+png('ConcFluxTimeErrs.png', res = 300, units ='in', width = 12, height = 6)
+layout(rbind(c(1,2)))
+plotConcPred(WRTDSmod)
+plotFluxPred(WRTDSmod)
+dev.off()
+
+plotResidPred(WRTDSmod)
+plotResidQ(WRTDSmod)
+plotResidTime(WRTDSmod)
+boxResidMonth(WRTDSmod)
+boxConcThree(WRTDSmod)
+boxQTwice(WRTDSmod)
+plotFluxHist(WRTDSmod)
+plotConcHist(WRTDSmod)
+
+png('BiasPlot.png', res = 300, units ='in', width = 12, height = 12)
+fluxBiasMulti(WRTDSmod, cex.axis = 1.5, cex.main = 1.5, cex.lab=1.5)
+dev.off()
+
+png('ContourPlotMean.png', res = 300, units ='in', width = 6, height = 6)
+plotContours(WRTDSmod, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,.8,0.05),qUnit=1, qBottom = 0.01, qTop = 100, whatSurface = 1)
+dev.off()
+
+png('ContourPlotErr.png', res = 300, units ='in', width = 6, height = 6)
+plotContours(WRTDSmod, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,.3,0.05),qUnit=1, qBottom = 0.01, qTop = 100, whatSurface = 2)
+dev.off()
+
+estSurfaces(eList, windowY = windowY, windowQ = windowQ, windowS = windowS, minNumObs = minNumObs, minNumUncen = minNumUncen, edgeAdjust = edgeAdjust, verbose = verbose, run.parallel = run.parallel)
+estDailyFromSurfaces
+checkSurfaceSpan(eList)
+
+#Model#2 WRTDS
+WRTDSmod2 = modelEstimation(eList = eList, windowY = 3, windowQ = 2, windowS = .5, minNumObs = 60, minNumUncen = 50, edgeAdjust = TRUE)
+
+setwd("C:\\Users\\jsmif\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs\\")
+png('ConcFluxTime.png', res = 300, units ='in', width = 12, height = 6)
+layout(rbind(c(1,2)))
+plotConcTimeDaily(WRTDSmod2)
+plotFluxTimeDaily(WRTDSmod2)
+dev.off()
+
+png('ConcFluxTimeErrs.png', res = 300, units ='in', width = 12, height = 6)
+layout(rbind(c(1,2)))
+plotConcPred(WRTDSmod2)
+plotFluxPred(WRTDSmod2)
+dev.off()
+
+plotResidPred(WRTDSmod2)
+plotResidQ(WRTDSmod2)
+plotResidTime(WRTDSmod2)
+boxResidMonth(WRTDSmod2)
+boxConcThree(WRTDSmod2)
+boxQTwice(WRTDSmod2)
+plotFluxHist(WRTDSmod2)
+plotConcHist(WRTDSmod2)
+
+png('BiasPlot.png', res = 300, units ='in', width = 12, height = 12)
+fluxBiasMulti(WRTDSmod2, cex.axis = 1.5, cex.main = 1.5, cex.lab=1.5)
+dev.off()
+
+png('ContourPlotMean.png', res = 300, units ='in', width = 6, height = 6)
+plotContours(WRTDSmod2, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,2,0.4),qUnit=1, qBottom = 0.01, qTop = 100, whatSurface = 1)
+dev.off()
+
+png('ContourPlotErr.png', res = 300, units ='in', width = 6, height = 6)
+plotContours(WRTDSmod2, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,.4,0.05),qUnit=1, qBottom = 0.01, qTop = 100, whatSurface = 2)
+dev.off()
