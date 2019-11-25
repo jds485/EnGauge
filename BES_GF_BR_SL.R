@@ -130,6 +130,9 @@ library(zoo)
 library(hydroTSM)
 library(rnoaa)
 library(rappdirs)
+library(EGRET)
+library(survival)
+library(pracma)
 #Functions from repository
 setwd(dir_EnGauge)
 source('missingDates.R')
@@ -1900,6 +1903,7 @@ INFO = readUserInfo(filePath = "C:\\Users\\jsmif\\OneDrive - University of Virgi
 eList = mergeReport(INFO = INFO, Daily = Daily, Sample = Sample)
 saveResults("C:\\Users\\jsmif\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs\\", eList)
 
+#Default WRTDS parameters----
 WRTDSmod = modelEstimation(eList = eList, windowY = 7, windowQ = 2, windowS = .5, minNumObs = 100, minNumUncen = 50, edgeAdjust = TRUE)
 
 setwd("C:\\Users\\jsmif\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs\\")
@@ -1929,28 +1933,26 @@ fluxBiasMulti(WRTDSmod, cex.axis = 1.5, cex.main = 1.5, cex.lab=1.5)
 dev.off()
 
 png('ContourPlotMean.png', res = 300, units ='in', width = 6, height = 6)
-plotContours(WRTDSmod, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,.8,0.05),qUnit=1, qBottom = 0.01, qTop = 100, whatSurface = 1)
+plotContours(WRTDSmod, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,2.6,0.2),qUnit=1, qBottom = 0.001, qTop = 50, whatSurface = 1)
 dev.off()
 
 png('ContourPlotErr.png', res = 300, units ='in', width = 6, height = 6)
-plotContours(WRTDSmod, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,.3,0.05),qUnit=1, qBottom = 0.01, qTop = 100, whatSurface = 2)
+plotContours(WRTDSmod, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,.5,0.05),qUnit=1, qBottom = 0.001, qTop = 50, whatSurface = 2)
 dev.off()
 
-estSurfaces(eList, windowY = windowY, windowQ = windowQ, windowS = windowS, minNumObs = minNumObs, minNumUncen = minNumUncen, edgeAdjust = edgeAdjust, verbose = verbose, run.parallel = run.parallel)
-estDailyFromSurfaces
-checkSurfaceSpan(eList)
+#Model#2-5 WRTDS----
+WRTDSmod2 = modelEstimation(eList = eList, windowY = 7, windowQ = 2, windowS = .25, minNumObs = 50, minNumUncen = 50, edgeAdjust = TRUE)
+WRTDSmod3 = modelEstimation(eList = eList, windowY = 4, windowQ = 2, windowS = .25, minNumObs = 50, minNumUncen = 50, edgeAdjust = TRUE)
+WRTDSmod4 = modelEstimation(eList = eList, windowY = 2, windowQ = 2, windowS = .25, minNumObs = 50, minNumUncen = 50, edgeAdjust = TRUE)
+WRTDSmod5 = modelEstimation(eList = eList, windowY = 1.5, windowQ = 2, windowS = .25, minNumObs = 50, minNumUncen = 50, edgeAdjust = TRUE)
 
-#Model#2 WRTDS
-WRTDSmod2 = modelEstimation(eList = eList, windowY = 3, windowQ = 2, windowS = .5, minNumObs = 60, minNumUncen = 50, edgeAdjust = TRUE)
-
-setwd("C:\\Users\\jsmif\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs\\")
-png('ConcFluxTime.png', res = 300, units ='in', width = 12, height = 6)
+png('ConcFluxTime_mod2.png', res = 300, units ='in', width = 12, height = 6)
 layout(rbind(c(1,2)))
 plotConcTimeDaily(WRTDSmod2)
 plotFluxTimeDaily(WRTDSmod2)
 dev.off()
 
-png('ConcFluxTimeErrs.png', res = 300, units ='in', width = 12, height = 6)
+png('ConcFluxTimeErrs_mod2.png', res = 300, units ='in', width = 12, height = 6)
 layout(rbind(c(1,2)))
 plotConcPred(WRTDSmod2)
 plotFluxPred(WRTDSmod2)
@@ -1965,14 +1967,354 @@ boxQTwice(WRTDSmod2)
 plotFluxHist(WRTDSmod2)
 plotConcHist(WRTDSmod2)
 
-png('BiasPlot.png', res = 300, units ='in', width = 12, height = 12)
+png('BiasPlot_mod2.png', res = 300, units ='in', width = 12, height = 12)
 fluxBiasMulti(WRTDSmod2, cex.axis = 1.5, cex.main = 1.5, cex.lab=1.5)
 dev.off()
 
-png('ContourPlotMean.png', res = 300, units ='in', width = 6, height = 6)
-plotContours(WRTDSmod2, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,2,0.4),qUnit=1, qBottom = 0.01, qTop = 100, whatSurface = 1)
+png('ContourPlotMean_mod2.png', res = 300, units ='in', width = 6, height = 6)
+plotContours(WRTDSmod2, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,2.6,0.2),qUnit=1, qBottom = 0.001, qTop = 50, whatSurface = 1)
 dev.off()
 
-png('ContourPlotErr.png', res = 300, units ='in', width = 6, height = 6)
-plotContours(WRTDSmod2, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,.4,0.05),qUnit=1, qBottom = 0.01, qTop = 100, whatSurface = 2)
+png('ContourPlotErr_mod2.png', res = 300, units ='in', width = 6, height = 6)
+plotContours(WRTDSmod2, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,.5,0.05),qUnit=1, qBottom = 0.001, qTop = 50, whatSurface = 2)
+dev.off()
+
+png('ConcFluxTime_mod3.png', res = 300, units ='in', width = 12, height = 6)
+layout(rbind(c(1,2)))
+plotConcTimeDaily(WRTDSmod3)
+plotFluxTimeDaily(WRTDSmod3)
+dev.off()
+
+png('ConcFluxTimeErrs_mod3.png', res = 300, units ='in', width = 12, height = 6)
+layout(rbind(c(1,2)))
+plotConcPred(WRTDSmod3)
+plotFluxPred(WRTDSmod3)
+dev.off()
+
+plotResidPred(WRTDSmod3)
+plotResidQ(WRTDSmod3)
+plotResidTime(WRTDSmod3)
+boxResidMonth(WRTDSmod3)
+boxConcThree(WRTDSmod3)
+boxQTwice(WRTDSmod3)
+plotFluxHist(WRTDSmod3)
+plotConcHist(WRTDSmod3)
+
+png('BiasPlot_mod3.png', res = 300, units ='in', width = 12, height = 12)
+fluxBiasMulti(WRTDSmod3, cex.axis = 1.5, cex.main = 1.5, cex.lab=1.5)
+dev.off()
+
+png('ContourPlotMean_mod3.png', res = 300, units ='in', width = 6, height = 6)
+plotContours(WRTDSmod3, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,2.6,0.2),qUnit=1, qBottom = 0.001, qTop = 50, whatSurface = 1)
+dev.off()
+
+png('ContourPlotErr_mod3.png', res = 300, units ='in', width = 6, height = 6)
+plotContours(WRTDSmod3, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,.5,0.05),qUnit=1, qBottom = 0.001, qTop = 50, whatSurface = 2)
+dev.off()
+
+png('ConcFluxTime_mod4.png', res = 300, units ='in', width = 12, height = 6)
+layout(rbind(c(1,2)))
+plotConcTimeDaily(WRTDSmod4)
+plotFluxTimeDaily(WRTDSmod4)
+dev.off()
+
+png('ConcFluxTimeErrs_mod4.png', res = 300, units ='in', width = 12, height = 6)
+layout(rbind(c(1,2)))
+plotConcPred(WRTDSmod4)
+plotFluxPred(WRTDSmod4)
+dev.off()
+
+plotResidPred(WRTDSmod4)
+plotResidQ(WRTDSmod4)
+plotResidTime(WRTDSmod4)
+boxResidMonth(WRTDSmod4)
+boxConcThree(WRTDSmod4)
+boxQTwice(WRTDSmod4)
+plotFluxHist(WRTDSmod4)
+plotConcHist(WRTDSmod4)
+
+png('BiasPlot_mod4.png', res = 300, units ='in', width = 12, height = 12)
+fluxBiasMulti(WRTDSmod4, cex.axis = 1.5, cex.main = 1.5, cex.lab=1.5)
+dev.off()
+
+png('ContourPlotMean_mod4.png', res = 300, units ='in', width = 6, height = 6)
+plotContours(WRTDSmod4, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,2.6,0.2),qUnit=1, qBottom = 0.001, qTop = 50, whatSurface = 1)
+dev.off()
+
+png('ContourPlotErr_mod4.png', res = 300, units ='in', width = 6, height = 6)
+plotContours(WRTDSmod4, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,.5,0.05),qUnit=1, qBottom = 0.001, qTop = 50, whatSurface = 2)
+dev.off()
+
+png('ConcFluxTime_mod5.png', res = 300, units ='in', width = 12, height = 6)
+layout(rbind(c(1,2)))
+plotConcTimeDaily(WRTDSmod5)
+plotFluxTimeDaily(WRTDSmod5)
+dev.off()
+
+png('ConcFluxTimeErrs_mod5.png', res = 300, units ='in', width = 12, height = 6)
+layout(rbind(c(1,2)))
+plotConcPred(WRTDSmod5)
+plotFluxPred(WRTDSmod5)
+dev.off()
+
+plotResidPred(WRTDSmod5)
+plotResidQ(WRTDSmod5)
+plotResidTime(WRTDSmod5)
+boxResidMonth(WRTDSmod5)
+boxConcThree(WRTDSmod5)
+boxQTwice(WRTDSmod5)
+plotFluxHist(WRTDSmod5)
+plotConcHist(WRTDSmod5)
+
+png('BiasPlot_mod5.png', res = 300, units ='in', width = 12, height = 12)
+fluxBiasMulti(WRTDSmod5, cex.axis = 1.5, cex.main = 1.5, cex.lab=1.5)
+dev.off()
+
+png('ContourPlotMean_mod5.png', res = 300, units ='in', width = 6, height = 6)
+plotContours(WRTDSmod5, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,2.6,0.2),qUnit=1, qBottom = 0.001, qTop = 50, whatSurface = 1)
+dev.off()
+
+png('ContourPlotErr_mod5.png', res = 300, units ='in', width = 6, height = 6)
+plotContours(WRTDSmod5, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,.5,0.05),qUnit=1, qBottom = 0.001, qTop = 50, whatSurface = 2)
+dev.off()
+
+#LOOCV SE for sample and discharge---
+sum(WRTDSmod$Sample$SE^2)
+sum(WRTDSmod2$Sample$SE^2)
+sum(WRTDSmod3$Sample$SE^2)
+sum(WRTDSmod4$Sample$SE^2)
+sum(WRTDSmod5$Sample$SE^2)
+
+sum(WRTDSmod$Daily$SE^2)
+sum(WRTDSmod2$Daily$SE^2)
+sum(WRTDSmod3$Daily$SE^2)
+sum(WRTDSmod4$Daily$SE^2)
+sum(WRTDSmod5$Daily$SE^2)
+
+#MSE for sample----
+mean((WRTDSmod$Sample$ConcHat - WRTDSmod$Sample$ConcAve))^2 + sum((WRTDSmod$Sample$ConcHat - WRTDSmod$Sample$ConcAve)^2)/(nrow(Sample)-1)
+mean((WRTDSmod2$Sample$ConcHat - WRTDSmod2$Sample$ConcAve))^2 + sum((WRTDSmod2$Sample$ConcHat - WRTDSmod2$Sample$ConcAve)^2)/(nrow(Sample)-1)
+mean((WRTDSmod3$Sample$ConcHat - WRTDSmod3$Sample$ConcAve))^2 + sum((WRTDSmod3$Sample$ConcHat - WRTDSmod3$Sample$ConcAve)^2)/(nrow(Sample)-1)
+mean((WRTDSmod4$Sample$ConcHat - WRTDSmod4$Sample$ConcAve))^2 + sum((WRTDSmod4$Sample$ConcHat - WRTDSmod4$Sample$ConcAve)^2)/(nrow(Sample)-1)
+mean((WRTDSmod5$Sample$ConcHat - WRTDSmod5$Sample$ConcAve))^2 + sum((WRTDSmod5$Sample$ConcHat - WRTDSmod5$Sample$ConcAve)^2)/(nrow(Sample)-1)
+
+
+#Concentration and Discharge - shift after 2005?----
+png('ConcDischarge.png', res = 300, units ='in', width = 5, height = 5)
+par(mar=c(4,4,.5,.5))
+layout(c(1,2))
+plot(Daily$Date, log(Daily$Q), type = 'l', ylab = 'log(Flow [cms])', xlab = 'Year')
+plot(Sample$Date, Sample$ConcAve, type = 'l', ylab = 'Total Nitrogen (mg/L)', xlab = 'Year')
+dev.off()
+
+
+#Running selected model with the modified functions that report the parameters of the surfaces----
+setwd('C:\\Users\\js4yd\\OneDrive - University of Virginia\\RHESSys_ParameterSA')
+source('WRTDS_modifiedFunctions.R')
+WRTDSmod4m = modelEstimation(eList = eList, windowY = 2, windowQ = 2, windowS = .25, minNumObs = 50, minNumUncen = 50, edgeAdjust = TRUE, numTsteps = 50, numQsteps = 100)
+
+#Make interpolation tables from the surfaces information and save to files that can be loaded in
+#Error in location 2, then locations 4-8 are Intercept, DecYear, LogQ, SinDY, CosDY
+TabInt = WRTDSmod4m$surfaces[,,4]
+TabYear = WRTDSmod4m$surfaces[,,5]
+TabLogQ = WRTDSmod4m$surfaces[,,6]
+TabSinYear = WRTDSmod4m$surfaces[,,7]
+TabCosYear = WRTDSmod4m$surfaces[,,8]
+TabLogErr = WRTDSmod4m$surfaces[,,2]
+
+#There are 3 cells that have NA values that need to be adjusted using parameter interpolation from the tables.
+IndReplace = which(is.na(TabInt))
+#6 is one for each of the parameters from WRTDS
+RepVal = matrix(0, nrow=length(IndReplace), ncol = 6)
+for (ir in 1:length(IndReplace)){
+  #Make a new temporary interpolation table that does not include the missing cell in it
+  TempColInd = ceiling(IndReplace[ir]/nrow(TabInt))
+  TempRowInd = which(rownames(TabInt) == names(which(is.na(TabInt[,TempColInd]))))
+  
+  #Check if this is the first column
+  if (TempColInd == 1){
+    #Use the parameters from the next column without NA values for both interpolation columns
+    count = 1
+    while (is.na(TabInt[TempRowInd,TempColInd+count])){
+      count = count + 1
+      if ((TempColInd+count) == (ncol(TabInt)+1)){
+        stop(paste('No columns in row', TempRowInd, 'of the interpolation table have non-NA values.'))
+      }
+    }
+    Col1 = Col2 = TempColInd+count
+  }else if (TempColInd == ncol(TabInt)){
+    #Used the second to last column's parameters for this column as well
+    count = 1
+    while (is.na(TabInt[TempRowInd,TempColInd-count])){
+      count = count - 1
+      if ((TempColInd-count) == 0){
+        stop(paste('No columns in row', TempRowInd, 'of the interpolation table have non-NA values.'))
+      }
+    }
+    Col1 = Col2 = TempColInd-count
+  }else{
+    #Use the columns on either side of the TempColInd in the new interpolation table.
+    
+    #Col1 first
+    count = 1
+    #Check on if column 2 exists
+    Col2Exists = 0
+    while (is.na(TabInt[TempRowInd,TempColInd-count])){
+      count = count - 1
+      if ((TempColInd-count) == 0){
+        print(paste('Columns in row', TempRowInd, 'of the interpolation table are all NA values for columns less than the target column to be filled in. Checking the greater columns.'))
+        count2 = 1
+        while (is.na(TabInt[TempRowInd,TempColInd+count2])){
+          count2 = count2 + 1
+          if ((TempColInd+count2) == (ncol(TabInt)+1)){
+            stop(paste('No columns in row', TempRowInd, 'of the interpolation table have non-NA values.'))
+          }
+        }
+        #Found a value to use. Assign that column to both Col1 and Col2
+        Col1 = Col2 = TempColInd+count2
+        Col2Exists = 1
+        rm(count2)
+      }
+      if ((TempColInd-count) == 0){
+        #If it makes it here, it found a value. break out of the while
+        break
+      }
+    }
+    
+    if (Col2Exists == 0){
+      Col1 = TempColInd-count
+      
+      #Col2
+      count = 1
+      while (is.na(TabInt[TempRowInd,TempColInd+count])){
+        count = count + 1
+        if ((TempColInd+count) == (ncol(TabInt)+1)){
+          print(paste('Columns in row', TempRowInd, 'of the interpolation table are all NA values for columns greater than the target column to be filled in. Using the column less than the target.'))
+          Col2 = Col1
+          break
+        }
+      }
+      Col2 = TempColInd+count
+    }
+  }
+  
+  #Get the rows
+  #Check if this is the first row
+  if (TempRowInd == 1){
+    #Use the parameters from the next row without NA values for both interpolation columns
+    count = 1
+    while (is.na(TabInt[TempRowInd+count, TempColInd])){
+      count = count + 1
+      if ((TempRowInd+count) == (nrow(TabInt)+1)){
+        stop(paste('No rows in column', TempColInd, 'of the interpolation table have non-NA values.'))
+      }
+    }
+    Row1 = Row2 = TempRowInd+count
+  }else if (TempRowInd == nrow(TabInt)){
+    #Used the second to last row's parameters for this row as well
+    count = 1
+    while (is.na(TabInt[TempRowInd-count,TempColInd])){
+      count = count - 1
+      if ((TempRowInd-count) == 0){
+        stop(paste('No rows in column', TempColInd, 'of the interpolation table have non-NA values.'))
+      }
+    }
+    Row1 = Row2 = TempRowInd-count
+  }else{
+    #Use the rows on either side of the TempRowInd in the new interpolation table.
+    
+    #Row1 first
+    count = 1
+    #Check on if Row2 exists
+    Row2Exists = 0
+    while (is.na(TabInt[TempRowInd-count,TempColInd])){
+      count = count - 1
+      if ((TempRowInd-count) == 0){
+        print(paste('Rows in column', TempColInd, 'of the interpolation table are all NA values for rows less than the target row to be filled in. Checking the greater rows.'))
+        count2 = 1
+        while (is.na(TabInt[TempRowInd+count2,TempColInd])){
+          count2 = count2 + 1
+          if ((TempRowInd+count2) == (nrow(TabInt)+1)){
+            stop(paste('No rows in column', TempColInd, 'of the interpolation table have non-NA values.'))
+          }
+        }
+        #Found a value to use. Assign that column to both Col1 and Col2
+        Row1 = Row2 = TempRowInd+count2
+        Row2Exists = 1
+        rm(count2)
+      }
+      if ((TempRowInd-count) == 0){
+        #If it makes it here, it found a value. break out of the while
+        break
+      }
+    }
+    
+    if (Row2Exists == 0){
+      Row1 = TempRowInd-count
+      
+      #Col2
+      count = 1
+      while (is.na(TabInt[TempRowInd+count,TempColInd])){
+        count = count + 1
+        if ((TempRowInd+count) == (nrow(TabInt)+1)){
+          print(paste('Rows in column', TempColInd, 'of the interpolation table are all NA values for rows greater than the target row to be filled in. Using the row less than the target.'))
+          Row2 = Row1
+          break
+        }
+      }
+      Row2 = TempRowInd+count
+    }
+  }
+  
+  #Get new table using the corners of the tables that bound the NA values
+  TempTabInt = TabInt[unique(c(Row1:TempRowInd, TempRowInd:Row2)), unique(c(Col1:TempColInd, TempColInd:Col2))]
+  TempTabYear = TabYear[unique(c(Row1:TempRowInd, TempRowInd:Row2)), unique(c(Col1:TempColInd, TempColInd:Col2))]
+  TempTabLogQ = TabLogQ[unique(c(Row1:TempRowInd, TempRowInd:Row2)), unique(c(Col1:TempColInd, TempColInd:Col2))]
+  TempTabSinYear = TabSinYear[unique(c(Row1:TempRowInd, TempRowInd:Row2)), unique(c(Col1:TempColInd, TempColInd:Col2))]
+  TempTabCosYear = TabCosYear[unique(c(Row1:TempRowInd, TempRowInd:Row2)), unique(c(Col1:TempColInd, TempColInd:Col2))]
+  TempTabLogErr = TabLogErr[unique(c(Row1:TempRowInd, TempRowInd:Row2)), unique(c(Col1:TempColInd, TempColInd:Col2))]
+  
+  #Extract the new table values for the NA location using the available data in the tables that are not NA
+  #Find the column and row index corresponding to the point
+  
+  RepVal[ir,] = FillTableNAs(DateInd = which(colnames(TempTabInt) == colnames(TabInt)[TempColInd]), FlowInd = which(rownames(TempTabInt) == rownames(TabInt)[TempRowInd]))
+}
+#Replace the table values
+TabInt[IndReplace] = RepVal[,1]
+TabYear[IndReplace] = RepVal[,2]
+TabLogQ[IndReplace] = RepVal[,3]
+TabSinYear[IndReplace] = RepVal[,4]
+TabCosYear[IndReplace] = RepVal[,5]
+TabLogErr[IndReplace] = RepVal[,6]
+
+rm(ir, TempTabInt, TempTabCosYear, TempColInd, TempRowInd, TempTabLogErr, TempTabLogQ, TempTabSinYear, TempTabYear)
+rm(Row2, Row1, Col1, Col2, count, Col2Exists, Row2Exists, RepVal, IndReplace)
+
+#Write the tables
+setwd('C:\\Users\\jsmif\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\WRTDS')
+write.table(TabInt, file = 'TabIntMod4.txt', sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
+write.table(TabYear, file = 'TabYearMod4.txt', sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
+write.table(TabLogQ, file = 'TabLogQMod4.txt', sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
+write.table(TabSinYear, file = 'TabSinYearMod4.txt', sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
+write.table(TabCosYear, file = 'TabCosYearMod4.txt', sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
+write.table(TabLogErr, file = 'TabLogErrMod4.txt', sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
+
+#Contour plots of the parameters
+png('TabInt.png', units = 'in', res = 300, height = 7, width = 7)
+plotContours(WRTDSmod4m, yearStart = 1999, yearEnd = 2011, contourLevels=seq(-2500,2100,100),qUnit=1, qBottom = 0.001, qTop = 50, whatSurface = 4)
+dev.off()
+png('TabYear.png', units = 'in', res = 300, height = 7, width = 7)
+plotContours(WRTDSmod4m, yearStart = 1999, yearEnd = 2011, contourLevels=seq(-1.2,1.4,0.2),qUnit=1, qBottom = 0.001, qTop = 50, whatSurface = 5)
+dev.off()
+png('TabLogFlow.png', units = 'in', res = 300, height = 7, width = 7)
+plotContours(WRTDSmod4m, yearStart = 1999, yearEnd = 2011, contourLevels=seq(-1.8,1,0.2),qUnit=1, qBottom = 0.001, qTop = 50, whatSurface = 6)
+dev.off()
+png('TabSinYear.png', units = 'in', res = 300, height = 7, width = 7)
+plotContours(WRTDSmod4m, yearStart = 1999, yearEnd = 2011, contourLevels=seq(-1.6,1.2,0.2),qUnit=1, qBottom = 0.001, qTop = 50, whatSurface = 7)
+dev.off()
+png('TabCosYear.png', units = 'in', res = 300, height = 7, width = 7)
+plotContours(WRTDSmod4m, yearStart = 1999, yearEnd = 2011, contourLevels=seq(-1.4,1.8,0.2),qUnit=1, qBottom = 0.001, qTop = 50, whatSurface = 8)
+dev.off()
+png('TabLogErr.png', units = 'in', res = 300, height = 7, width = 7)
+plotContours(WRTDSmod3, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,.5,0.05),qUnit=1, qBottom = 0.001, qTop = 50, whatSurface = 2)
 dev.off()
