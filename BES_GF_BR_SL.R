@@ -1895,18 +1895,18 @@ a = lm(StreamStationList$`01583580`$X_00060_00003[Ind1:Ind2] ~ StreamStationList
 
 #Estimate WRTDS interpolation tables----
 #Load the streamflow data into WRTDS format
-Daily = readUserDaily(filePath = "C:\\Users\\jsmif\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs", fileName = 'BaismanStreamflow_Cal.txt', hasHeader = TRUE, separator = '\t', qUnit = 1, verbose = FALSE)
+Daily = readUserDaily(filePath = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs", fileName = 'BaismanStreamflow_Cal.txt', hasHeader = TRUE, separator = '\t', qUnit = 1, verbose = FALSE)
 #Read the TN data
-Sample = readUserSample(filePath = "C:\\Users\\jsmif\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs", fileName = 'TN_Cal_WRTDS.txt', hasHeader = TRUE, separator = '\t', verbose = FALSE)
+Sample = readUserSample(filePath = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs", fileName = 'TN_Cal_WRTDS.txt', hasHeader = TRUE, separator = '\t', verbose = FALSE)
 #Set the required information
-INFO = readUserInfo(filePath = "C:\\Users\\jsmif\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs", fileName = 'WRTDS_INFO.csv', interactive = FALSE)
+INFO = readUserInfo(filePath = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs", fileName = 'WRTDS_INFO.csv', interactive = FALSE)
 eList = mergeReport(INFO = INFO, Daily = Daily, Sample = Sample)
-saveResults("C:\\Users\\jsmif\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs\\", eList)
+saveResults("C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs\\", eList)
 
 #Default WRTDS parameters----
 WRTDSmod = modelEstimation(eList = eList, windowY = 7, windowQ = 2, windowS = .5, minNumObs = 100, minNumUncen = 50, edgeAdjust = TRUE)
 
-setwd("C:\\Users\\jsmif\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs\\")
+setwd("C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs\\")
 png('ConcFluxTime.png', res = 300, units ='in', width = 12, height = 6)
 layout(rbind(c(1,2)))
 plotConcTimeDaily(WRTDSmod)
@@ -2122,6 +2122,9 @@ TabSinYear = WRTDSmod4m$surfaces[,,7]
 TabCosYear = WRTDSmod4m$surfaces[,,8]
 TabLogErr = WRTDSmod4m$surfaces[,,2]
 
+rownames(TabInt) = rownames(TabYear) = rownames(TabLogQ) = rownames(TabSinYear) = rownames(TabCosYear) = rownames(TabLogErr) = attr(WRTDSmod4m$surfaces, which = 'LogQ')
+colnames(TabInt) = colnames(TabYear) = colnames(TabLogQ) = colnames(TabSinYear) = colnames(TabCosYear) = colnames(TabLogErr) = attr(WRTDSmod4m$surfaces, which = 'Year')
+
 #There are 3 cells that have NA values that need to be adjusted using parameter interpolation from the tables.
 IndReplace = which(is.na(TabInt))
 #6 is one for each of the parameters from WRTDS
@@ -2291,13 +2294,15 @@ rm(ir, TempTabInt, TempTabCosYear, TempColInd, TempRowInd, TempTabLogErr, TempTa
 rm(Row2, Row1, Col1, Col2, count, Col2Exists, Row2Exists, RepVal, IndReplace)
 
 #Write the tables
-setwd('C:\\Users\\jsmif\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\WRTDS')
-write.table(TabInt, file = 'TabIntMod4.txt', sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
-write.table(TabYear, file = 'TabYearMod4.txt', sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
-write.table(TabLogQ, file = 'TabLogQMod4.txt', sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
-write.table(TabSinYear, file = 'TabSinYearMod4.txt', sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
-write.table(TabCosYear, file = 'TabCosYearMod4.txt', sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
-write.table(TabLogErr, file = 'TabLogErrMod4.txt', sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
+setwd('C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\WRTDS')
+options(scipen = 999)
+write.table(round(TabInt,5), file = 'TabIntMod4_p5.txt', sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
+write.table(signif(TabYear,4), file = 'TabYearMod4_p4.txt', sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
+write.table(signif(TabLogQ,4), file = 'TabLogQMod4_p4.txt', sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
+write.table(signif(TabSinYear,4), file = 'TabSinYearMod4_p4.txt', sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
+write.table(signif(TabCosYear,4), file = 'TabCosYearMod4_p4.txt', sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
+write.table(round(TabLogErr,5), file = 'TabLogErrMod4_p5.txt', sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
+options(scipen = 0)
 
 #Contour plots of the parameters
 png('TabInt.png', units = 'in', res = 300, height = 7, width = 7)
@@ -2316,5 +2321,5 @@ png('TabCosYear.png', units = 'in', res = 300, height = 7, width = 7)
 plotContours(WRTDSmod4m, yearStart = 1999, yearEnd = 2011, contourLevels=seq(-1.4,1.8,0.2),qUnit=1, qBottom = 0.001, qTop = 50, whatSurface = 8)
 dev.off()
 png('TabLogErr.png', units = 'in', res = 300, height = 7, width = 7)
-plotContours(WRTDSmod3, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,.5,0.05),qUnit=1, qBottom = 0.001, qTop = 50, whatSurface = 2)
+plotContours(WRTDSmod4m, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,.5,0.05),qUnit=1, qBottom = 0.001, qTop = 50, whatSurface = 2)
 dev.off()
