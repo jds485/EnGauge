@@ -25,6 +25,7 @@ wd_P = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\
 dir_WChem = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\WaterChemistry"
 #Precipitation
 dir_precip = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\Precipitation"
+dir_Nexrad = paste0(dir_precip, '/', "BES_Nexrad")
 #Streams
 dir_streams = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\NHD_H_Maryland_State_Shape\\Shape"
 
@@ -98,6 +99,8 @@ f_BESprecipSites = 'BES_PrecipSites'
 #NOAA station data - all
 f_NOAAstationsROI = 'NOAA_StationLocs_20km'
 f_NOAAstationsDataList = 'NOAA_MetStations.yaml'
+#Nexrad Data
+f_NexradDataList = 'NexradYearList.yaml'
 
 #Fixme: provide output filenames for these weather station gauge datasets
 # Precipitation
@@ -1578,19 +1581,279 @@ list.save(x = MetStations, file = f_NOAAstationsDataList, type = "YAML")
 #       need to have matching timeseries to do this. Hydropairs function may work.
 #       can help the spatial prediction
 
-#Fixme: process nexrad radar info----
-setwd("C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\Precipitation\\BES_Nexrad\\Balto2000")
+#Process hydro nexrad radar info----
+#Initial test with year 2000
+setwd(paste0(dir_Nexrad, "/Balto2000"))
 Nexrad = read.table('200004040830.txt', header = FALSE)
+Nexrad2 = read.table('200009040830.txt', header = FALSE)
 colnames(Nexrad) = c('lat', 'long', 'precip')
-test = rasterFromXYZ(Nexrad[,c(2,1,3)], crs = '+init=epsg:4326')
+colnames(Nexrad2) = c('lat', 'long', 'precip')
 coordinates(Nexrad) = c('long', 'lat')
 proj4string(Nexrad) = CRS('+init=epsg:4326')
+Nexrad = spTransform(Nexrad, CRSobj = pCRS)
+coordinates(Nexrad2) = c('long', 'lat')
+proj4string(Nexrad2) = CRS('+init=epsg:4326')
+Nexrad2 = spTransform(Nexrad2, CRSobj = pCRS)
+
+#Check if the samples are in the same locations
+any((Nexrad@coords == Nexrad2@coords) == FALSE)
+
+#Plot the raster point (cell center) locations
+plot(ROI)
+plot(Nexrad, col = 'red', pch = 15, cex = 0.3, add = T)
+
+BaispCRS = spTransform(BaisRun_Outlet, CRSobj = pCRS)
+plot(BaispCRS)
+plot(Nexrad, col = 'red', pch = 15, cex = 0.5, add = T)
+
+#Extract the Baisman Run pixels
+BaisPix = Nexrad[BaispCRS,]
+BaisPix$Pix = c(1,2,3,4)
+
+# Map of which pixel is which----
+plot(BaispCRS)
+plot(Nexrad, pch = 15, add = TRUE)
+plot(BaisPix, col = c('red', 'orange', 'green', 'blue'), pch = 15, add = TRUE)
+
+# Loop over the available NEXRAD txt files and extract these 4 pixels for Baisman Run----
+#  Use 2007 as a test year----
+#Store as a dataframe with the pixels as columns and the dates/times as rows
+#setwd(paste0(dir_Nexrad, "/Balto2007"))
+#fs2007 = list.files()
+
+#Serial
+#BaisNexMat = as.data.frame(matrix(NA, nrow = length(fs2007), ncol = 5))
+#colnames(BaisNexMat) = c('Date', 'Pix1', 'Pix2', 'Pix3', 'Pix4')
+# for (i in 1:length(fs2007)[1:1000]){
+#   #Open the file and project into spatial dataframe
+#   f = read.table(fs2007[i], header = FALSE)
+#   colnames(f) = c('lat', 'long', 'precip')
+#   coordinates(f) = c('long', 'lat')
+#   proj4string(f) = CRS('+init=epsg:4326')
+#   f = spTransform(f, CRSobj = pCRS)
+#   
+#   #Extract the Baisman Run pixels
+#   f_BaisPix = f[BaispCRS,]
+#   rm(f)
+#   
+#   #Extract the date and time information
+#   Date = paste(paste(substr(fs2007[i], start = 1, stop = 4), substr(fs2007[i], start = 5, stop = 6), substr(fs2007[i], start = 7, stop = 8), sep = '-'), paste(substr(fs2007[i], start = 9, stop = 10), substr(fs2007[i], start = 11, stop = 12), sep = ':'), sep = ' ') 
+#   
+#   #Store the date and time as Posix
+#   BaisNexMat$Date[i] = as.character(as.POSIXct(Date))
+#   
+#   #Store the precip info (mm/ha)
+#   BaisNexMat[i, 2:5] = f_BaisPix$precip  
+# }
+# 
+# #Parallel
+# cl = makeCluster(detectCores() - 1)
+# registerDoParallel(cl)
+# BaisNexMat = foreach (i = 1:length(fs2007), .combine = rbind, .inorder = FALSE, .packages = 'sp') %dopar% {
+#   #Open the file and project into spatial dataframe
+#   f = read.table(fs2007[i], header = FALSE)
+#   colnames(f) = c('lat', 'long', 'precip')
+#   coordinates(f) = c('long', 'lat')
+#   proj4string(f) = CRS('+init=epsg:4326')
+#   f = spTransform(f, CRSobj = pCRS)
+#   
+#   #Extract the Baisman Run pixels
+#   f_BaisPix = f[BaispCRS,]
+#   rm(f)
+#   
+#   #Extract the date and time information
+#   Date = paste(paste(substr(fs2007[i], start = 1, stop = 4), substr(fs2007[i], start = 5, stop = 6), substr(fs2007[i], start = 7, stop = 8), sep = '-'), paste(substr(fs2007[i], start = 9, stop = 10), substr(fs2007[i], start = 11, stop = 12), sep = ':'), sep = ' ') 
+#   
+#   #Store the date and time as Posix
+#   Date = as.character(as.POSIXct(Date))
+#   
+#   #Store the precip info (mm/ha) and return as vector
+#   retvals = c(Date, f_BaisPix$precip)
+# }
+# stopCluster(cl)
+# rm(fs2007)
+# 
+# rownames(BaisNexMat) = NULL
+# colnames(BaisNexMat) = c('Date', 'Pix1', 'Pix2', 'Pix3', 'Pix4')
+# 
+# #Fixme: why are there negative values in this processed product?
+# #Give all negative values NAs
+# BaisNexMat[BaisNexMat < 0] = NA
+
+##Plot of the 4 Baisman pixels over time
+#matplotDates(x = as.POSIXct(BaisNexMat[,1]), y = BaisNexMat[,2:5], type = 'l', col = c('red', 'orange', 'green', 'blue'), 
+#        xlab = 'Time', ylab = 'Precipitation (mm/ha)')
+##xlim = c(as.POSIXct(x = '2007-01-01', origin = '1970-01-01'), as.POSIXct('2007-12-31', origin = '1970-01-01'))
+
+##Scatterplot Matrix
+#plot(as.data.frame(BaisNexMat[,2:5]))
+
+#  Parallel over all available Nexrad years----
+setwd(dir_Nexrad)
+folsNexrad = grep(list.files(), pattern = 'Balto', value = TRUE)
+cl = makeCluster(detectCores() - 1)
+registerDoParallel(cl)
+NexradList = list()
+for (j in 1:length(folsNexrad)){
+  fs = list.files(paste0(getwd(), '/', folsNexrad[j]))
+  #Get all of the nexrad data for this year.
+  BaisNexMat = foreach (i = 1:length(fs), .combine = rbind, .inorder = FALSE, .packages = 'sp') %dopar% {
+    #Open the file and project into spatial dataframe
+    f = read.table(paste0(getwd(), '/', folsNexrad[j], '/', fs[i]), header = FALSE)
+    colnames(f) = c('lat', 'long', 'precip')
+    coordinates(f) = c('long', 'lat')
+    proj4string(f) = CRS('+init=epsg:4326')
+    f = spTransform(f, CRSobj = pCRS)
+    
+    #Extract the Baisman Run pixels
+    f_BaisPix = f[BaispCRS,]
+    rm(f)
+    
+    #Extract the date and time information
+    Date = paste(paste(substr(fs[i], start = 1, stop = 4), substr(fs[i], start = 5, stop = 6), substr(fs[i], start = 7, stop = 8), sep = '-'), paste(substr(fs[i], start = 9, stop = 10), substr(fs[i], start = 11, stop = 12), sep = ':'), sep = ' ') 
+    
+    #Store the date and time as Posix
+    Date = as.character(as.POSIXct(Date))
+    
+    #Store the precip info (mm/ha) and return as vector
+    retvals = c(Date, f_BaisPix$precip)
+  }
+  
+  rownames(BaisNexMat) = NULL
+  colnames(BaisNexMat) = c('Date', 'Pix1', 'Pix2', 'Pix3', 'Pix4')
+  
+  #Save to list
+  NexradList = c(NexradList, list(BaisNexMat))
+  names(NexradList) = c(names(NexradList)[1:(j-1)], folsNexrad[j])
+}
+stopCluster(cl)
+
+#Save the Nexrad product list
+list.save(x = NexradList, file = f_NexradDataList, type = 'YAML')
+
+#Go from a list to a matrix / data.frame
+NexradMat = as.data.frame(NexradList[[1]])
+NexradMat$Date = as.character(NexradMat$Date)
+NexradMat[,2] = as.numeric(matrix(NexradMat[,2]))
+NexradMat[,3] = as.numeric(matrix(NexradMat[,3]))
+NexradMat[,4] = as.numeric(matrix(NexradMat[,4]))
+NexradMat[,5] = as.numeric(matrix(NexradMat[,5]))
+
+for(i in 2:length(NexradList)){
+  NexradMat = rbind(NexradMat, NexradList[[i]])
+}
+NexradMat[,2] = as.numeric(matrix(NexradMat[,2]))
+NexradMat[,3] = as.numeric(matrix(NexradMat[,3]))
+NexradMat[,4] = as.numeric(matrix(NexradMat[,4]))
+NexradMat[,5] = as.numeric(matrix(NexradMat[,5]))
+
+rm(NexradList)
+
+#Reassigned dates using this method
+# NexradMat$Date[1:26600] = as.character(test[[1]][1:26600])
+# NexradMat$Date[26601:(26600+25732)] = as.character(test[[2]][1:25732])
+# NexradMat$Date[(26600+25732+1):(26600+25732+27020)] = as.character(test[[3]][1:27020])
+# NexradMat$Date[(26600+25732+27020+1):(26600+25732+27020+30621)] = as.character(test[[4]][1:30621])
+# NexradMat$Date[(26600+25732+27020+30621+1):(26600+25732+27020+30621+30648)] = as.character(test[[5]][1:30648])
+# NexradMat$Date[(26600+25732+27020+30621+30648+1):(26600+25732+27020+30621+30648+30717)] = as.character(test[[6]][1:30717])
+# NexradMat$Date[(26600+25732+27020+30621+30648+30717+1):(26600+25732+27020+30621+30648+30717+32732)] = as.character(test[[7]][1:32732])
+# NexradMat$Date[(26600+25732+27020+30621+30648+30717+32732+1):(26600+25732+27020+30621+30648+30717+32732+33077)] = as.character(test[[8]][1:33077])
+# NexradMat$Date[(26600+25732+27020+30621+30648+30717+32732+33077+1):(26600+25732+27020+30621+30648+30717+32732+33077+33727)] = as.character(test[[9]][1:33727])
+# NexradMat$Date[(26600+25732+27020+30621+30648+30717+32732+33077+33727+1):(26600+25732+27020+30621+30648+30717+32732+33077+33727+34166)] = as.character(test[[10]][1:34166])
+
+#   Check for duplicate records----
+NexradDuplicates = which(duplicated(NexradMat))
+#All of these are for the timestamp 2:00 - 2:45 AM. 
+#I'm not sure why only a few dates have this problem. It does not affect further analysis, so leaving as is.
+
+#   Check for negative values----
+NexradMat$Pix1NegRm = NexradMat$Pix1
+NexradMat$Pix2NegRm = NexradMat$Pix2
+NexradMat$Pix3NegRm = NexradMat$Pix3
+NexradMat$Pix4NegRm = NexradMat$Pix4
+
+NexradMat$Pix1NegRm[NexradMat$Pix1NegRm < 0] = NA
+NexradMat$Pix2NegRm[NexradMat$Pix2NegRm < 0] = NA
+NexradMat$Pix3NegRm[NexradMat$Pix3NegRm < 0] = NA
+NexradMat$Pix4NegRm[NexradMat$Pix4NegRm < 0] = NA
+
+#   Aggregate to daily timeseries----
+#Make a list of the pixels to use the aggregate Timeseries function
+BaisPixList = list(NexradMat[,c(1,6)], NexradMat[,c(1,7)], NexradMat[,c(1,8)], NexradMat[,c(1,9)])
+for(i in 1:length(BaisPixList)){
+  BaisPixList[[i]]$Pix = i
+  BaisPixList[[i]]$DateTime = BaisPixList[[i]]$Date
+  colnames(BaisPixList[[i]]) = c("Date", 'Precip', 'Pix', "DateTime")
+  BaisPixList[[i]]$Date = as.Date(BaisPixList[[i]]$Date)
+}
+BaisNex_Precip_agg = aggregateTimesteps(StationList = BaisPixList, aggVal = 'd', aggVar = 'Precip', date = 'Date', site = 'Pix', fun = 'sum')
+BaisNex_Precip_d = BaisNex_Precip_agg$daily
+rm(BaisNex_Precip_agg)
+
+#   Fill in missing dates in the aggregated timeseries----
+BaisNex_Precip_d2 = FillMissingDates_par(Dataset = BaisPix, StationList = BaisNex_Precip_d, Var = 'Precip', 
+                                     Date = 'Date', gapType = 'd', site_no_D = 'Pix', 
+                                     site_no_SL = 'Pix', NoNAcols = c('Pix'))
+BaisPix_Processed = BaisNex_Precip_d2$Dataset
+BaisNex_Precip_d = BaisNex_Precip_d2$StationList
+rm(BaisNex_Precip_d2)
+
+#   Convert units to mm/km^2 from mm/ha----
+#1 ha = .01 km^2
+for(i in 1:length(BaisNex_Precip_d)){
+  BaisNex_Precip_d[[i]]$Precip/.01
+}
+rm(i)
+
+# Compare the pixels with each other----
+#make a matrix of the data to get a scatterplot matrix
+BaisNexPrecipMat = matrix(NA, nrow = nrow(BaisNex_Precip_d[[1]]), ncol = 5)
+BaisNexPrecipMat[,1] = BaisNex_Precip_d[[1]]$Date
+BaisNexPrecipMat[,2] = BaisNex_Precip_d[[1]]$Precip
+BaisNexPrecipMat[,3] = BaisNex_Precip_d[[2]]$Precip
+BaisNexPrecipMat[,4] = BaisNex_Precip_d[[3]]$Precip
+BaisNexPrecipMat[,5] = BaisNex_Precip_d[[4]]$Precip
+BaisNexPrecipMat = as.data.frame(BaisNexPrecipMat)
+colnames(BaisNexPrecipMat) = c('Date', paste0('Pix', seq(1,4,1)))
+
+png('BaismanNexradPixPrecipTimeseries.png', res = 300, height = 5, width = 5, units = 'in')
+par(mar = c(5,5,2,2))
+matplotDates(as.Date(BaisNexPrecipMat[,1]), BaisNexPrecipMat[,-1], type = 'l', col = c('red', 'orange', 'green', 'blue'), 
+             xlab = 'Time', ylab = expression(paste('Precipitation (mm/km'^2,')')))
+dev.off()
+
+png('BaismanNexradPixPrecipScatterPlotMatrix.png', res = 300, height = 8, width = 8, units = 'in')
+pairs.panels(x = log10(BaisNexPrecipMat[,-1]+.01), scale = FALSE, density = FALSE, ellipses = FALSE, smooth = FALSE, 
+             digits = 3, lm = TRUE, jiggle = FALSE, rug = FALSE, cex.cor = .7, method = 'spearman')
+dev.off()
+
+# Compare to the Oregon Riddge rain gauge----
+min(as.Date(BES_Precip_d$WXORDG_RG1$SortDate))
+max(as.Date(BaisNex_Precip_d[[1]]$Date))
+IndStart = which(as.Date(BaisNex_Precip_d[[1]]$Date) == min(as.Date(BES_Precip_d$WXORDG_RG1$SortDate)))
+
+#Plot the rain gauge vs. this gauge
+BaisNex_Precip_d[[1]][IndStart:nrow(BaisNex_Precip_d[[1]]),]
+
+BaisNexPrecipMat$ORGauge = NA 
+BaisNexPrecipMat$ORGauge[IndStart:nrow(BaisNexPrecipMat)] = BES_Precip_Avg_d$`Oregon Ridge Park`$mean[as.Date(BES_Precip_Avg_d$`Oregon Ridge Park`$SortDate) <= max(as.Date(BaisNex_Precip_d[[1]]$Date))]
+
+png('BaismanNexradPixPrecipScatterPlotMatrix_WithRainGauge.png', res = 300, height = 8, width = 8, units = 'in')
+pairs.panels(x = log10(BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),-1][which((BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),-1]$Pix1 > 0) & !is.nan(BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),-1]$ORGauge)),]), scale = FALSE, density = FALSE, ellipses = FALSE, smooth = FALSE, 
+             digits = 3, lm = TRUE, jiggle = FALSE, rug = FALSE, cex.cor = .7, method = 'spearman', xlim = c(-2.5,2.5), ylim = c(-2.5, 2.5))
+dev.off()
+
+
+# Fixme: Fill in rasters with gauge values on days without radar information----
+
+# Fixme: Convert to a raster for use in RHESSys patch precip assignment----
 gridded(Nexrad) = TRUE
+gridded(Nexrad2) = TRUE
 NexradRas = raster(Nexrad)
 NexradRas = projectRaster(NexradRas, crs = CRS(pCRS))
 
-plot(NexradRas, col = terrain.colors(30))
-plot(ROI, add = T, border = 'black')
+NexradRas2 = raster(Nexrad2)
+NexradRas2 = projectRaster(NexradRas2, crs = CRS(pCRS))
 
 #Fixme: Download climate indices (ENSO, PDO, etc.) and evaluate timeseries relative to those----
 

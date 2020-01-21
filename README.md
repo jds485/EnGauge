@@ -24,7 +24,8 @@ It is likely that others have made similar functions to process USGS and other e
 ### Gauge datasets include:
 1. USGS streamflow from the NWIS portal
 2. EPA STORET, USGS, USDA and other water quality data via the water quality portal
-3. ...
+3. NOAA climate station data
+4. ...
 
 ---
 
