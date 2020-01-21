@@ -23,6 +23,9 @@ wd_N = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\
 wd_P = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges\\Phosphorus'
 #Water Chemistry datasets
 dir_WChem = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\WaterChemistry"
+#Synoptic Water Chemistry
+dir_SynWChem_Kenworth = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\WaterChemistry\\BARN_Synoptic\\WaterChemical_Kenworth_01-02"
+dir_SynWChem_Smith = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\WaterChemistry\\BARN_Synoptic\\WaterChemical_Smith_06-07"
 #Precipitation
 dir_precip = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\Precipitation"
 dir_Nexrad = paste0(dir_precip, '/', "BES_Nexrad")
@@ -136,6 +139,7 @@ library(rappdirs)
 library(EGRET)
 library(survival)
 library(pracma)
+library(psych)
 #Functions from repository
 setwd(dir_EnGauge)
 source('missingDates.R')
@@ -148,6 +152,16 @@ source('scatterHistCols.R')
 #Color functions for plots (R script from Jared Smith's Geothermal_ESDA Github Repo)
 setwd(dir_ColFuns)
 source('ColorFunctions.R')
+#Load modified WRTDS functions and the interpolation tables for regression parameters
+setwd('C:\\Users\\js4yd\\OneDrive - University of Virginia\\RHESSys_ParameterSA')
+source('WRTDS_modifiedFunctions.R')
+setwd("C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\WRTDS")
+TabInt = as.matrix(read.table(file = 'TabIntMod4_p5.txt', sep = '\t', header = TRUE, check.names = FALSE))
+TabYear = as.matrix(read.table(file = 'TabYearMod4_p4.txt', sep = '\t', header = TRUE, check.names = FALSE))
+TabLogQ = as.matrix(read.table(file = 'TabLogQMod4_p4.txt', sep = '\t', header = TRUE, check.names = FALSE))
+TabSinYear = as.matrix(read.table(file = 'TabSinYearMod4_p4.txt', sep = '\t', header = TRUE, check.names = FALSE))
+TabCosYear = as.matrix(read.table(file = 'TabCosYearMod4_p4.txt', sep = '\t', header = TRUE, check.names = FALSE))
+TabLogErr = as.matrix(read.table(file = 'TabLogErrMod4_p5.txt', sep = '\t', header = TRUE, check.names = FALSE))
 
 #Load information from EnGauge downloads and place into the project coordinate system----
 DEM = raster(x = paste0(dir_DEM_out, f_DEM_mosiac))
@@ -2166,7 +2180,7 @@ INFO = readUserInfo(filePath = "C:\\Users\\js4yd\\OneDrive - University of Virgi
 eList = mergeReport(INFO = INFO, Daily = Daily, Sample = Sample)
 saveResults("C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs\\", eList)
 
-#Default WRTDS parameters----
+# Default WRTDS parameters----
 WRTDSmod = modelEstimation(eList = eList, windowY = 7, windowQ = 2, windowS = .5, minNumObs = 100, minNumUncen = 50, edgeAdjust = TRUE)
 
 setwd("C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs\\")
@@ -2203,7 +2217,7 @@ png('ContourPlotErr.png', res = 300, units ='in', width = 6, height = 6)
 plotContours(WRTDSmod, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,.5,0.05),qUnit=1, qBottom = 0.001, qTop = 50, whatSurface = 2)
 dev.off()
 
-#Model#2-5 WRTDS----
+# Model#2-5 WRTDS----
 WRTDSmod2 = modelEstimation(eList = eList, windowY = 7, windowQ = 2, windowS = .25, minNumObs = 50, minNumUncen = 50, edgeAdjust = TRUE)
 WRTDSmod3 = modelEstimation(eList = eList, windowY = 4, windowQ = 2, windowS = .25, minNumObs = 50, minNumUncen = 50, edgeAdjust = TRUE)
 WRTDSmod4 = modelEstimation(eList = eList, windowY = 2, windowQ = 2, windowS = .25, minNumObs = 50, minNumUncen = 50, edgeAdjust = TRUE)
@@ -2354,7 +2368,7 @@ sum(WRTDSmod3$Daily$SE^2)
 sum(WRTDSmod4$Daily$SE^2)
 sum(WRTDSmod5$Daily$SE^2)
 
-#MSE for sample----
+# MSE for sample----
 mean((WRTDSmod$Sample$ConcHat - WRTDSmod$Sample$ConcAve))^2 + sum((WRTDSmod$Sample$ConcHat - WRTDSmod$Sample$ConcAve)^2)/(nrow(Sample)-1)
 mean((WRTDSmod2$Sample$ConcHat - WRTDSmod2$Sample$ConcAve))^2 + sum((WRTDSmod2$Sample$ConcHat - WRTDSmod2$Sample$ConcAve)^2)/(nrow(Sample)-1)
 mean((WRTDSmod3$Sample$ConcHat - WRTDSmod3$Sample$ConcAve))^2 + sum((WRTDSmod3$Sample$ConcHat - WRTDSmod3$Sample$ConcAve)^2)/(nrow(Sample)-1)
@@ -2362,7 +2376,7 @@ mean((WRTDSmod4$Sample$ConcHat - WRTDSmod4$Sample$ConcAve))^2 + sum((WRTDSmod4$S
 mean((WRTDSmod5$Sample$ConcHat - WRTDSmod5$Sample$ConcAve))^2 + sum((WRTDSmod5$Sample$ConcHat - WRTDSmod5$Sample$ConcAve)^2)/(nrow(Sample)-1)
 
 
-#Concentration and Discharge - shift after 2005?----
+# Concentration and Discharge - shift after 2005?----
 png('ConcDischarge.png', res = 300, units ='in', width = 5, height = 5)
 par(mar=c(4,4,.5,.5))
 layout(c(1,2))
@@ -2371,7 +2385,7 @@ plot(Sample$Date, Sample$ConcAve, type = 'l', ylab = 'Total Nitrogen (mg/L)', xl
 dev.off()
 
 
-#Running selected model with the modified functions that report the parameters of the surfaces----
+# Running selected model with the modified functions that report the parameters of the surfaces----
 setwd('C:\\Users\\js4yd\\OneDrive - University of Virginia\\RHESSys_ParameterSA')
 source('WRTDS_modifiedFunctions.R')
 WRTDSmod4m = modelEstimation(eList = eList, windowY = 2, windowQ = 2, windowS = .25, minNumObs = 50, minNumUncen = 50, edgeAdjust = TRUE, numTsteps = 50, numQsteps = 100)
@@ -2586,3 +2600,134 @@ dev.off()
 png('TabLogErr.png', units = 'in', res = 300, height = 7, width = 7)
 plotContours(WRTDSmod4m, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,.5,0.05),qUnit=1, qBottom = 0.001, qTop = 50, whatSurface = 2)
 dev.off()
+#WRTDS for hillslopes----
+#Kenworth 2001-2002----
+setwd(dir_SynWChem_Kenworth)
+K_Q = read.csv(file = "Kenworth_Q.csv",stringsAsFactors = FALSE)
+K_TN = read.csv(file = "Kenworth_TN.csv",stringsAsFactors = FALSE)
+K_Sites = readOGR(dsn = getwd(), layer = "Kenworth_Chem_Sites", stringsAsFactors = FALSE)
+
+#Smith 2006-2007----
+setwd(dir_SynWChem_Smith)
+S_Q = read.csv(file = "Smith_discharge.csv",stringsAsFactors = FALSE)
+S_TN = read.csv(file = "Smith_TN.csv",stringsAsFactors = FALSE)
+S_Sites = readOGR(dsn = getwd(), layer = "Smith_Chem_Sites", stringsAsFactors = FALSE)
+
+#Make a relation for the hillslopes that were also sampled by Kenworth----
+#BR3----
+BR3_Q = K_Q[K_Q$Site == 'BR3',]
+BR3_Q = cbind(BR3_Q, S_Q[S_Q$Site == 'BA3',-1])
+
+BR3_TN = K_TN[K_TN$Site == 'BR3',]
+BR3_TN = cbind(BR3_TN, S_TN[S_TN$Site == 'BA3',-1])
+
+#Find all of the dates that match the BARN outlet sampling
+Dates = colnames(BR3_TN)[which(!is.na(BR3_TN))][-1]
+for(i in 1:length(Dates)){
+  Dates[i] = strcat(strsplit(x = Dates[i], split = '.', fixed = TRUE)[[1]][-1], collapse = '-')
+}
+
+BR3_NSamps = which(as.Date(Dates) %in% as.Date(Sample$Date))
+
+#Incorrect regression model
+#lm_BR3 = lm(as.numeric(BR3_TN[which(!is.na(BR3_TN))][-1][BR3_NSamps]) ~ Sample$ConcAve[as.Date(Sample$Date) %in% as.Date(Dates)])
+
+#BR5----
+BR5_Q = K_Q[K_Q$Site == 'BR5A',]
+BR5_Q = cbind(BR5_Q, S_Q[S_Q$Site == 'BA5AJC2',-1])
+
+BR5_TN = K_TN[K_TN$Site == 'BR5A',]
+BR5_TN = cbind(BR5_TN, S_TN[S_TN$Site == 'BA5AJC2',-1])
+
+#Find all of the dates that match the BARN outlet sampling
+Dates = colnames(BR5_TN)[which(!is.na(BR5_TN))][-1]
+for(i in 1:length(Dates)){
+  Dates[i] = strcat(strsplit(x = Dates[i], split = '.', fixed = TRUE)[[1]][-1], collapse = '-')
+}
+
+BR5_NSamps = which(as.Date(Dates) %in% as.Date(Sample$Date))
+
+#Make a relation for Pond Branch using the Basin Outlet and the Pond Branch gauged site----
+setwd(paste0(dir_WChem, '/Nitrogen'))
+BES_TN_d = list.load(file = "BES_TN_d.yaml", type = 'YAML')
+
+length(which(as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]) %in% as.Date(BES_TN_d$BARN$SortDate[!is.na(BES_TN_d$BARN$TN..mg.N.L.)])))
+
+which(as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]) %in% as.Date(BES_TN_d$BARN$SortDate[!is.na(BES_TN_d$BARN$TN..mg.N.L.)]))
+which(as.Date(BES_TN_d$BARN$SortDate[!is.na(BES_TN_d$BARN$TN..mg.N.L.)]) %in% as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]))
+
+#Plot of TN in POBR vs. BARN
+plot(x = BES_TN_d$BARN$TN..mg.N.L.[!is.na(BES_TN_d$BARN$TN..mg.N.L.)][which(as.Date(BES_TN_d$BARN$SortDate[!is.na(BES_TN_d$BARN$TN..mg.N.L.)]) %in% as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]))],
+     y = BES_TN_d$POBR$TN..mg.N.L.[!is.na(BES_TN_d$POBR$TN..mg.N.L.)][which(as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]) %in% as.Date(BES_TN_d$BARN$SortDate[!is.na(BES_TN_d$BARN$TN..mg.N.L.)]))],
+     ylab = 'Pond Branch TN (mg N/L)', xlab = 'Baisman Run TN (mg N/L)', )
+
+#Now use BARN WRTDS with POBR flows to predict POBR TN
+#Get the POBR streamflows that match those dates
+Flows = BES_TN_d$POBR$Flow[!is.na(BES_TN_d$POBR$TN..mg.N.L.)][which(as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]) %in% as.Date(BES_TN_d$BARN$SortDate[!is.na(BES_TN_d$BARN$TN..mg.N.L.)]))]
+Dates = BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)][which(as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]) %in% as.Date(BES_TN_d$BARN$SortDate[!is.na(BES_TN_d$BARN$TN..mg.N.L.)]))]
+
+POBR_PredTN = matrix(NA, ncol = 3, nrow = length(Flows))
+for(i in 1:length(Flows)){
+  POBR_PredTN[i,] = predictWRTDS(Date = as.character(as.Date(Dates))[i], Flow = Flows[i], rowt = as.numeric(rownames(TabInt)), colt = as.numeric(colnames(TabInt)))
+}
+rm(i)
+colnames(POBR_PredTN) = c('05', 'Med', '95')
+
+POBR_PredTN = as.data.frame(POBR_PredTN)
+POBR_PredTN$True = BES_TN_d$POBR$TN..mg.N.L.[!is.na(BES_TN_d$POBR$TN..mg.N.L.)][which(as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]) %in% as.Date(BES_TN_d$BARN$SortDate[!is.na(BES_TN_d$BARN$TN..mg.N.L.)]))]
+POBR_PredTN$DiffMed = POBR_PredTN$True - POBR_PredTN$Med
+
+plot(POBR_PredTN$True, POBR_PredTN$Med)
+lines(c(-10,10), c(-10,10))
+plot(POBR_PredTN$True, POBR_PredTN$`05`)
+plot(POBR_PredTN$True, POBR_PredTN$`95`)
+
+lm_POBR = lm(POBR_PredTN$DiffMed ~ Flows + POBR_PredTN$Med)
+
+#Make a map of these water quality sampling locations----
+setwd(dir_WChem)
+
+res = 30
+
+world = read.csv("C:\\Users\\js4yd\\Documents\\BaismanSA\\RHESSysRuns\\Run0\\worldfiles\\worldfile.csv", stringsAsFactors = FALSE)
+
+#Taking the unique patch IDs because strata can exist in more than one patch.
+Area.basin = length(unique(world$patchID))*res^2
+
+#Get hillslope areas and conversion factor for streamflow in hillslopes
+uhills = unique(world$hillID)
+Area.Hills = matrix(NA, nrow = length(uhills), ncol = 2)
+for (h in 1:length(uhills)){
+  Area.Hills[h,1] = h
+  #some patches have multiple strata, so their area cannot be counted from the count of cells.
+  Area.Hills[h,2] = length(which(world[which(duplicated(world$patchID) == FALSE),]$hillID == h))*res^2
+}
+rm(h)
+
+coordinates(world) = c('patchX', 'patchY')
+proj4string(world) = CRS('+init=epsg:26918')
+world=spTransform(world, CRSobj = pCRS)
+
+png('BaismanSynopticWaterQualitySites.png', res = 300, units = 'in', width = 6, height = 6)
+par(mar= c(2.5,2.5,1,1))
+plot(world, col = 'white')
+for (h in 1:length(uhills)){
+  plot(world[world$hillID == uhills[h],], pch = 22, add = TRUE, lwd=10, col = 'gray')
+  plot(world[world$hillID == uhills[h],], col = 'white', pch = 15, add = TRUE)
+}
+rm(h)
+plot(MDstreams, col = 'skyblue', add = T, lwd = 4)
+plot(S_Sites, add = T, col = 'green', cex = 2)
+plot(K_Sites, add = T, col = 'red', cex = 2)
+text(x = K_Sites@coords[,1], y = K_Sites@coords[,2], K_Sites$NAME, col = 'darkred', cex = 0.4)
+text(x = S_Sites@coords[,1], y = S_Sites@coords[,2], S_Sites$NAME, col ='darkgreen', cex = 0.4)
+legend('bottomright', legend = c('Kenworth: 2001-2', 'Smith: 2006-7'), col = c('red', 'green'), pch = 3)
+box(which = 'figure', lwd = 2)
+dev.off()
+# degAxis(side = 1, at = seq(-77,-76,.01), labels = FALSE)
+# degAxis(side = 1, at = seq(-76.7,-76,.02))
+# degAxis(side = 3, at = seq(-77,-76,.01), labels = FALSE)
+# degAxis(side = 2, at = seq(39.45, 40,.01))
+# degAxis(side = 4, at = seq(39.45, 40,.01), labels = FALSE)
+# north.arrow(xb = -76.712, yb = 39.469, len = .0005, lab = 'N', tcol = 'black', col='black')
+# text(x = -76.712, y = 39.467, 'WGS84')
