@@ -1,4 +1,4 @@
-#Editing the matplot function to allow for plotting dates on the x-axis instead of the numeric version of the date.
+#Edited the matplot function to allow for plotting dates on the x-axis instead of the numeric version of the date.
 matplotDates = function (x, y, type = "p", lty = 1:5, lwd = 1, lend = par("lend"), 
           pch = NULL, col = 1:6, cex = NULL, bg = NA, xlab = NULL, 
           ylab = NULL, xlim = NULL, ylim = NULL, log = "", ..., add = FALSE, 
