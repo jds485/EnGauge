@@ -2621,7 +2621,7 @@ BR3_Q = cbind(BR3_Q, S_Q[S_Q$Site == 'BA3',-1])
 BR3_TN = K_TN[K_TN$Site == 'BR3',]
 BR3_TN = cbind(BR3_TN, S_TN[S_TN$Site == 'BA3',-1])
 
-#Find all of the dates that match the BARN outlet sampling
+#Relation using only the dates that match the BARN outlet sampling----
 Dates = colnames(BR3_TN)[which(!is.na(BR3_TN))][-1]
 for(i in 1:length(Dates)){
   Dates[i] = strcat(strsplit(x = Dates[i], split = '.', fixed = TRUE)[[1]][-1], collapse = '-')
@@ -2629,8 +2629,71 @@ for(i in 1:length(Dates)){
 
 BR3_NSamps = which(as.Date(Dates) %in% as.Date(Sample$Date))
 
-#Incorrect regression model
-#lm_BR3 = lm(as.numeric(BR3_TN[which(!is.na(BR3_TN))][-1][BR3_NSamps]) ~ Sample$ConcAve[as.Date(Sample$Date) %in% as.Date(Dates)])
+#Relation using all available data for BR3----
+Dates = colnames(BR3_TN)[which(!is.na(BR3_TN))][-1]
+for(i in 1:length(Dates)){
+  Dates[i] = strcat(strsplit(x = Dates[i], split = '.', fixed = TRUE)[[1]][-1], collapse = '-')
+}
+Flows = as.numeric(BR3_Q[which(!is.na(BR3_TN))][-1])
+
+BR3_PredTN = matrix(NA, ncol = 3, nrow = length(Flows))
+for(i in 1:length(Flows)){
+  BR3_PredTN[i,] = predictWRTDS(Date = as.character(as.Date(Dates))[i], Flow = Flows[i], rowt = as.numeric(rownames(TabInt)), colt = as.numeric(colnames(TabInt)))
+}
+rm(i)
+colnames(BR3_PredTN) = c('05', 'Med', '95')
+
+BR3_PredTN = as.data.frame(BR3_PredTN)
+BR3_PredTN$True = as.numeric(BR3_TN[which(!is.na(BR3_TN))][-1])
+BR3_PredTN$DiffMed = BR3_PredTN$True - BR3_PredTN$Med
+
+png('BR3_TrueTNvsWRTDS.png', res = 300, units = 'in', height = 5, width = 5)
+plot(BR3_PredTN$True, BR3_PredTN$Med, ylim = c(0,9), xlim = c(0,9), xlab = 'True BR3 TN (mg N/L)', ylab = 'WRTDS Predicted BR3 TN (mg N/L)')
+lines(c(-10,10), c(-10,10))
+dev.off()
+
+plot(BR3_PredTN$True, BR3_PredTN$`05`)
+plot(BR3_PredTN$True, BR3_PredTN$`95`)
+
+#Date numbers in the year
+DateNumMat = matrix(NA, nrow = 366, ncol = 2)
+DateNumMat[,1] = seq(as.Date("2000-01-01"), as.Date("2000-12-31"), 1)
+DateNumMat[,2] = seq(1, 366, 1)
+
+DatesNums = vector('numeric', length=length(Dates))
+for(i in 1:length(Dates)){
+  DatesNums[i] = DateNumMat[which((month(as.Date(DateNumMat[,1])) == month(Dates[i])) & (day(as.Date(DateNumMat[,1])) == day(Dates[i]))), 2]
+}
+
+lm_BR3 = lm(BR3_PredTN$DiffMed ~ BR3_PredTN$Med)
+lm_BR3_Dates = lm(BR3_PredTN$DiffMed ~ BR3_PredTN$Med + sin(2*pi*DatesNums/366) + cos(2*pi*DatesNums/366))
+
+summary(lm_BR3)
+plot(lm_BR3)
+
+summary(lm_BR3_Dates)
+plot(lm_BR3_Dates)
+
+#plot of regression y vs. x
+plot(y = BR3_PredTN$DiffMed, x = BR3_PredTN$Med)
+plot(y = BR3_PredTN$DiffMed, x = sin(2*pi*DatesNums/366))
+plot(y = BR3_PredTN$DiffMed, x = cos(2*pi*DatesNums/366))
+
+#Relation dropping suspeccted outlier----
+lm_BR3 = lm(BR3_PredTN$DiffMed[BR3_PredTN$True > 1] ~ BR3_PredTN$Med[BR3_PredTN$True > 1])
+lm_BR3_Dates = lm(BR3_PredTN$DiffMed[BR3_PredTN$True > 1] ~ BR3_PredTN$Med[BR3_PredTN$True > 1] + sin(2*pi*DatesNums[BR3_PredTN$True > 1]/366) + cos(2*pi*DatesNums[BR3_PredTN$True > 1]/366))
+
+summary(lm_BR3)
+plot(lm_BR3)
+
+summary(lm_BR3_Dates)
+plot(lm_BR3_Dates)
+
+#plot of regression y vs. x
+plot(y = BR3_PredTN$DiffMed[BR3_PredTN$True > 1], x = BR3_PredTN$Med[BR3_PredTN$True > 1])
+plot(y = BR3_PredTN$DiffMed[BR3_PredTN$True > 1], x = Flows[BR3_PredTN$True > 1])
+plot(y = BR3_PredTN$DiffMed[BR3_PredTN$True > 1], x = sin(2*pi*DatesNums[BR3_PredTN$True > 1]/366))
+plot(y = BR3_PredTN$DiffMed[BR3_PredTN$True > 1], x = cos(2*pi*DatesNums[BR3_PredTN$True > 1]/366))
 
 #BR5----
 BR5_Q = K_Q[K_Q$Site == 'BR5A',]
@@ -2639,7 +2702,7 @@ BR5_Q = cbind(BR5_Q, S_Q[S_Q$Site == 'BA5AJC2',-1])
 BR5_TN = K_TN[K_TN$Site == 'BR5A',]
 BR5_TN = cbind(BR5_TN, S_TN[S_TN$Site == 'BA5AJC2',-1])
 
-#Find all of the dates that match the BARN outlet sampling
+#Relation using all of the dates that match the BARN outlet sampling----
 Dates = colnames(BR5_TN)[which(!is.na(BR5_TN))][-1]
 for(i in 1:length(Dates)){
   Dates[i] = strcat(strsplit(x = Dates[i], split = '.', fixed = TRUE)[[1]][-1], collapse = '-')
@@ -2647,12 +2710,81 @@ for(i in 1:length(Dates)){
 
 BR5_NSamps = which(as.Date(Dates) %in% as.Date(Sample$Date))
 
+#Relation using all available data for BR5----
+Dates = colnames(BR5_TN)[which(!is.na(BR5_TN))][-1]
+for(i in 1:length(Dates)){
+  Dates[i] = strcat(strsplit(x = Dates[i], split = '.', fixed = TRUE)[[1]][-1], collapse = '-')
+}
+Flows = as.numeric(BR5_Q[which(!is.na(BR5_TN))][-1])
+#Drop the NA flow date
+Dates = Dates[-length(Dates)]
+Flows = Flows[-length(Flows)]
+
+BR5_PredTN = matrix(NA, ncol = 3, nrow = length(Flows))
+for(i in 1:length(Flows)){
+  BR5_PredTN[i,] = predictWRTDS(Date = as.character(as.Date(Dates))[i], Flow = Flows[i], rowt = as.numeric(rownames(TabInt)), colt = as.numeric(colnames(TabInt)))
+}
+rm(i)
+colnames(BR5_PredTN) = c('05', 'Med', '95')
+
+BR5_PredTN = as.data.frame(BR5_PredTN)
+BR5_PredTN$True = as.numeric(BR5_TN[which(!is.na(BR5_TN))][-1])[-ncol(BR5_TN[which(!is.na(BR5_TN))][-1])]
+BR5_PredTN$DiffMed = BR5_PredTN$True - BR5_PredTN$Med
+
+png('BR5_TrueTNvsWRTDS.png', res = 300, units = 'in', height = 5, width = 5)
+plot(BR5_PredTN$True, BR5_PredTN$Med, ylim = c(0,9), xlim = c(0,9), xlab = 'True BR5 TN (mg N/L)', ylab = 'WRTDS Predicted BR5 TN (mg N/L)')
+lines(c(-10,10), c(-10,10))
+dev.off()
+
+plot(BR5_PredTN$True, BR5_PredTN$`05`)
+plot(BR5_PredTN$True, BR5_PredTN$`95`)
+
+#Date numbers in the year
+DateNumMat = matrix(NA, nrow = 366, ncol = 2)
+DateNumMat[,1] = seq(as.Date("2000-01-01"), as.Date("2000-12-31"), 1)
+DateNumMat[,2] = seq(1, 366, 1)
+
+DatesNums = vector('numeric', length=length(Dates))
+for(i in 1:length(Dates)){
+  DatesNums[i] = DateNumMat[which((month(as.Date(DateNumMat[,1])) == month(Dates[i])) & (day(as.Date(DateNumMat[,1])) == day(Dates[i]))), 2]
+}
+
+lm_BR5 = lm(BR5_PredTN$DiffMed ~ BR5_PredTN$Med)
+lm_BR5_Dates = lm(BR5_PredTN$DiffMed ~ BR5_PredTN$Med + sin(2*pi*DatesNums/366) + cos(2*pi*DatesNums/366))
+
+summary(lm_BR5)
+plot(lm_BR5)
+
+summary(lm_BR5_Dates)
+plot(lm_BR5_Dates)
+
+#plot of regression y vs. x
+plot(y = BR5_PredTN$DiffMed, x = BR5_PredTN$Med)
+plot(y = BR5_PredTN$DiffMed, x = sin(2*pi*DatesNums/366))
+plot(y = BR5_PredTN$DiffMed, x = cos(2*pi*DatesNums/366))
+
+#Relation dropping suspeccted outlier----
+lm_BR5 = lm(BR5_PredTN$DiffMed[BR5_PredTN$True > 1] ~ BR5_PredTN$Med[BR5_PredTN$True > 1])
+lm_BR5_Dates = lm(BR5_PredTN$DiffMed[BR5_PredTN$True > 1] ~ BR5_PredTN$Med[BR5_PredTN$True > 1] + sin(2*pi*DatesNums[BR5_PredTN$True > 1]/366) + cos(2*pi*DatesNums[BR5_PredTN$True > 1]/366))
+
+summary(lm_BR5)
+plot(lm_BR5)
+
+summary(lm_BR5_Dates)
+plot(lm_BR5_Dates)
+
+#plot of regression y vs. x
+plot(y = BR5_PredTN$DiffMed[BR5_PredTN$True > 1], x = BR5_PredTN$Med[BR5_PredTN$True > 1], xlab = 'Predicted Mean TN (mg N/L)', ylab = 'Difference from True TN (mg N/L)')
+plot(y = BR5_PredTN$DiffMed[BR5_PredTN$True > 1], x = Flows[BR5_PredTN$True > 1])
+plot(y = BR5_PredTN$DiffMed[BR5_PredTN$True > 1], x = sin(2*pi*DatesNums[BR5_PredTN$True > 1]/366))
+plot(y = BR5_PredTN$DiffMed[BR5_PredTN$True > 1], x = cos(2*pi*DatesNums[BR5_PredTN$True > 1]/366))
+
 #Make a relation for Pond Branch using the Basin Outlet and the Pond Branch gauged site----
 setwd(paste0(dir_WChem, '/Nitrogen'))
 BES_TN_d = list.load(file = "BES_TN_d.yaml", type = 'YAML')
 
+#For only those dates that the POBR and BARN gauges have water quality samples----
 length(which(as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]) %in% as.Date(BES_TN_d$BARN$SortDate[!is.na(BES_TN_d$BARN$TN..mg.N.L.)])))
-
 which(as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]) %in% as.Date(BES_TN_d$BARN$SortDate[!is.na(BES_TN_d$BARN$TN..mg.N.L.)]))
 which(as.Date(BES_TN_d$BARN$SortDate[!is.na(BES_TN_d$BARN$TN..mg.N.L.)]) %in% as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]))
 
@@ -2683,6 +2815,57 @@ plot(POBR_PredTN$True, POBR_PredTN$`05`)
 plot(POBR_PredTN$True, POBR_PredTN$`95`)
 
 lm_POBR = lm(POBR_PredTN$DiffMed ~ Flows + POBR_PredTN$Med)
+
+#Using all of the POBR water chemistry data----
+Flows = BES_TN_d$POBR$Flow[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]
+Dates = as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)])
+
+POBR_PredTN = matrix(NA, ncol = 3, nrow = length(Flows))
+for(i in 1:length(Flows)){
+  POBR_PredTN[i,] = predictWRTDS(Date = as.character(as.Date(Dates))[i], Flow = Flows[i], rowt = as.numeric(rownames(TabInt)), colt = as.numeric(colnames(TabInt)))
+}
+rm(i)
+colnames(POBR_PredTN) = c('05', 'Med', '95')
+
+POBR_PredTN = as.data.frame(POBR_PredTN)
+POBR_PredTN$True = BES_TN_d$POBR$TN..mg.N.L.[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]
+POBR_PredTN$DiffMed = POBR_PredTN$True - POBR_PredTN$Med
+
+png('POBR_TrueTNvsWRTDS.png', res = 300, units = 'in', height = 5, width = 5)
+plot(POBR_PredTN$True, POBR_PredTN$Med, ylim = c(0,9), xlim = c(0,9), xlab = 'True Pond Branch TN (mg N/L)', ylab = 'WRTDS Predicted Pond Branch TN (mg N/L)')
+lines(c(-10,10), c(-10,10))
+dev.off()
+
+plot(POBR_PredTN$True, POBR_PredTN$`05`)
+plot(POBR_PredTN$True, POBR_PredTN$`95`)
+
+#Assign number values to the dates to be used in regression. 1 - 366
+DateNumMat = matrix(NA, nrow = 366, ncol = 2)
+DateNumMat[,1] = seq(as.Date("2000-01-01"), as.Date("2000-12-31"), 1)
+DateNumMat[,2] = seq(1, 366, 1)
+
+DatesNums = vector('numeric', length=length(Dates))
+for(i in 1:length(Dates)){
+  DatesNums[i] = DateNumMat[which((month(as.Date(DateNumMat[,1])) == month(Dates[i])) & (day(as.Date(DateNumMat[,1])) == day(Dates[i]))), 2]
+}
+
+#Fixme - this needs to be a censored regression because of the y censoring. Thresholds change over time. Great.
+lm_POBR = lm(POBR_PredTN$DiffMed ~ Flows + POBR_PredTN$Med)
+lm_POBR_Dates = lm(POBR_PredTN$DiffMed ~ Flows + POBR_PredTN$Med + sin(2*pi*DatesNums/366) + cos(2*pi*DatesNums/366))
+lm_POBR_log = lm(log10(POBR_PredTN$DiffMed + abs(min(POBR_PredTN$DiffMed)) + .001) ~ POBR_PredTN$Med + sin(2*pi*DatesNums/366) + cos(2*pi*DatesNums/366))
+
+summary(lm_POBR)
+plot(lm_POBR)
+
+summary(lm_POBR_Dates)
+plot(lm_POBR_dates)
+
+summary(lm_POBR_log)
+
+#plot of regression y vs. x
+plot(y = POBR_PredTN$DiffMed, x = POBR_PredTN$Med)
+plot(y = POBR_PredTN$DiffMed, x = sin(2*pi*DatesNums/366))
+plot(y = POBR_PredTN$DiffMed, x = cos(2*pi*DatesNums/366))
 
 #Make a map of these water quality sampling locations----
 setwd(dir_WChem)
