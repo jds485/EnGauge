@@ -1,11 +1,12 @@
-#Identify missing dates and fill them into the timeseries----
+#Identify missing dates and fill them into the timeseries
 #Fixme: make parallelization general for different operating systems
 
-FillMissingDates = function(Dataset, #Where the missing date information will be added as counts 
+#Serial method
+FillMissingDates = function(Dataset, #Data frame where the missing date information will be added as counts 
                             StationList, #list of streamflow stations to check for missing dates
                             Var = 'X_00060_00003', #variable in StationList to check for missing dates
-                            Date = 'Date',  #Name of the date variable in StationList
-                            gapType = NA,  #length of the desired gap in the StationList dataset: d - day, m - month, a - annual
+                            Date = 'Date',  #Column name of the date variable in StationList
+                            gapType = NA,  #length of the desired gap in the StationList dataset: d = day, m = month, a = annual. Can only specify one a t a time.
                             site_no_D = 'site_no', #column name containing the site number for Dataset
                             site_no_SL = 'site_no', #column name containing the site number for StationList
                             NoNAcols #character vector of column names that should not be made NA
@@ -118,14 +119,14 @@ FillMissingDates = function(Dataset, #Where the missing date information will be
 }
 
 #Same function as above, in parallel for Windows
-FillMissingDates_par = function(Dataset, #Where the missing date information will be added as counts 
-                            StationList, #list of streamflow stations to check for missing dates
-                            Var = 'X_00060_00003', #variable in StationList to check for missing dates
-                            Date = 'Date',  #Name of the date variable in StationList
-                            gapType = NA,  #length of the desired gap in the StationList dataset: d - day, m - month, a - annual
-                            site_no_D = 'site_no', #column name containing the site number for Dataset
-                            site_no_SL = 'site_no', #column name containing the site number for StationList
-                            NoNAcols #character vector of column names that should not be made NA
+FillMissingDates_par = function(Dataset, 
+                            StationList, 
+                            Var = 'X_00060_00003', 
+                            Date = 'Date',  
+                            gapType = NA,  
+                            site_no_D = 'site_no', 
+                            site_no_SL = 'site_no', 
+                            NoNAcols 
 ){
   if (is.na(gapType)){
     stop('Error: gapType must be specified.')
