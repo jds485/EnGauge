@@ -1,6 +1,6 @@
 #Function for DEM mosaikinng from separate tiles
-processDEM = function(dir_DEMs, #Directories for DEMs 
-                      f_DEMs,    #Filenames of DEMs in those directories
+processDEM = function(dir_DEMs, #Character vector of directories for DEMs 
+                      f_DEMs,    #Character vector of filenames of DEMs in those directories
                       pCRS      #Project coordinate system
 ){
   #Mosiac the tiles together
