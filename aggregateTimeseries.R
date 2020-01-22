@@ -1,10 +1,10 @@
 #Function to aggregate timeseries into daily, monthly, or annual values.
 
 aggregateTimesteps = function(StationList, #named list of station timeseries
-                              aggVal, #text: d, m, a. Daily, Monthly, Annual
-                              aggVar, #variable in StationList to aggregate by
-                              date, #fieldname supplying the date
-                              site,  #fieldname supplying the site ID
+                              aggVal, #character vector containing: d, m, and/or a. These stand for Daily, Monthly, and Annual
+                              aggVar, #column name in StationList to aggregate by
+                              date, #column name in StationList supplying the date
+                              site,  #column name in StationList supplying the site ID
                               fun #function to use for aggregation (character)
 ){
   ld = list()
