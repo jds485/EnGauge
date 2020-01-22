@@ -1,3 +1,4 @@
+#Modified flow-duration curve function from hydroTSM package
 fdc.default = function (x, lQ.thr = 0.7, hQ.thr = 0.2, plot = TRUE, log = "y", 
           main = "Flow Duration Curve", xlab = "% Time flow equalled or exceeded", 
           ylab = "Q, [m3/s]", ylim = NULL, yat = c(0.01, 0.1, 1), 
