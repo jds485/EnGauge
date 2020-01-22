@@ -34,6 +34,7 @@ checkZerosNegs = function(StationList, #List of station records in dataframes
   return(StationList)
 }
 
+#Add indicators for negatives and zeros to spatial dataset. Useful for plotting purposes.
 addNegsToSpatialDataset = function(StationList, 
                                    SpatialDataset,
                                    site_D, #site ID name in Dataset
