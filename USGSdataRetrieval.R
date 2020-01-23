@@ -33,13 +33,13 @@ dir_wq = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Dat
 #Set input filenames----
 #Region of interest shapefile name
 f_ROI = "Watershed_GF"
-#Streamflow gauges and site coordinates filenames
+#Streamflow gauges and site coordinates filenames - Only used for Method 2 for Streamflow
 f_StreamGaugeData = "BES_USGS_GaugeStations.csv"
 #Optional site data. If not provided, will use function readNWISsite() to collect site coordinates
 #f_StreamGaugeSites = "USGS_GaugeSites.txt"
 #DEM - all separate DEM tiles may be added to this as a vector (e.g. c("w001001.adf", "w001002.adf") )
 f_DEM = c("w001001.adf", "w001001.adf")
-#Water quality gauges
+#Water quality gauges - Only used for Method 2 for Water Quality
 f_WQgauges = "BES_WaterQualityGaugeStations.csv"
 
 #Set output filenames----
@@ -47,7 +47,7 @@ f_WQgauges = "BES_WaterQualityGaugeStations.csv"
 f_DEM_mosiac = "DEM_mosaic"
 #NWIS streamflow gauges in ROI
 f_NWIS_ROI_out = 'NWIS_ROI'
-#NWIS streamflow gauges in bounding box
+#NWIS streamflow gauges in bounding box. Only for Method 2 streamflow.
 f_NWIS_bb_out = 'NWIS_bb'
 #Streamflow gauge data processing name appendage
 # e.g. 0159384_p
@@ -58,6 +58,9 @@ f_sf_processKey = '_p'
 # It is not the coordinate system of your data (although it could be)
 # EPSG codes from: https://spatialreference.org/ref/?page=2
 pCRS = '+init=epsg:26918'
+
+#Define a small buffer to use for the ROI, in pCRS map units----
+ROIbuff = 0
 
 #Load libraries and functions----
 #USGS function library - note that a more recent version is available through Github
@@ -105,7 +108,7 @@ dir.create(path = wd_sf, showWarnings = FALSE)
 # Method 1: Get gauges using whatNWISsites()----
 AllStations_fn = whatNWISsites(statecode = "MD", parameterCd = '00060')
 AllStations_fn = readNWISsite(AllStations_fn$site_no)
-#Convert to spatial dataframe
+#  Make a spatial dataframe: Method 1----
 # NOTE: Your data may be all one coordinate system, and therefore not need to split into 2 datasets
 #       before joining into 1 dataset.
 # NOTE: your coordinate system may be different (epsg code)
@@ -118,7 +121,7 @@ proj4string(GaugesLocs_NAD27) = CRS('+init=epsg:4267')
 GaugesLocs_NAD83 = AllStations_fn[which(AllStations_fn$coord_datum_cd == 'NAD83'), ]
 coordinates(GaugesLocs_NAD83) = c('dec_long_va', 'dec_lat_va')
 proj4string(GaugesLocs_NAD83) = CRS('+init=epsg:4269')
-#Transform to NAD83 UTM Zone 18N
+#Transform to pCRS
 GaugeLocs_NAD27 = spTransform(GaugesLocs_NAD27, CRS(pCRS))
 GaugeLocs_NAD83 = spTransform(GaugesLocs_NAD83, CRS(pCRS))
 #Join to one dataset again
@@ -147,7 +150,7 @@ if(exists("f_StreamGaugeSites")){
   GaugesLocs = readNWISsite(NWISstations$GaugeNum)
 }
 
-# Make spatial dataframe
+#  Make spatial dataframe: Method 2----
 GaugesLocs_NAD27 = GaugesLocs[which(GaugesLocs$coord_datum_cd == 'NAD27'), ]
 coordinates(GaugesLocs_NAD27) = c('dec_long_va', 'dec_lat_va')
 proj4string(GaugesLocs_NAD27) = CRS('+init=epsg:4267')
@@ -166,23 +169,35 @@ rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugesLocs, GaugesLocs_NAD27, GaugesLocs_NA
 #  Gather all of the DEM files together and mosaic into one file
 DEM = processDEM(dir_DEMs = dir_DEM, f_DEMs = f_DEM, pCRS = pCRS)
 #Add the DEM elevation to the gauge dataset
-GaugeLocs$ElevDEM = raster::extract(x = DEM, y = GaugeLocs)
-GaugeLocs_fn$ElevDEM = raster::extract(x = DEM, y = GaugeLocs_fn)
+#Method 1
+if (exists(x = "GaugeLocs_fn")){
+  GaugeLocs_fn$ElevDEM = raster::extract(x = DEM, y = GaugeLocs_fn)
+}
+#Method 2
+if (exists(x = "GaugeLocs")){
+  GaugeLocs$ElevDEM = raster::extract(x = DEM, y = GaugeLocs)
+}
 
 #  Compare the DEM elevation to the listed elevation----
 setwd(wd_sf)
-png('CompareStreamflowGaugeElevToDEM.png', res = 300, units = 'in', width = 5, height = 5)
-plot(GaugeLocs$alt_va[which((is.na(GaugeLocs_fn$alt_va) == FALSE) & (is.na(GaugeLocs_fn$ElevDEM) == FALSE))], GaugeLocs$ElevDEM[which((is.na(GaugeLocs_fn$alt_va) == FALSE) & (is.na(GaugeLocs_fn$ElevDEM) == FALSE))]/.3048,
-     xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations')
-lines(c(-100,1100), c(-100,1100), col = 'red')
-dev.off()
-
-png('CompareStreamflowGaugeElevToDEM_fn.png', res = 300, units = 'in', width = 5, height = 5)
-plot(GaugeLocs_fn$alt_va[which((is.na(GaugeLocs_fn$alt_va) == FALSE) & (is.na(GaugeLocs_fn$ElevDEM) == FALSE))], GaugeLocs_fn$ElevDEM[which((is.na(GaugeLocs_fn$alt_va) == FALSE)  & (is.na(GaugeLocs_fn$ElevDEM) == FALSE))]/.3048,
-     xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations')
-lines(c(-100,1100), c(-100,1100), col = 'red')
-dev.off()
-
+#Method 1
+if (exists(x = "GaugeLocs_fn")){
+  png('CompareStreamflowGaugeElevToDEM_fn.png', res = 300, units = 'in', width = 5, height = 5)
+  plot(GaugeLocs_fn$alt_va[which((is.na(GaugeLocs_fn$alt_va) == FALSE) & (is.na(GaugeLocs_fn$ElevDEM) == FALSE))], 
+       GaugeLocs_fn$ElevDEM[which((is.na(GaugeLocs_fn$alt_va) == FALSE)  & (is.na(GaugeLocs_fn$ElevDEM) == FALSE))]/.3048,
+       xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations')
+  lines(c(-100,1100), c(-100,1100), col = 'red')
+  dev.off()
+}
+#Method 2
+if (exists(x = "GaugeLocs")){
+  png('CompareStreamflowGaugeElevToDEM.png', res = 300, units = 'in', width = 5, height = 5)
+  plot(GaugeLocs$alt_va[which((is.na(GaugeLocs$alt_va) == FALSE) & (is.na(GaugeLocs$ElevDEM) == FALSE))], 
+       GaugeLocs$ElevDEM[which((is.na(GaugeLocs$alt_va) == FALSE) & (is.na(GaugeLocs$ElevDEM) == FALSE))]/.3048,
+       xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations')
+  lines(c(-100,1100), c(-100,1100), col = 'red')
+  dev.off()
+}
 
 #Fixme: Correct the elevations for those gauges that are very different than the DEM
 # and have collection codes that suggest lower data quality
@@ -199,89 +214,104 @@ dev.off()
 
 
 #  Method 2 only: Add coordinates, elevation, and other data to the NWISstations data----
-for (i in 1:nrow(NWISstations)){
-  #NOTE: if your data are not both character, errors stating the following will appear:
-  # Error in data.frame(..., check.names = FALSE) : 
-  #  arguments imply differing number of rows: 1, 0
-  Ind = which(GaugeLocs$site_no == NWISstations$GaugeNum[i])
-  if (length(Ind) > 1){
-    print(paste('More than one gauge number matches the uniqueNum gauge ', i, '. Using only first match.'))
+if (exists(x = "GaugeLocs")){
+  for (i in 1:nrow(NWISstations)){
+    #NOTE: if your data are not both character, errors stating the following will appear:
+    # Error in data.frame(..., check.names = FALSE) : 
+    #  arguments imply differing number of rows: 1, 0
+    Ind = which(GaugeLocs$site_no == NWISstations$GaugeNum[i])
+    if (length(Ind) > 1){
+      print(paste('More than one gauge number matches the uniqueNum gauge ', i, '. Using only first match.'))
+    }
+    cmb = cbind(NWISstations[i,], GaugeLocs@data[Ind,], GaugeLocs@coords[Ind,][1], GaugeLocs@coords[Ind,][2])
+    colnames(cmb) = c(colnames(NWISstations), colnames(GaugeLocs@data), colnames(GaugeLocs@coords))
+    if (i == 1){ 
+      NewData = cmb
+    }else{
+      NewData = rbind(NewData, cmb)
+    }
   }
-  cmb = cbind(NWISstations[i,], GaugeLocs@data[Ind,], GaugeLocs@coords[Ind,][1], GaugeLocs@coords[Ind,][2])
-  colnames(cmb) = c(colnames(NWISstations), colnames(GaugeLocs@data), colnames(GaugeLocs@coords))
-  if (i == 1){ 
-    NewData = cmb
-  }else{
-    NewData = rbind(NewData, cmb)
-  }
+  NWISstations = NewData
+  rm(i, Ind, NewData, cmb)
 }
-NWISstations = NewData
-rm(i, Ind, NewData, cmb)
 
 # Clip to ROI----
 ROI = readOGR(dsn = dir_ROI, layer = f_ROI, stringsAsFactors = FALSE)
 ROI = spTransform(ROI, CRS(pCRS))
 
-#Make NWIS stations a spatial dataframe
-coordinates(NWISstations) = c('dec_long_va', 'dec_lat_va')
-proj4string(NWISstations) = CRS(pCRS)
-NWIS_ROI = NWISstations[ROI,]
+#buffer
+ROI_buff = buffer(ROI, ROIbuff)
 
-NWIS_ROI_fn = GaugeLocs_fn[ROI,]
+if (exists(x = "GaugeLocs_fn")){
+  NWIS_ROI_fn = GaugeLocs_fn[ROI_buff,]
+}
+if (exists(x = "GaugeLocs")){
+  #  Method 2 only: Make NWIS stations a spatial dataframe
+  coordinates(NWISstations) = c('dec_long_va', 'dec_lat_va')
+  proj4string(NWISstations) = CRS(pCRS)
+  NWIS_ROI = NWISstations[ROI_buff,]
+}
 
 # Plot locations of gauges----
 setwd(wd_sf)
-png('StremflowGauges.png', res = 300, units = 'in', width = 6, height = 6)
-# All NWIS streamflow gauges in bounding box
-plot(NWISstations, pch = 16, col = 'white')
-# ROI
-plot(ROI, add = TRUE)
-# All NWIS streamflow gauges in bounding box, in color
-plot(NWISstations, pch = 16, add = TRUE)
-# NWIS streamflow gauges in ROI
-plot(NWIS_ROI, pch = 16, col = 'red', add = TRUE)
-# Add coordinates
-axis(side = 1)
-axis(side = 2)
-box()
-north.arrow(xb = 370000, yb = 4346000, len = 700, col = 'black', lab = 'N')
-legend('topleft', title = 'Streamflow Stations', legend = c('In ROI', 'Not in ROI'), pch = 16, col = c('red', 'black'))
-dev.off()
-
-png('StremflowGauges_fn.png', res = 300, units = 'in', width = 6, height = 6)
-# ROI
-plot(ROI)
-# All NWIS streamflow gauges in bounding box, in color
-plot(GaugeLocs_fn, pch = 16, add = TRUE)
-# NWIS streamflow gauges in ROI
-plot(NWIS_ROI_fn, pch = 16, col = 'red', add = TRUE)
-# Add coordinates
-axis(side = 1)
-axis(side = 2)
-box()
-north.arrow(xb = 370000, yb = 4347000, len = 700, col = 'black', lab = 'N')
-legend('bottomleft', title = 'Streamflow Stations', legend = c('In ROI', 'Not in ROI'), pch = 16, col = c('red', 'black'))
-dev.off()
+if (exists(x = "GaugeLocs_fn")){
+  #  Method 1 only
+  png('StremflowGauges_fn.png', res = 300, units = 'in', width = 6, height = 6)
+  # ROI
+  plot(ROI)
+  # All NWIS streamflow gauges in bounding box, in color
+  plot(GaugeLocs_fn, pch = 16, add = TRUE)
+  # NWIS streamflow gauges in ROI
+  plot(NWIS_ROI_fn, pch = 16, col = 'red', add = TRUE)
+  # Add coordinates
+  axis(side = 1)
+  axis(side = 2)
+  box()
+  north.arrow(xb = 370000, yb = 4347000, len = 700, col = 'black', lab = 'N')
+  legend('bottomleft', title = 'Streamflow Stations', legend = c('In ROI', 'Not in ROI'), pch = 16, col = c('red', 'black'))
+  dev.off()
+}
+if (exists(x = "GaugeLocs")){
+  #  Method 2 only
+  png('StremflowGauges.png', res = 300, units = 'in', width = 6, height = 6)
+  # All NWIS streamflow gauges in bounding box
+  plot(NWISstations, pch = 16, col = 'white')
+  # ROI
+  plot(ROI, add = TRUE)
+  # All NWIS streamflow gauges in bounding box, in color
+  plot(NWISstations, pch = 16, add = TRUE)
+  # NWIS streamflow gauges in ROI
+  plot(NWIS_ROI, pch = 16, col = 'red', add = TRUE)
+  # Add coordinates
+  axis(side = 1)
+  axis(side = 2)
+  box()
+  north.arrow(xb = 370000, yb = 4346000, len = 700, col = 'black', lab = 'N')
+  legend('topleft', title = 'Streamflow Stations', legend = c('In ROI', 'Not in ROI'), pch = 16, col = c('red', 'black'))
+  dev.off()
+}
 
 # Plot reported vs. DEM elevation of gauges within the ROI----
 setwd(wd_sf)
-png('CompareGaugeElevToDEM_ROI.png', res = 300, units = 'in', width = 5, height = 5)
-plot(NWIS_ROI$alt_va, NWIS_ROI$ElevDEM/.3048,
-     xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations in ROI')
-lines(c(-100,1100), c(-100,1100), col = 'red')
-dev.off()
-
-png('CompareGaugeElevToDEM_ROI_fn.png', res = 300, units = 'in', width = 5, height = 5)
-plot(NWIS_ROI_fn$alt_va, NWIS_ROI_fn$ElevDEM/.3048,
-     xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations in ROI')
-lines(c(-100,1100), c(-100,1100), col = 'red')
-dev.off()
-
-#One of these gauge elevations is a lot lower than DEM. Likely that the gauge was reported in m in USGS database
-#identify(NWIS_ROI_fn$alt_va, NWIS_ROI_fn$ElevDEM/.3048)
+if (exists(x = "GaugeLocs_fn")){
+  #  Method 1 only
+  png('CompareGaugeElevToDEM_ROI_fn.png', res = 300, units = 'in', width = 5, height = 5)
+  plot(NWIS_ROI_fn$alt_va, NWIS_ROI_fn$ElevDEM/.3048,
+       xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations in ROI')
+  lines(c(-100,1100), c(-100,1100), col = 'red')
+  dev.off()
+}
+if (exists(x = "GaugeLocs")){
+  #  Method 2 only
+  png('CompareGaugeElevToDEM_ROI.png', res = 300, units = 'in', width = 5, height = 5)
+  plot(NWIS_ROI$alt_va, NWIS_ROI$ElevDEM/.3048,
+       xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations in ROI')
+  lines(c(-100,1100), c(-100,1100), col = 'red')
+  dev.off()
+}
 
 # Hypsometric plot for DEM in the ROI----
-#Clip DEM to the ROI and make a spatial grid dataframe
+#Clip DEM to the ROI (no buffer) and make a spatial grid dataframe
 DEM_ROI = as(mask(DEM, ROI), 'SpatialGridDataFrame')
 #Plot curve
 setwd(dir_DEM_out)
@@ -297,7 +327,7 @@ dev.off()
 
 # Statistics to download for each streamflow gauge, if available----
 # All codes defined here: https://help.waterdata.usgs.gov/code/stat_cd_nm_query?stat_nm_cd=%25&fmt=html
-#Fixme: lookup codes from the website
+#Fixme: lookup codes directly from the website
 Stat.minFlow = "00002"
 Stat.avgFlow = "00003"
 Stat.maxFlow = "00001"
@@ -314,11 +344,12 @@ Stat.P99 = "01990"
 
 #Collect all of the Stat variables into a vector
 #Fixme: is there a way to collect all variables that begin Stat. and collect them into a new vector?
-Stats = c(Stat.minFlow, Stat.P1, Stat.P5, Stat.P25, Stat.P50, Stat.P75, Stat.P95, Stat.P99, Stat.maxFlow, Stat.avgFlow, Stat.varFlow, Stat.skewFlow)
+Stats = c(Stat.minFlow, Stat.P1, Stat.P5, Stat.P25, Stat.P50, Stat.P75, Stat.P95, Stat.P99, 
+          Stat.maxFlow, Stat.avgFlow, Stat.varFlow, Stat.skewFlow)
 
 # Parameters to download for each gauge, if available----
 # All codes defined here: https://help.waterdata.usgs.gov/code/parameter_cd_query?fmt=rdb&inline=true&group_cd=%
-#Fixme: lookup codes from the website
+#Fixme: lookup codes directly from the website
 Par.cfsFlow = "00060"
 Par.Nflow = "00600"
 Par.Lat = "91110"
@@ -329,9 +360,18 @@ Pars = c(Par.cfsFlow, Par.Nflow, Par.Long, Par.Lat)
 
 # Download the within-ROI stream gauge data in parallel----
 #  Use only the unique gauge numbers in the dataset 
-#  (repeats occur when multiple variables are available for a gauge)
+#  (repeats numbers occur when multiple variables are available for a gauge)
 setwd(wd_sf)
-uniqueNums = unique(NWIS_ROI_fn$site_no)
+#Get unique numbers
+if (exists(x = "NWIS_ROI_fn")){
+  #  Method 1
+  uniqueNums = unique(NWIS_ROI_fn$site_no)
+}else if (exists(x = "NWIS_ROI")){
+  #  Method 2
+  uniqueNums = unique(NWIS_ROI$site_no)
+}
+
+#Download
 cl = makeCluster(detectCores() - 1)
 registerDoParallel(cl)
 a = foreach(i = uniqueNums, .packages = 'dataRetrieval') %dopar% {
@@ -361,7 +401,8 @@ ErrCodes = vector('character')
 Ind_f_StreamStat = list.files()[grep(pattern = 'StreamStat', x = list.files(), ignore.case = FALSE, fixed = TRUE)]
 for (i in 1:length(Ind_f_StreamStat)){
   #Read file
-  f = read.table(Ind_f_StreamStat[i], header = TRUE, sep = '\t', stringsAsFactors = FALSE, colClasses = c('character', 'character', 'Date', 'numeric', 'character'))
+  f = read.table(Ind_f_StreamStat[i], header = TRUE, sep = '\t', stringsAsFactors = FALSE, 
+                 colClasses = c('character', 'character', 'Date', 'numeric', 'character'))
   #Gather the error codes for dates
   ErrCodes = unique(c(ErrCodes, f$X_00060_00003_cd))
   #Add to list
@@ -382,38 +423,75 @@ StreamStationList = checkDuplicatesAndRemove(StreamStationList)
 #  Check for zeros and negative values in the records----
 StreamStationList = checkZerosNegs(StreamStationList)
 
-#See if any stations have negative values and add to NWIS spatial dataset
-NWIS_ROI_fn = addNegsToSpatialDataset(StationList = StreamStationList, SpatialDataset = NWIS_ROI_fn, site_D = 'site_no', site_SL = 'site_no')
+#   See if any stations have negative or zero values and add to NWIS spatial dataset----
+if (exists(x = "NWIS_ROI_fn")){
+  #    Method 1
+  NWIS_ROI_fn = addNegsToSpatialDataset(StationList = StreamStationList, SpatialDataset = NWIS_ROI_fn, site_D = 'site_no', site_SL = 'site_no')
+  NWIS_ROI_fn = addZerosToSpatialDataset(StationList = StreamStationList, SpatialDataset = NWIS_ROI_fn, site_D = 'site_no', site_SL = 'site_no')
+}else if (exists(x = "NWIS_ROI")){
+  #    Method 2
+  NWIS_ROI = addNegsToSpatialDataset(StationList = StreamStationList, SpatialDataset = NWIS_ROI, site_D = 'site_no', site_SL = 'site_no')
+  NWIS_ROI = addZerosToSpatialDataset(StationList = StreamStationList, SpatialDataset = NWIS_ROI, site_D = 'site_no', site_SL = 'site_no')
+}
 
-#See if any stations have zero values and add to NWIS spatial dataset
-NWIS_ROI_fn = addZerosToSpatialDataset(StationList = StreamStationList, SpatialDataset = NWIS_ROI_fn, site_D = 'site_no', site_SL = 'site_no')
+#     Plot a map of the stations with zero and negative records----
+if (exists(x = "NWIS_ROI_fn")){
+  #     Method 1
+  png(paste0('Streamflow_ZerosNegsMap_fn.png'), res = 300, units = 'in', width = 6, height = 6)
+  plot(ROI)
+  #All gauges
+  plot(NWIS_ROI_fn, pch = 16, add = TRUE)
+  #Gauges with zeros
+  plot(NWIS_ROI_fn[!is.na(NWIS_ROI_fn$Zero),], pch = 16, col = 'red', add = TRUE)
+  #Gauges with negative values
+  plot(NWIS_ROI_fn[!is.na(NWIS_ROI_fn$Neg),], pch = 16, col = 'blue', add = TRUE)
+  #Gauges with both
+  plot(NWIS_ROI_fn[which(!is.na(NWIS_ROI_fn$Neg) & !is.na(NWIS_ROI_fn$Zero)),], pch = 16, col = 'purple', add = TRUE)
+  # Add coordinates
+  axis(side = 1)
+  axis(side = 2)
+  box()
+  north.arrow(xb = 370000, yb = 4347000, len = 700, col = 'black', lab = 'N')
+  legend('topright', title = 'Streamflow Stations', legend = c('Zeros in Record', 'Negatives in Record', 'Both', 'Neither'), pch = 16, col = c('red', 'blue', 'purple', 'black'), bty = 'n')
+  dev.off()
+}else if (exists(x = "NWIS_ROI")){
+  #     Method 2
+  png(paste0('Streamflow_ZerosNegsMap.png'), res = 300, units = 'in', width = 6, height = 6)
+  plot(ROI)
+  #All gauges
+  plot(NWIS_ROI, pch = 16, add = TRUE)
+  #Gauges with zeros
+  plot(NWIS_ROI[!is.na(NWIS_ROI$Zero),], pch = 16, col = 'red', add = TRUE)
+  #Gauges with negative values
+  plot(NWIS_ROI[!is.na(NWIS_ROI$Neg),], pch = 16, col = 'blue', add = TRUE)
+  #Gauges with both
+  plot(NWIS_ROI[which(!is.na(NWIS_ROI$Neg) & !is.na(NWIS_ROI$Zero)),], pch = 16, col = 'purple', add = TRUE)
+  # Add coordinates
+  axis(side = 1)
+  axis(side = 2)
+  box()
+  north.arrow(xb = 370000, yb = 4347000, len = 700, col = 'black', lab = 'N')
+  legend('topright', title = 'Streamflow Stations', legend = c('Zeros in Record', 'Negatives in Record', 'Both', 'Neither'), pch = 16, col = c('red', 'blue', 'purple', 'black'), bty = 'n')
+  dev.off()
+}
 
-#   Plot a map of the stations with zero and negative records----
-png(paste0('Streamflow_ZerosNegsMap.png'), res = 300, units = 'in', width = 6, height = 6)
-plot(ROI)
-#All gauges
-plot(NWIS_ROI_fn, pch = 16, add = TRUE)
-#Gauges with zeros
-plot(NWIS_ROI_fn[!is.na(NWIS_ROI_fn$Zero),], pch = 16, col = 'red', add = TRUE)
-#Gauges with negative values
-plot(NWIS_ROI_fn[!is.na(NWIS_ROI_fn$Neg),], pch = 16, col = 'blue', add = TRUE)
-#Gauges with both
-plot(NWIS_ROI_fn[which(!is.na(NWIS_ROI_fn$Neg) & !is.na(NWIS_ROI_fn$Zero)),], pch = 16, col = 'purple', add = TRUE)
-# Add coordinates
-axis(side = 1)
-axis(side = 2)
-box()
-north.arrow(xb = 370000, yb = 4347000, len = 700, col = 'black', lab = 'N')
-legend('topright', title = 'Streamflow Stations', legend = c('Zeros in Record', 'Negatives in Record', 'Both', 'Neither'), pch = 16, col = c('red', 'blue', 'purple', 'black'), bty = 'n')
-dev.off()
-
-# Identify missing dates and fill them into the timeseries----
-# This also places the timeseries in chronological order
-Fills = FillMissingDates_par(Dataset = NWIS_ROI_fn, StationList = StreamStationList, Var = 'X_00060_00003', 
-                         Date = 'Date', gapType = 'd', site_no_D = 'site_no', site_no_SL = 'site_no', NoNAcols = 'agency_cd')
-NWIS_ROI_fn = Fills$Dataset
-StreamStationList = Fills$StationList
-rm(Fills)
+# Identify missing dates and fill them into the timeseries. This also places the timeseries in chronological order----
+#Fixme: Missing data fill in with numerical value estimates using prediction in ungauged basins methods for large gaps
+if (exists(x = "NWIS_ROI_fn")){
+  #  Method 1
+  Fills = FillMissingDates_par(Dataset = NWIS_ROI_fn, StationList = StreamStationList, Var = 'X_00060_00003', 
+                           Date = 'Date', gapType = 'd', site_no_D = 'site_no', site_no_SL = 'site_no', NoNAcols = 'agency_cd')
+  NWIS_ROI_fn = Fills$Dataset
+  StreamStationList = Fills$StationList
+  rm(Fills)
+}else if (exists(x = "NWIS_ROI")){
+  #  Method 2
+  Fills = FillMissingDates_par(Dataset = NWIS_ROI, StationList = StreamStationList, Var = 'X_00060_00003', 
+                               Date = 'Date', gapType = 'd', site_no_D = 'site_no', site_no_SL = 'site_no', NoNAcols = 'agency_cd')
+  NWIS_ROI = Fills$Dataset
+  StreamStationList = Fills$StationList
+  rm(Fills)
+}
 
 # Plot the time series for each gauge, and the eCDF, colored by error code----
 #Fixme: add confidence intervals for flow duration curves (fdcu package)
@@ -433,7 +511,9 @@ for (i in 1:length(StreamStationList)){
   #Add colors
   for (cc in 1:length(colCodes)){
     par(new = TRUE)
-    plot(x = StreamStationList[[i]]$Date[which(StreamStationList[[i]]$X_00060_00003_cd == ErrCodes[cc])], y = StreamStationList[[i]]$X_00060_00003[which(StreamStationList[[i]]$X_00060_00003_cd == ErrCodes[cc])], pch = 16, cex = 0.3,
+    plot(x = StreamStationList[[i]]$Date[which(StreamStationList[[i]]$X_00060_00003_cd == ErrCodes[cc])], 
+         y = StreamStationList[[i]]$X_00060_00003[which(StreamStationList[[i]]$X_00060_00003_cd == ErrCodes[cc])], 
+         pch = 16, cex = 0.3,
          col = colCodes[cc],
          ylim = c(0, 7000), xlim = c(as.Date("1950-01-01"), as.Date("2020-01-01")), axes = FALSE, xlab = '', ylab = '')
   }
@@ -455,7 +535,8 @@ for (i in 1:length(StreamStationList)){
   dev.off()
   
   #Streamflow exceedance, timeseries, and map----
-  png(paste0('StreamflowExceedanceTimeseries_Map_', StreamStationList[[i]]$site_no[1],'.png'), res = 300, units = 'in', width = 10, height = 10)
+  png(paste0('StreamflowExceedanceTimeseries_Map_', StreamStationList[[i]]$site_no[1],'.png'), 
+      res = 300, units = 'in', width = 10, height = 10)
   layout(rbind(c(1,2), c(3, 2)))
   
   #Exceedance
@@ -468,27 +549,37 @@ for (i in 1:length(StreamStationList)){
   #Map of sites with the plotted streamflow exceedance site highlighted in red
   plot(ROI)
   #All gauges
-  plot(NWIS_ROI_fn, pch = 16, add = TRUE)
-  #Gauge selected for exceedance plot
-  plot(NWIS_ROI_fn[which(NWIS_ROI_fn$site_no == StreamStationList[[i]]$site_no[1]),], pch = 16, col = 'red', add = TRUE)
+  if (exists(x = "NWIS_ROI_fn")){
+    plot(NWIS_ROI_fn, pch = 16, add = TRUE)
+    #Gauge selected for exceedance plot
+    plot(NWIS_ROI_fn[which(NWIS_ROI_fn$site_no == StreamStationList[[i]]$site_no[1]),], pch = 16, col = 'red', add = TRUE)
+    title(main = NWIS_ROI_fn$station_nm[which(NWIS_ROI_fn$site_no == StreamStationList[[i]]$site_no[1])])
+  }else if (exists(x = "NWIS_ROI")){
+    plot(NWIS_ROI, pch = 16, add = TRUE)
+    #Gauge selected for exceedance plot
+    plot(NWIS_ROI[which(NWIS_ROI$site_no == StreamStationList[[i]]$site_no[1]),], pch = 16, col = 'red', add = TRUE)
+    title(main = NWIS_ROI$station_nm[which(NWIS_ROI$site_no == StreamStationList[[i]]$site_no[1])])
+  }
   # Add coordinates
   axis(side = 1)
   axis(side = 2)
   box()
   north.arrow(xb = 370000, yb = 4347000, len = 700, col = 'black', lab = 'N')
   legend('topright', title = 'Streamflow Stations', legend = c('Selected', 'Other'), pch = 16, col = c('red', 'black'), bty = 'n')
-  title(main = NWIS_ROI_fn$station_nm[which(NWIS_ROI_fn$site_no == StreamStationList[[i]]$site_no[1])])
   
   #Timeseries
   plot(x = StreamStationList[[i]]$Date, y = StreamStationList[[i]]$X_00060_00003, type = 'o', pch = 16, cex = 0.3,
        xlab = 'Year', ylab = 'Daily Mean Streamflow (cfs)', main = paste0('Station #', StreamStationList[[i]]$site_no[1]),
-       ylim = c(min(StreamStationList[[i]]$X_00060_00003, na.rm = TRUE), max(StreamStationList[[i]]$X_00060_00003, na.rm = TRUE)), xlim = c(as.Date("1950-01-01"), as.Date("2020-01-01")))
+       ylim = c(min(StreamStationList[[i]]$X_00060_00003, na.rm = TRUE), max(StreamStationList[[i]]$X_00060_00003, na.rm = TRUE)), 
+       xlim = c(as.Date("1950-01-01"), as.Date("2020-01-01")))
   #Add colors
   for (cc in 1:length(colCodes)){
     par(new = TRUE)
-    plot(x = StreamStationList[[i]]$Date[which(StreamStationList[[i]]$X_00060_00003_cd == ErrCodes[cc])], y = StreamStationList[[i]]$X_00060_00003[which(StreamStationList[[i]]$X_00060_00003_cd == ErrCodes[cc])], pch = 16, cex = 0.3,
-         col = colCodes[cc], axes = FALSE, xlab = '', ylab = '',
-         ylim = c(min(StreamStationList[[i]]$X_00060_00003, na.rm = TRUE), max(StreamStationList[[i]]$X_00060_00003, na.rm = TRUE)), xlim = c(as.Date("1950-01-01"), as.Date("2020-01-01")))
+    plot(x = StreamStationList[[i]]$Date[which(StreamStationList[[i]]$X_00060_00003_cd == ErrCodes[cc])], 
+         y = StreamStationList[[i]]$X_00060_00003[which(StreamStationList[[i]]$X_00060_00003_cd == ErrCodes[cc])], 
+         pch = 16, cex = 0.3, col = colCodes[cc], axes = FALSE, xlab = '', ylab = '',
+         ylim = c(min(StreamStationList[[i]]$X_00060_00003, na.rm = TRUE), max(StreamStationList[[i]]$X_00060_00003, na.rm = TRUE)), 
+         xlim = c(as.Date("1950-01-01"), as.Date("2020-01-01")))
   }
   legend('topleft', legend = ErrCodes[codes], col = colCodes[codes], pch = 16)
   dev.off()
@@ -537,6 +628,7 @@ rm(i, cc, colCodes, codes, mts, dts, M, at.y, lab.y)
 #Fixme: check for high and low flow outliers in each record, and compare spatially to other gauges on those dates
 #Fixme: add temporal outlier detection methods to account for correlation at many lag distances (spectral methods?)
 #Fixme: add spatiotemporal outlier detection methods
+#Fixme: flags for ST outliers at specified levels
 
 for (i in 1:length(StreamStationList)){
   #Hacky spatiotemporal outlier detection method
@@ -716,7 +808,19 @@ for (i in 1:length(StreamStationList)){
   ahighs = ahighs[,c(1,1+order(as.numeric(colnames(ahighs[-1]))))]
   
   #also order the stations for plotting with same color scheme
-  pstations = NWIS_ROI_fn[order(as.numeric(NWIS_ROI_fn$site_no)),]
+  if (exists(x = "NWIS_ROI_fn")){
+    pstations = NWIS_ROI_fn[order(as.numeric(NWIS_ROI_fn$site_no)),]
+    #figure titles
+    title1 = paste(NWIS_ROI_fn$station_nm[which(NWIS_ROI_fn$site_no == StreamStationList[[i]]$site_no[1])], '\n 99th Percentile Daily Average Flow')
+    title2 = paste(NWIS_ROI_fn$station_nm[which(NWIS_ROI_fn$site_no == StreamStationList[[i]]$site_no[1])], '\n Day Before 99th Percentile Daily Average Flow')
+    title3 = paste(NWIS_ROI_fn$station_nm[which(NWIS_ROI_fn$site_no == StreamStationList[[i]]$site_no[1])], '\n Day After 99th Percentile Daily Average Flow')
+  }else if (exists(x = "NWIS_ROI")){
+    pstations = NWIS_ROI[order(as.numeric(NWIS_ROI$site_no)),]
+    #figure titles
+    title1 = paste(NWIS_ROI$station_nm[which(NWIS_ROI$site_no == StreamStationList[[i]]$site_no[1])], '\n 99th Percentile Daily Average Flow')
+    title2 = paste(NWIS_ROI$station_nm[which(NWIS_ROI$site_no == StreamStationList[[i]]$site_no[1])], '\n Day Before 99th Percentile Daily Average Flow')
+    title3 = paste(NWIS_ROI$station_nm[which(NWIS_ROI$site_no == StreamStationList[[i]]$site_no[1])], '\n Day After 99th Percentile Daily Average Flow')
+  }
   
   png(paste0('Outlier99Quantile_', StreamStationList[[i]]$site_no[1],'.png'), res = 300, units = 'in', width = 12, height = 6)
   layout(rbind(c(1,2)))
@@ -737,7 +841,7 @@ for (i in 1:length(StreamStationList)){
   box()
   north.arrow(xb = 370000, yb = 4347000, len = 700, col = 'black', lab = 'N')
   legend('topright', title = 'Streamflow Stations', legend = c('Reference'), pch = 16, col = c('black'), bty = 'n')
-  title(main = paste(NWIS_ROI_fn$station_nm[which(NWIS_ROI_fn$site_no == StreamStationList[[i]]$site_no[1])], '\n 99th Percentile Daily Average Flow'))
+  title(main = title1)
   dev.off()
   
   png(paste0('Outlier99bQuantile_', StreamStationList[[i]]$site_no[1],'.png'), res = 300, units = 'in', width = 12, height = 6)
@@ -759,7 +863,7 @@ for (i in 1:length(StreamStationList)){
   box()
   north.arrow(xb = 370000, yb = 4347000, len = 700, col = 'black', lab = 'N')
   legend('topright', title = 'Streamflow Stations', legend = c('Reference'), pch = 16, col = c('black'), bty = 'n')
-  title(main = paste(NWIS_ROI_fn$station_nm[which(NWIS_ROI_fn$site_no == StreamStationList[[i]]$site_no[1])], '\n Day Before 99th Percentile Daily Average Flow'))
+  title(main = title2)
   dev.off()
   
   png(paste0('Outlier99aQuantile_', StreamStationList[[i]]$site_no[1],'.png'), res = 300, units = 'in', width = 12, height = 6)
@@ -781,48 +885,78 @@ for (i in 1:length(StreamStationList)){
   box()
   north.arrow(xb = 370000, yb = 4347000, len = 700, col = 'black', lab = 'N')
   legend('topright', title = 'Streamflow Stations', legend = c('Reference'), pch = 16, col = c('black'), bty = 'n')
-  title(main = paste(NWIS_ROI_fn$station_nm[which(NWIS_ROI_fn$site_no == StreamStationList[[i]]$site_no[1])], '\n Day After 99th Percentile Daily Average Flow'))
+  title(main = title3)
   dev.off()
 }
 rm(i, j, Inds, IndStart, highs, highsj, qhighs, pstations, ahighs, bhighs, aInds, bInds, cols, aqhighs, bqhighs)
 
-#Fixme: add high and low flow outlier analysis
-
-#Fixme: Missing data fill in with numerical value estimates using prediction in ungauged basins methods for large gaps
-
 # Make a map of gauge locations colored by their record lengths, corrected for the total amount of missing data----
-NWIS_ROI_fn$RecordLength = NWIS_ROI_fn$RecordLengthMinusGaps = NA
-for (i in 1:length(StreamStationList)){
-  NWIS_ROI_fn$RecordLength[which(as.numeric(NWIS_ROI_fn$site_no) == as.numeric(StreamStationList[[i]]$site_no[1]))] = as.numeric((max(StreamStationList[[i]]$Date) - min(StreamStationList[[i]]$Date)))
+if (exists(x = "NWIS_ROI_fn")){
+  NWIS_ROI_fn$RecordLength = NWIS_ROI_fn$RecordLengthMinusGaps = NA
+  for (i in 1:length(StreamStationList)){
+    NWIS_ROI_fn$RecordLength[which(as.numeric(NWIS_ROI_fn$site_no) == as.numeric(StreamStationList[[i]]$site_no[1]))] = as.numeric((max(StreamStationList[[i]]$Date) - min(StreamStationList[[i]]$Date)))
+  }
+  rm(i)
+  NWIS_ROI_fn$RecordLengthMinusGaps = NWIS_ROI_fn$RecordLength - NWIS_ROI_fn$MissingData_d
+  #in years
+  NWIS_ROI_fn$RecordLength = NWIS_ROI_fn$RecordLength/365.25
+  NWIS_ROI_fn$RecordLengthMinusGaps = NWIS_ROI_fn$RecordLengthMinusGaps/365.25
+  
+  #Color by decades
+  scaleRange = c(0,70)
+  scaleBy = 10
+  Pal = rev(rainbow((scaleRange[2] - scaleRange[1])/scaleBy))
+  png('StremflowGauges_RecordLengths.png', res = 300, units = 'in', width = 6, height = 6)
+  plot(ROI)
+  # Gauges colored by their record lengths
+  plot(NWIS_ROI_fn, pch = 16, col = colFun(NWIS_ROI_fn$RecordLengthMinusGaps), add = TRUE)
+  # Add coordinates
+  axis(side = 1)
+  axis(side = 2)
+  box()
+  north.arrow(xb = 370000, yb = 4346000, len = 700, col = 'black', lab = 'N')
+  legend('right', title = 'Streamflow Station \n Record Lengths \n (years)', legend = seq(scaleRange[1], scaleRange[2]-scaleBy, scaleBy), 
+         pch = 16, col = colFun(seq(scaleRange[1], scaleRange[2]-scaleBy, scaleBy)), bty = 'n')
+  dev.off()
+}else if (exists(x = "NWIS_ROI")){
+  NWIS_ROI$RecordLength = NWIS_ROI$RecordLengthMinusGaps = NA
+  for (i in 1:length(StreamStationList)){
+    NWIS_ROI$RecordLength[which(as.numeric(NWIS_ROI$site_no) == as.numeric(StreamStationList[[i]]$site_no[1]))] = as.numeric((max(StreamStationList[[i]]$Date) - min(StreamStationList[[i]]$Date)))
+  }
+  rm(i)
+  NWIS_ROI$RecordLengthMinusGaps = NWIS_ROI$RecordLength - NWIS_ROI$MissingData_d
+  #in years
+  NWIS_ROI$RecordLength = NWIS_ROI$RecordLength/365.25
+  NWIS_ROI$RecordLengthMinusGaps = NWIS_ROI$RecordLengthMinusGaps/365.25
+  
+  #Color by decades
+  scaleRange = c(0,70)
+  scaleBy = 10
+  Pal = rev(rainbow((scaleRange[2] - scaleRange[1])/scaleBy))
+  png('StremflowGauges_RecordLengths.png', res = 300, units = 'in', width = 6, height = 6)
+  plot(ROI)
+  # Gauges colored by their record lengths
+  plot(NWIS_ROI, pch = 16, col = colFun(NWIS_ROI$RecordLengthMinusGaps), add = TRUE)
+  # Add coordinates
+  axis(side = 1)
+  axis(side = 2)
+  box()
+  north.arrow(xb = 370000, yb = 4346000, len = 700, col = 'black', lab = 'N')
+  legend('right', title = 'Streamflow Station \n Record Lengths \n (years)', legend = seq(scaleRange[1], scaleRange[2]-scaleBy, scaleBy), 
+         pch = 16, col = colFun(seq(scaleRange[1], scaleRange[2]-scaleBy, scaleBy)), bty = 'n')
+  dev.off()
 }
-rm(i)
-NWIS_ROI_fn$RecordLengthMinusGaps = NWIS_ROI_fn$RecordLength - NWIS_ROI_fn$MissingData_d
-#in years
-NWIS_ROI_fn$RecordLength = NWIS_ROI_fn$RecordLength/365.25
-NWIS_ROI_fn$RecordLengthMinusGaps = NWIS_ROI_fn$RecordLengthMinusGaps/365.25
-
-#Color by decades
-scaleRange = c(0,70)
-scaleBy = 10
-Pal = rev(rainbow((scaleRange[2] - scaleRange[1])/scaleBy))
-png('StremflowGauges_RecordLengths.png', res = 300, units = 'in', width = 6, height = 6)
-plot(ROI)
-# Gauges colored by their record lengths
-plot(NWIS_ROI_fn, pch = 16, col = colFun(NWIS_ROI_fn$RecordLengthMinusGaps), add = TRUE)
-# Add coordinates
-axis(side = 1)
-axis(side = 2)
-box()
-north.arrow(xb = 370000, yb = 4346000, len = 700, col = 'black', lab = 'N')
-legend('right', title = 'Streamflow Station \n Record Lengths \n (years)', legend = seq(scaleRange[1], scaleRange[2]-scaleBy, scaleBy), pch = 16, col = colFun(seq(scaleRange[1], scaleRange[2]-scaleBy, scaleBy)), bty = 'n')
-dev.off()
 
 # Write streamflow datasets to files----
 setwd(dir_DEM_out)
 writeRaster(x = DEM, filename = f_DEM_mosiac, format = "GTiff")
 setwd(wd_sf)
-writeOGR(obj = NWIS_ROI_fn, dsn = getwd(), driver = 'ESRI Shapefile', layer = f_NWIS_ROI_out)
-writeOGR(obj = NWISstations, dsn = getwd(), driver = 'ESRI Shapefile', layer = f_NWIS_bb_out)
+if (exists(x = "NWIS_ROI_fn")){
+  writeOGR(obj = NWIS_ROI_fn, dsn = getwd(), driver = 'ESRI Shapefile', layer = f_NWIS_ROI_out)
+}else if (exists(x = "NWIS_ROI")){
+  writeOGR(obj = NWIS_ROI, dsn = getwd(), driver = 'ESRI Shapefile', layer = f_NWIS_ROI_out)
+  writeOGR(obj = NWISstations, dsn = getwd(), driver = 'ESRI Shapefile', layer = f_NWIS_bb_out)
+}
 #Stream gauges had missing dates added to the files. Write new files.
 for (i in names(StreamStationList)){
   write.table(StreamStationList[[i]], 
@@ -843,7 +977,7 @@ phosSites <- whatWQPsites(statecode="MD", characteristicName="Phosphorus")
 #Nitrogen
 NitroSites <- whatWQPsites(statecode="MD", characteristicName="Nitrogen")
 
-#Make spatial data
+#  Make a spatial dataframe: Method 1----
 #Nitrogen
 GaugesLocs_NAD27 = NitroSites[which(NitroSites$HorizontalCoordinateReferenceSystemDatumName == 'NAD27'), ]
 coordinates(GaugesLocs_NAD27) = c('LongitudeMeasure', 'LatitudeMeasure')
@@ -892,13 +1026,13 @@ GaugeLocs_WQP = rbind(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugeLocs_WGS84, GaugeLo
 #Remove separate datasets
 rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugesLocs_NAD27, GaugesLocs_NAD83, GaugeLocs_WGS84, GaugeLocs_U, GaugesLocs_U, GaugesLocs_WGS84)
 
-#Clip to ROI
-WQstations_ROI_N = GaugeLocs_WQN[ROI,]
-WQstations_ROI_P = GaugeLocs_WQP[ROI,]
+#  Clip to ROI----
+WQstations_ROI_N = GaugeLocs_WQN[ROI_buff,]
+WQstations_ROI_P = GaugeLocs_WQP[ROI_buff,]
 
 # Method 2: Read water quality station data from file----
 WQstations = read.csv(f_WQgauges, stringsAsFactors = FALSE)
-#Convert to spatial data
+#  Make a spatial dataframe: Method 2----
 coordinates(WQstations) = c('LongitudeMeasure', 'LatitudeMeasure')
 #Split dataset according to the coordinate reference systems used
 GaugesLocs_NAD27 = WQstations[which(WQstations$HorizontalCoordinateReferenceSystemDatumName == 'NAD27'), ]
@@ -916,8 +1050,8 @@ WQGaugeLocs = rbind(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugeLocs_WGS84)
 #Remove separate datasets
 rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugeLocs_WGS84, GaugesLocs_NAD27, GaugesLocs_NAD83, GaugesLocs_WGS84)
 
-#Clip to ROI
-WQstations_ROI = WQGaugeLocs[ROI,]
+#  Clip to ROI----
+WQstations_ROI = WQGaugeLocs[ROI_buff,]
 
 #Select only those sites in the ROI that have nitrogen data
 WQstations_ROI_N = WQstations_ROI[which(WQstations_ROI$MonitoringLocationIdentifier %in% NitroSites$MonitoringLocationIdentifier),]
@@ -1087,14 +1221,16 @@ for (i in 1:length(TN)){
     #Add detection limits
     #Lower detection limit
     par(new = TRUE)
-    plot(y = TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Low", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TN[[i]]$SortDate[grep(pattern = "Low", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
+    plot(y = TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Low", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], 
+         x = as.Date(TN[[i]]$SortDate[grep(pattern = "Low", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
          ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
          col = 'blue')
     #Upper detection limit
     par(new = TRUE)
-    plot(y = TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Up", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TN[[i]]$SortDate[grep(pattern = "Up", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
+    plot(y = TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Up", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], 
+         x = as.Date(TN[[i]]$SortDate[grep(pattern = "Up", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
          ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
@@ -1105,7 +1241,8 @@ for (i in 1:length(TN)){
   if(length(as.Date(TN[[i]]$SortDate[which(is.na(TN[[i]]$ResultMeasureValue) & is.na(TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))])) > 0){
     #Plot where there are NA days that do not correspond to detection limits
     par(new = TRUE)
-    plot(y = rep(0, length(as.Date(TN[[i]]$SortDate[which(is.na(TN[[i]]$ResultMeasureValue) & is.na(TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]))), x = as.Date(TN[[i]]$SortDate[which(is.na(TN[[i]]$ResultMeasureValue) & is.na(TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]), pch = 4, cex = 0.3,
+    plot(y = rep(0, length(as.Date(TN[[i]]$SortDate[which(is.na(TN[[i]]$ResultMeasureValue) & is.na(TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]))), 
+         x = as.Date(TN[[i]]$SortDate[which(is.na(TN[[i]]$ResultMeasureValue) & is.na(TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]), pch = 4, cex = 0.3,
          xlab = '', 
          ylab = "",
          ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
@@ -1127,14 +1264,16 @@ for (i in 1:length(TN)){
     #Add detection limits
     #Lower detection limit
     par(new = TRUE)
-    plot(y = TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Low", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TN[[i]]$SortDate[grep(pattern = "Low", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
+    plot(y = TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Low", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], 
+         x = as.Date(TN[[i]]$SortDate[grep(pattern = "Low", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
          ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
          col = 'blue')
     #Upper detection limit
     par(new = TRUE)
-    plot(y = TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Up", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TN[[i]]$SortDate[grep(pattern = "Up", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
+    plot(y = TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Up", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], 
+         x = as.Date(TN[[i]]$SortDate[grep(pattern = "Up", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
          ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
@@ -1145,7 +1284,8 @@ for (i in 1:length(TN)){
   if(length(as.Date(TN[[i]]$SortDate[which(is.na(TN[[i]]$ResultMeasureValue) & is.na(TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))])) > 0){
     #Plot where there are NA days that do not correspond to detection limits
     par(new = TRUE)
-    plot(y = rep(0, length(as.Date(TN[[i]]$SortDate[which(is.na(TN[[i]]$ResultMeasureValue) & is.na(TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]))), x = as.Date(TN[[i]]$SortDate[which(is.na(TN[[i]]$ResultMeasureValue) & is.na(TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]), pch = 4, cex = 0.3,
+    plot(y = rep(0, length(as.Date(TN[[i]]$SortDate[which(is.na(TN[[i]]$ResultMeasureValue) & is.na(TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]))), 
+         x = as.Date(TN[[i]]$SortDate[which(is.na(TN[[i]]$ResultMeasureValue) & is.na(TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]), pch = 4, cex = 0.3,
          xlab = '', 
          ylab = "",
          ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
@@ -1302,14 +1442,16 @@ for (i in 1:length(TP)){
     #Add detection limits
     #Lower detection limit
     par(new = TRUE)
-    plot(y = TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Low", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TP[[i]]$SortDate[grep(pattern = "Low", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
+    plot(y = TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Low", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], 
+         x = as.Date(TP[[i]]$SortDate[grep(pattern = "Low", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
          ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
          col = 'blue')
     #Upper detection limit
     par(new = TRUE)
-    plot(y = TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Up", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TP[[i]]$SortDate[grep(pattern = "Up", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
+    plot(y = TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Up", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], 
+         x = as.Date(TP[[i]]$SortDate[grep(pattern = "Up", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
          ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
@@ -1320,7 +1462,8 @@ for (i in 1:length(TP)){
   if(length(as.Date(TP[[i]]$SortDate[which(is.na(TP[[i]]$ResultMeasureValue) & is.na(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))])) > 0){
     #Plot where there are NA days that do not correspond to detection limits
     par(new = TRUE)
-    plot(y = rep(0, length(as.Date(TP[[i]]$SortDate[which(is.na(TP[[i]]$ResultMeasureValue) & is.na(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]))), x = as.Date(TP[[i]]$SortDate[which(is.na(TP[[i]]$ResultMeasureValue) & is.na(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]), pch = 4, cex = 0.3,
+    plot(y = rep(0, length(as.Date(TP[[i]]$SortDate[which(is.na(TP[[i]]$ResultMeasureValue) & is.na(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]))), 
+         x = as.Date(TP[[i]]$SortDate[which(is.na(TP[[i]]$ResultMeasureValue) & is.na(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]), pch = 4, cex = 0.3,
          xlab = '', 
          ylab = "",
          ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
@@ -1347,14 +1490,16 @@ for (i in 1:length(TP)){
     #Add detection limits
     #Lower detection limit
     par(new = TRUE)
-    plot(y = TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Low", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TP[[i]]$SortDate[grep(pattern = "Low", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
+    plot(y = TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Low", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], 
+         x = as.Date(TP[[i]]$SortDate[grep(pattern = "Low", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
          ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
          col = 'blue')
     #Upper detection limit
     par(new = TRUE)
-    plot(y = TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Up", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TP[[i]]$SortDate[grep(pattern = "Up", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
+    plot(y = TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Up", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], 
+         x = as.Date(TP[[i]]$SortDate[grep(pattern = "Up", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
          ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
@@ -1365,7 +1510,8 @@ for (i in 1:length(TP)){
   if(length(as.Date(TP[[i]]$SortDate[which(is.na(TP[[i]]$ResultMeasureValue) & is.na(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))])) > 0){
     #Plot where there are NA days that do not correspond to detection limits
     par(new = TRUE)
-    plot(y = rep(0, length(as.Date(TP[[i]]$SortDate[which(is.na(TP[[i]]$ResultMeasureValue) & is.na(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]))), x = as.Date(TP[[i]]$SortDate[which(is.na(TP[[i]]$ResultMeasureValue) & is.na(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]), pch = 4, cex = 0.3,
+    plot(y = rep(0, length(as.Date(TP[[i]]$SortDate[which(is.na(TP[[i]]$ResultMeasureValue) & is.na(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]))), 
+         x = as.Date(TP[[i]]$SortDate[which(is.na(TP[[i]]$ResultMeasureValue) & is.na(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]), pch = 4, cex = 0.3,
          xlab = '', 
          ylab = "",
          ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
@@ -1440,7 +1586,6 @@ list.save(x = TP, file = 'TP.yaml', type = "YAML")
 list.save(x = TP_d, file = 'TP_d.yaml', type = "YAML")
 list.save(x = TP_m, file = 'TP_m.yaml', type = "YAML")
 list.save(x = TP_a, file = 'TP_a.yaml', type = "YAML")
-
 
 #Fixme: Try plotting the water quality data using R tools like EGRET----
 #Weather Stations----
@@ -1531,4 +1676,7 @@ for (i in 1:nrow(ClimGauges)){
 rm(i, ClimStationData, fname)
 
 #Get the site information for each of those gauges
+
+
+
 
