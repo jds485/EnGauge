@@ -33,43 +33,54 @@ It is likely that others have made similar functions to process these and other 
 ---
 ### Main script: USGSdataRetrieval.R
 **Code Notes**
-There are comment section and sub-section headers throughout this script that indicate blocks of code used for tasks and sub-tasks, respectively. Sub-headers are indented by one space more than the main header. In RStudio, these blocks can be opened and closed with arrows on the left side of the scripting window. This can be useful for navigating the script.
 
-Because of the wide variety of needs for different projects, this main script serves as examples of how downloading and processing data could be completed, but you may want to modify for your project (e.g., if you do not want to use DEM processing).
+  There are comment section and sub-section headers throughout this script that indicate blocks of code used for tasks and sub-tasks, respectively. Sub-headers are indented by one space more than the main header. In RStudio, these blocks can be opened and closed with arrows on the left side of the scripting window. This can be useful for navigating the script.
+
+  Because of the wide variety of needs for different projects, this main script serves as examples of how downloading and processing data could be completed, but you may want to modify for your project (e.g., if you do not want to use DEM processing).
 Examples are provided for downloading and processing streamflow data using two methods.
 Examples are provided for downloading and processing Total Nitrogen and Total Phosphorus water quality data using two methods.
 Examples are provided for downloading weather station gauges, and selecting sites with precipitation, maximum temperature, and minimum temperature. Duplicates, negatives, and zeros are not checked in this example, but they could be using the functions employed for streamflow and water quality. Aggreation of timeseries to monthly and annual is also not shown, but could be implemented.
 
-This code was developed on Windows 10 OS. The compatibility on other OS is untested. File an issue on GitHub if you experience issues with your OS.
+  This code was developed on Windows 10 OS. The compatibility on other OS is untested. File an issue on GitHub if you experience issues with your OS.
 
 **0. Preparing to Use the Code**
+
 **_Install R Libraries_**
-Users may need to install several R libraries if using this code for the first time. These are listed in the "Load libraries and functions" heading within the script.
+
+  Users may need to install several R libraries if using this code for the first time. These are listed in the "Load libraries and functions" heading within the script.
 
 **_Prepare Input Data_**
-For each acquisition of streamflow, water quality, and weather station data, users should have either: 
-1. Method 1 (recommended, applies to streamflow, water quality, and weather stations): Scenario is that you know your region of interest but do not yet have data. Supply a polygon shapefile of the region of interest (ROI). The code will use this shapefile and an optional radial buffer around this shapefile to acquire data for streamflow, water quality, and weather station sites. There is an option to specify a different buffer for weather stations because it's common to need a larger region for these information. 
-OR
-2. Method 2 (streamflow and water quality only): Scenario is that you already have data. Supply a csv file of streamflow gauges (water quality gauges). The streamflow file must contain columns called Source, and GaugeNum. It may contain other columns. The water quality file must be the same as downloaded from the section below entitled "Water Quality Retrieval Method 2".
+
+  For each acquisition of streamflow, water quality, and weather station data, users should have either: 
+  1. Method 1 (recommended, applies to streamflow, water quality, and weather stations): Scenario is that you know your region of interest but do not yet have data. Supply a polygon shapefile of the region of interest (ROI). The code will use this shapefile and an optional radial buffer around this shapefile to acquire data for streamflow, water quality, and weather station sites. There is an option to specify a different buffer for weather stations because it's common to need a larger region for these information. 
+  OR
+  2. Method 2 (streamflow and water quality only): Scenario is that you already have data. Supply a csv file of streamflow gauges (water quality gauges). The streamflow file must contain columns called Source, and GaugeNum. It may contain other columns. The water quality file must be the same as downloaded from the section below entitled "Water Quality Retrieval Method 2".
 
 **_Set directory and file names_**
-The directories of input and output files, and the names of the files are specified at the top of the script.
+
+  The directories of input and output files, and the names of the files are specified at the top of the script.
 
 **_Set the Project Coordinate System_**
-Users will need the [EPSG Code](https://spatialreference.org/ref/?page=2) for their coordinate system of choice for their project. All data will be projected into and saved in this coordinate system.
+
+  Users will need the [EPSG Code](https://spatialreference.org/ref/?page=2) for their coordinate system of choice for their project. All data will be projected into and saved in this coordinate system.
 
 **_Set plot x- and y-axis limits_**
-If you do not want to use a particular limit, set equal to NULL. Other plot modifications will require editing of the script.
+
+  If you do not want to use a particular limit, set equal to NULL. Other plot modifications will require editing of the script.
 
 **_Obtain DEM Tiles (optional)_**
-Users who want to use the DEM tile merging/mosaicking functionality, processDEM, will have to download DEM raster tiles manually. These must have the same raster pixel resolution, be in the same coordinate system, and be spatially adjacent to each other. 
+
+  Users who want to use the DEM tile merging/mosaicking functionality, processDEM, will have to download DEM raster tiles manually. These must have the same raster pixel resolution, be in the same coordinate system, and be spatially adjacent to each other. 
 
 **1a. Streamflow Gauge Retrieval**
-There are two methods implemented to download streamflow gauge data, depending on what information you're starting with. Throughout the code there are labels for Method 1 only and Method 2 only processing steps. 
-There are likely many other ways to setup data for download. If you have suggestions, please write to the repository authors.
+
+  There are two methods implemented to download streamflow gauge data, depending on what information you're starting with. Throughout the code there are labels for Method 1 only and Method 2 only processing steps. 
+
+  There are likely many other ways to setup data for download. If you have suggestions, please write to the repository authors.
 
 **_Streamflow Gauge Retrieval Method 1:_**  
-NOTE: This method seems more reliable than Method 2, and returned more gauges in several test regions.
+
+  NOTE: This method seems more reliable than Method 2, and returned more gauges in several test regions.
 
 The function `whatNWISsites()` will return gauge numbers with coordinates for a specified state (county, or various other criteria)  
   Search Criteria for `whatNWISsites()`: [Table 1 on waterqualitydata website](https://www.waterqualitydata.us/webservices_documentation/)  
@@ -80,6 +91,7 @@ The function `whatNWISsites()` will return gauge numbers with coordinates for a 
    - This function does not return full site information. For full site information, use `readNWISsite()` with the vector of gauge numbers that is returned using `whatNWISsites()`.
 
 **_Streamflow Gauge Retrieval Method 2:_**  
+
 You can find USGS gauges of any type in your region of interest [here](https://cida.usgs.gov/enddat/dataDiscovery.jsp)  
   1. Record the coordinates of the bounding box for your region of interest! They could be important for the next step. Select the data you want and copy the resulting table of values into a txt file. txt is important to retain leading zeros on gauge numbers. If you inhereted a csv or txt file without leading zeros, a script below can add them to NWIS gauges. Other gauge datasets seem to not require leading zeros.  
   2. Coordinates of gauges are not reported in that download :(  
@@ -87,27 +99,35 @@ You can find USGS gauges of any type in your region of interest [here](https://c
      You can also find coordinates for your gauges if you provide a bounding box of coordinates [here](https://waterdata.usgs.gov/nwis/inventory?search_criteria=lat_long_bounding_box&submitted_form=introduction)
 
 **1b. Streamflow Data Coordinate Reprojection**
-The downloaded gauges may be in several different coordinate systems. An automatic reprojection and merging is in development. For now, a manual method is implemented that requires users to look up EPSG codes for the projections of their downloaded datasets.
+
+  The downloaded gauges may be in several different coordinate systems. An automatic reprojection and merging is in development. For now, a manual method is implemented that requires users to look up EPSG codes for the projections of their downloaded datasets.
 The reprojections are found under the headers "Make a spatial dataframe: Method X" where X is 1 or 2.
 
 **2a. Water Quality Portal Data Retrieval**
-There are two methods implemented to download water quality data. Throughout the code there are labels for Method 1 only and Method 2 only processing steps.
-There are other water quality data that are not contained within the water quality portal. These datasets may also be processed by some functions in this repository, but may require the user to modify their dataset to be compatible with the functions.
+
+  There are two methods implemented to download water quality data. Throughout the code there are labels for Method 1 only and Method 2 only processing steps.
+
+  There are other water quality data that are not contained within the water quality portal. These datasets may also be processed by some functions in this repository, but may require the user to modify their dataset to be compatible with the functions.
   
 **_Water Quality Portal Retrieval Method 1:_**  
-You can use the `whatWQPsites()`, using the same query criteria as the `whatNWISsites()` function, described in 1a. above. The `whatWQPsites()` function returns all site information, same as the waterqualitydata website described in Method 2 below. You will have to modify the function choices to meet your specific needs. These functions are below the header "Method 1: Read water quality station data using the USGS function"
+
+  You can use the `whatWQPsites()`, using the same query criteria as the `whatNWISsites()` function, described in 1a. above. The `whatWQPsites()` function returns all site information, same as the waterqualitydata website described in Method 2 below. You will have to modify the function choices to meet your specific needs. These functions are below the header "Method 1: Read water quality station data using the USGS function"
 
 **_Water Quality Portal Retrieval Method 2:_**  
+
 You can find water quality sites [here](https://www.waterqualitydata.us/portal/)  
   Download "site data only" to receive a csv file with gauge/site information with coordinates. The MonitoringLocationIdentifier field is used to download data for each gauge/site.
 
 **2b. Streamflow Data Coordinate Reprojection**
-Similarly to 1b above, the downloaded information may have several coordinate systems. The places where manual reprojections can be found are under the headers "Make a spatial dataframe: Method X" where X is 1 or 2.
+
+  Similarly to 1b above, the downloaded information may have several coordinate systems. The places where manual reprojections can be found are under the headers "Make a spatial dataframe: Method X" where X is 1 or 2.
 
 **3. Weather Data Retrieval from NOAA**
-The `ghcnd_stations()` funuction grabs all available weather stations. The region of interest shapefile with radial buffer is used to select gauges.
+
+  The `ghcnd_stations()` funuction grabs all available weather stations. The region of interest shapefile with radial buffer is used to select gauges.
 
 **4. Comparing altitude of gauge vs. DEM**  
+
 Downloaded gauge/site coordinates may include the altitude of the gauge, which can be important vs. DEM elevation (e.g. if there's a cliff at the gauge vs. DEM mean elevation of the pixel).  
   - Ensure that the units and the vertical datum are the same for your DEM and all gauge altitudes. A common error in gauge altitudes is USGS data reported in m instead of in ft.  
   - DEMs in the US tend to be NAVD88 in m, whereas gauges tend to be referenced to NGVD29 in ft. Differences after unit conversion tend to be minor in the US, [except in the West](https://www.ngs.noaa.gov/TOOLS/Vertcon/vertcon.html)  
@@ -115,6 +135,7 @@ Downloaded gauge/site coordinates may include the altitude of the gauge, which c
   - [Altitude collection method codes](https://help.waterdata.usgs.gov/code/alt_meth_cd_query?fmt=html)
 
 **5. Check Data Quality Codes**  
+
 You can find data quality codes for USGS datasets [here](https://help.waterdata.usgs.gov/codes-and-parameters/codes#discharge_cd)  
   - You should always look at these quality codes, and process your data accordingly. This script colors streamflow timeseries by error code, but doesn't process further than that.  
   - [codes for streamflow 1](https://help.waterdata.usgs.gov/codes-and-parameters/daily-value-qualification-code-dv_rmk_cd)  
@@ -122,6 +143,7 @@ You can find data quality codes for USGS datasets [here](https://help.waterdata.
   Yes, there are 2 separate reference schemes for streamflow data.
 
 **6. Process Data**
+
 Functions in the code do the following checks and actions for downloaded products:
 i.	Check for duplicate observations
 ii.	Check for zeros and negative values
@@ -130,6 +152,7 @@ iv.	Aggregate to daily, monthly, and annual timesteps
 v.	Spatio-temporal outlier detection (simple at the moment)
 
 **7. Make Plots**
+
 Plots for each downloaded dataset include:
 Maps of data locations
 Timeseries
@@ -139,6 +162,7 @@ Hypsometric curves for DEMs
 
 ---
 ### Function files:
+
 1. addZerosToGaugeNames.R - for adding leading zeros to NWIS streamflow gauge numbers.
 2. extractWQdata.R - for extracting separate timeseries for each variable collected at sites downloaded from the water quality portal database. Also places timeseries in chronological order.
 3. missingDates.R - for filling in missing dates in downloaded timeseries. Missing dates are assigned NA values. Also places timeseries in chronological order.
@@ -153,12 +177,14 @@ Hypsometric curves for DEMs
 
 ---
 ### Example files - In Development:
+
 Example 1 is less in development than example 2. Both of these are based on earlier versions of the main script.
 1. Method1Example_GFBR.R - example employing only the Method 1 downloads to the Baltimore Ecosystem Study Long Term Ecological Research Site in Gwynns Falls and Baisman Run (GFBR)
 2. BES_GF_BR_SL.R - example of loading the processed data for further analysis, using site water quality data (as opposed to Water Quality Portal Data), downloading weather station data, among other tasks.
 
 ---
 ## Citation and Contact Information
+
 Citation: Smith, J.D. et al. (2019). EnGauge. Online Github Repository. https://github.com/jds485/EnGauge
 
 Contact Information:  
@@ -169,4 +195,5 @@ Julianne D. Quinn (jdq6nn@virginia.edu)
 
 ---
 ## License Information
+
 You must cite this repository if you use it for your work. Please see the license file.
