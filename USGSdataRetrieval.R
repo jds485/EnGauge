@@ -12,23 +12,25 @@
 #       stored on the USGS database (which includes NOAA ACIS data)
 
 #Set directory names----
-#Region of interest shapefile
+#Region of interest shapefile directory
 dir_ROI = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\BES-Watersheds-Land-Cover-Analysis"  
-#Color functions - from JDS github repo: Geothermal_ESDA
+#ColorFunctions.R script directory - from JDS github repo: Geothermal_ESDA
 dir_ColFuns = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges"
-#EnGauge repository
+#EnGauge code repository directory
 dir_EnGauge = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge"
-#USGS streamflow gauges
+#Directory where USGS streamflow gauge data will be downloaded. This directory must already exist.
 dir_sfgauges = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges"
 #DEM - specify as a vector of directories if there are multiple tiles to be mosaicked together.
 # The directory order has to match the file name order for f_DEM below.
 # Fixme: can DEMs be downloaded from a server instead of downloading manually before using this script?
 dir_DEM = c("C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\DEM\\USGS_NED_1_n40w077_ArcGrid\\grdn40w077_1",
             'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\DEM\\USGS_NED_1_n40w078_ArcGrid\\grdn40w078_1')
-#Output for processed DEM
+#Output directory for processed DEM. This directory must already exist.
 dir_DEM_out = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\DEM\\'
-#Water quality gauges
+#Directory where water quality gauge data will be downloaded. This directory must already exist.
 dir_wq = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges'
+#Directory where weather station data will be downloaded. This directory must already exist.
+dir_weather = 'C:\Users\js4yd\OneDrive - University of Virginia\BES_Data\BES_Data\Hydrology\Precipitation'
 
 #Set input filenames----
 #Region of interest shapefile name
@@ -37,21 +39,37 @@ f_ROI = "Watershed_GF"
 f_StreamGaugeData = "BES_USGS_GaugeStations.csv"
 #Optional site data. If not provided, will use function readNWISsite() to collect site coordinates
 #f_StreamGaugeSites = "USGS_GaugeSites.txt"
-#DEM - all separate DEM tiles may be added to this as a vector (e.g. c("w001001.adf", "w001002.adf") )
+#DEM - all separate DEM tiles should be added to this vector (e.g. c("w001001.adf", "w001002.adf") )
 f_DEM = c("w001001.adf", "w001001.adf")
 #Water quality gauges - Only used for Method 2 for Water Quality
 f_WQgauges = "BES_WaterQualityGaugeStations.csv"
 
 #Set output filenames----
-#DEM - geotiff format is the default. You can change in the script below
+#DEM - GeoTiff format is the default. You can change in the script.
 f_DEM_mosiac = "DEM_mosaic"
 #NWIS streamflow gauges in ROI
 f_NWIS_ROI_out = 'NWIS_ROI'
 #NWIS streamflow gauges in bounding box. Only for Method 2 streamflow.
 f_NWIS_bb_out = 'NWIS_bb'
-#Streamflow gauge data processing name appendage
+#Streamflow gauge data processing name appendage (_p for processed)
 # e.g. 0159384_p
 f_sf_processKey = '_p'
+#Name for the list of all streamflow gauge timeseries. YAML list type is used below.
+f_StreamStationList = 'SF.yaml'
+#Name for the list of all TN water quality site timeseries. YAML list type is used below.
+f_TNSiteList = 'TN.yaml'
+f_TNSiteList_daily = 'TN_d.yaml'
+f_TNSiteList_monthly = 'TN_m.yaml'
+f_TNSiteList_annual = 'TN_a.yaml'
+#Name for the list of all TP water quality site timeseries. YAML list type is used below.
+f_TPSiteList = 'TP.yaml'
+f_TPSiteList_daily = 'TP_d.yaml'
+f_TPSiteList_monthly = 'TP_m.yaml'
+f_TPSiteList_annual = 'TP_a.yaml'
+#NOAA weather station data locations
+f_NOAAstationsROI = 'NOAA_StationLocs'
+#Name for the list of all NOAA weather station timeseries. YAML list type is used below.
+f_NOAAstationsDataList = 'NOAA_MetStations.yaml'
 
 #Set project coordinate system----
 #This is the coordinate system that all data will be plotted and written in
@@ -60,7 +78,10 @@ f_sf_processKey = '_p'
 pCRS = '+init=epsg:26918'
 
 #Define a small buffer to use for the ROI, in pCRS map units----
+#For streamflow and water quality
 ROIbuff = 0
+#For weather stations
+ROIbuffWeather = 20000
 
 #Load libraries and functions----
 #USGS function library - note that a more recent version is available through Github
@@ -83,6 +104,7 @@ library(lattice)
 library(zoo)
 library(lubridate)
 library(hydroTSM)
+library(rnoaa)
 #Color functions for plots (R script from Jared Smith's Geothermal_ESDA Github Repo)
 setwd(dir_ColFuns)
 source('ColorFunctions.R')
@@ -964,7 +986,7 @@ for (i in names(StreamStationList)){
               sep = "\t", row.names = FALSE)
 }
 rm(i)
-list.save(x = StreamStationList, file = 'SF.yaml', type = "YAML")
+list.save(x = StreamStationList, file = f_StreamStationList, type = "YAML")
 
 #Water Quality----
 setwd(dir_wq)
@@ -1576,107 +1598,293 @@ rm(i)
 # Write water quality data to files----
 setwd(dir = wd_N)
 writeOGR(WQstations_ROI_N, dsn = getwd(), layer = 'NitrogenSites', driver = "ESRI Shapefile")
-list.save(x = TN, file = 'TN.yaml', type = "YAML")
-list.save(x = TN_d, file = 'TN_d.yaml', type = "YAML")
-list.save(x = TN_m, file = 'TN_m.yaml', type = "YAML")
-list.save(x = TN_a, file = 'TN_a.yaml', type = "YAML")
+list.save(x = TN, file = f_TNSiteList, type = "YAML")
+list.save(x = TN_d, file = f_TNSiteList_daily, type = "YAML")
+list.save(x = TN_m, file = f_TNSiteList_monthly, type = "YAML")
+list.save(x = TN_a, file = f_TNSiteList_annual, type = "YAML")
 setwd(dir = wd_P)
 writeOGR(WQstations_ROI_P, dsn = getwd(), layer = 'PhosphorusSites', driver = "ESRI Shapefile")
-list.save(x = TP, file = 'TP.yaml', type = "YAML")
-list.save(x = TP_d, file = 'TP_d.yaml', type = "YAML")
-list.save(x = TP_m, file = 'TP_m.yaml', type = "YAML")
-list.save(x = TP_a, file = 'TP_a.yaml', type = "YAML")
+list.save(x = TP, file = f_TPSiteList, type = "YAML")
+list.save(x = TP_d, file = f_TPSiteList_daily, type = "YAML")
+list.save(x = TP_m, file = f_TPSiteList_monthly, type = "YAML")
+list.save(x = TP_a, file = f_TPSiteList_annual, type = "YAML")
 
-#Fixme: Try plotting the water quality data using R tools like EGRET----
-#Weather Stations----
-setwd(dir_sfgauges)
-#Load file containing hyperlinks to the climate data
-ClimGauges = read.csv("NOAA_HyperlinksToGauges.csv", stringsAsFactors = FALSE, header = FALSE)
+# Fixme: Try plotting the water quality data using R tools like EGRET----
+#NOAA weather station data----
+#Gather all ghcnd stations
+AllNOAAstations = ghcnd_stations()
+#Make a spatial dataframe, and clip to ROI
+coordinates(AllNOAAstations) = c('longitude', 'latitude')
+proj4string(AllNOAAstations) = CRS('+init=epsg:4326')
+#buffer the ROI a bit - assumes a UTM coordinate system. Will not work with other systems.
+ROI_buffer = buffer(ROI, width = ROIbuffWeather)
+ROI_buffer_WGS = spTransform(ROI_buffer, CRS('+init=epsg:4326'))
+NOAAstations_locs = AllNOAAstations[ROI_buffer_WGS,]
+NOAAstations_locs = spTransform(NOAAstations_locs, CRS(pCRS))
 
-#Make new directory for weather data
-wd_clim = paste0(getwd(), '\\Weather')
-dir.create(wd_clim)
-setwd(wd_clim)
+#  Download data and store in a list----
+MetStations = list()
+#Fixme: downloading in parallel throws errors.
+#cl = makeCluster(detectCores() - 1)
+#registerDoParallel(cl)
+#foreach (i = 1:length(unique(NOAAstations_locs$id)), .packages = 'rnoaa') %dopar%{
+#  ghcnd(stationid = unique(NOAAstations_locs$id)[i], refresh = TRUE)
+#  m = meteo_tidy_ghcnd(stationid = unique(NOAAstations_locs$id)[i], var = 'all', keep_flags = TRUE)
+#  MetStations = c(MetStations, list(m))
+#}
+#stopCluster(cl)
+#rm(cl)
 
-#Fixme: some AllStations data are climate stations when loaded from the csv file from the website specified in the readme.
-#Fixme: add DEM elevation to dataset and compare
-
-#Load from NWIS
-TempCStations = whatNWISsites(statecode = "MD", parameterCd = '00020')
-TempFStations = whatNWISsites(statecode = "MD", parameterCd = '00021')
-TotalPrecipStations = whatNWISsites(statecode = "MD", parameterCd = '00045')
-TempCStations = readNWISsite(TempCStations$site_no)
-TempFStations = readNWISsite(TempFStations$site_no)
-TotalPrecipStations = readNWISsite(TotalPrecipStations$site_no)
-
-#Make spatial data
-GaugesLocs_NAD27 = TempCStations[which(TempCStations$coord_datum_cd == 'NAD27'), ]
-coordinates(GaugesLocs_NAD27) = c('dec_long_va', 'dec_lat_va')
-proj4string(GaugesLocs_NAD27) = CRS('+init=epsg:4267')
-GaugesLocs_NAD83 = TempCStations[which(TempCStations$coord_datum_cd == 'NAD83'), ]
-coordinates(GaugesLocs_NAD83) = c('dec_long_va', 'dec_lat_va')
-proj4string(GaugesLocs_NAD83) = CRS('+init=epsg:4269')
-#Transform to NAD83 UTM Zone 18N
-GaugeLocs_NAD27 = spTransform(GaugesLocs_NAD27, CRS(pCRS))
-GaugeLocs_NAD83 = spTransform(GaugesLocs_NAD83, CRS(pCRS))
-#Join to one dataset again
-TempCStations = rbind(GaugeLocs_NAD27, GaugeLocs_NAD83)
-#Remove separate datasets
-rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugesLocs_NAD27, GaugesLocs_NAD83)
-
-GaugesLocs_NAD83 = TempFStations[which(TempFStations$coord_datum_cd == 'NAD83'), ]
-coordinates(GaugesLocs_NAD83) = c('dec_long_va', 'dec_lat_va')
-proj4string(GaugesLocs_NAD83) = CRS('+init=epsg:4269')
-#Transform to NAD83 UTM Zone 18N
-GaugeLocs_NAD83 = spTransform(GaugesLocs_NAD83, CRS(pCRS))
-#Join to one dataset again
-TempFStations = GaugeLocs_NAD83
-#Remove separate datasets
-rm(GaugeLocs_NAD83, GaugesLocs_NAD83)
-
-GaugesLocs_NAD27 = TotalPrecipStations[which(TotalPrecipStations$coord_datum_cd == 'NAD27'), ]
-coordinates(GaugesLocs_NAD27) = c('dec_long_va', 'dec_lat_va')
-proj4string(GaugesLocs_NAD27) = CRS('+init=epsg:4267')
-GaugesLocs_NAD83 = TotalPrecipStations[which(TotalPrecipStations$coord_datum_cd == 'NAD83'), ]
-coordinates(GaugesLocs_NAD83) = c('dec_long_va', 'dec_lat_va')
-proj4string(GaugesLocs_NAD83) = CRS('+init=epsg:4269')
-#Transform to NAD83 UTM Zone 18N
-GaugeLocs_NAD27 = spTransform(GaugesLocs_NAD27, CRS(pCRS))
-GaugeLocs_NAD83 = spTransform(GaugesLocs_NAD83, CRS(pCRS))
-#Join to one dataset again
-TotalPrecipStations = rbind(GaugeLocs_NAD27, GaugeLocs_NAD83)
-#Remove separate datasets
-rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugesLocs_NAD27, GaugesLocs_NAD83)
-
-#Read the hyperlinks and place data into separate text files per gauge
-#List of climate stations named by the station number
-ClimateStationList = list()
-for (i in 1:nrow(ClimGauges)){
-  #First save the file as a *.txt
-  if (is.na(strsplit(strsplit(ClimGauges[i,], split = 'NWIS=')[[1]][2], split = '%', fixed = TRUE)[[1]][1])){
-    #ACIS stations
-    fname = paste0(strsplit(strsplit(ClimGauges[i,], split = 'ACIS=')[[1]][2], split = '%', fixed = TRUE)[[1]][1], '.txt')
-  }else{
-    #NWIS stations
-    fname = paste0(strsplit(strsplit(ClimGauges[i,], split = 'NWIS=')[[1]][2], split = '%', fixed = TRUE)[[1]][1], '.txt')
-  }
-  
-  download.file(url = ClimGauges[i,], destfile = fname, mode = 'wb', method = "curl")
-  ClimStationData = read.table(fname, header = TRUE, stringsAsFactors = FALSE, sep = '\t')
-  #Reformat the time to standard format
-  ClimStationData$time = as.POSIXct(ClimStationData$time, format = '%m/%d/%Y %H:%M')
-  
-  #Place the measurements in chronological order by the sort date and time
-  ClimStationData = ClimStationData[order(as.POSIXct(ClimStationData$time)),]
-  
-  #Add to list
-  ClimateStationList = c(ClimateStationList, list(ClimStationData))
-  names(ClimateStationList)[length(ClimateStationList)] = strsplit(fname, split = '.txt', fixed = TRUE)[[1]][1]
+#Serial
+for (i in 1:length(unique(NOAAstations_locs$id))){
+  ghcnd(stationid = unique(NOAAstations_locs$id)[i], refresh = FALSE)
+  m = meteo_tidy_ghcnd(stationid = unique(NOAAstations_locs$id)[i], var = 'all', keep_flags = TRUE)
+  MetStations = c(MetStations, list(m))
 }
-rm(i, ClimStationData, fname)
+names(MetStations) = unique(NOAAstations_locs$id)
+rm(m)
+
+#Move files from the cache directory to a permanent directory
+wd_NOAA = paste0(dir_weather, '\\NOAA')
+dir.create(path = wd_NOAA)
+file.copy(from = user_cache_dir(appname = 'rnoaa', version = NULL, opinion = TRUE, expand = TRUE), to = wd_NOAA, recursive = TRUE)
+setwd(wd_NOAA)
+
+#  Map of the type of data at each station----
+for (i in 1:length(unique(NOAAstations_locs$element))){
+  #map for each type of data recorded
+  png(paste0('NOAA_Datatype_', unique(NOAAstations_locs$element)[i],'.png'), width = 5, height = 5, units = 'in', res = 300)
+  plot(NOAAstations_locs, col = 'white')
+  plot(ROI, add = T)
+  plot(NOAAstations_locs, add = T)
+  plot(NOAAstations_locs[NOAAstations_locs$element == unique(NOAAstations_locs$element)[i],], col = 'blue', add = T)
+  
+  # Add coordinates
+  axis(side = 1)
+  axis(side = 2)
+  box()
+  north.arrow(xb = 370000, yb = 4343000, len = 700, col = 'black', lab = 'N')
+  title(main = paste0(unique(NOAAstations_locs$element)[i], ' Stations'))
+  dev.off()
+}
+rm(i)
+
+#  Plot the DEM of the station vs. the DEM of the grid cell----
+NOAAstations_locs$DEMelev = raster::extract(DEM, y = NOAAstations_locs)
+png('CompareNOAAGaugeElevToDEM.png', res = 300, units = 'in', width = 5, height = 5)
+plot(NOAAstations_locs$elevation, NOAAstations_locs$DEMelev,
+     xlab = 'Reported Elevation (m)', ylab = 'DEM Elevation (m)', main = 'NOAA Gauge Elevations')
+lines(c(-100,1100), c(-100,1100), col = 'red')
+dev.off()
+
+#  Fill in missing dates----
+#make dataframe of the spatial dataset
+NOAAstations_locs@data = as.data.frame(NOAAstations_locs@data)
+
+#   Precipitation----
+MetStations_Precip = FillMissingDates_par(Dataset = NOAAstations_locs[NOAAstations_locs$element == 'PRCP',], StationList = MetStations[names(MetStations) %in% NOAAstations_locs[NOAAstations_locs$element == 'PRCP',]$id], Var = 'prcp', Date = 'date', gapType = 'd', site_no_D = 'id', site_no_SL = 'id', NoNAcols = 'id')
+#Extract data from the function return
+NOAAstations_locs_Precip = MetStations_Precip$Dataset
+MetStations_Precip = MetStations_Precip$StationList
+
+#   Maximum Temperature----
+MetStations_TMAX = FillMissingDates_par(Dataset = NOAAstations_locs[NOAAstations_locs$element == 'TMAX',], StationList = MetStations[names(MetStations) %in% NOAAstations_locs[NOAAstations_locs$element == 'TMAX',]$id], Var = 'tmax', Date = 'date', gapType = 'd', site_no_D = 'id', site_no_SL = 'id', NoNAcols = 'id')
+#Extract data from the function return
+NOAAstations_locs_TMAX = MetStations_TMAX$Dataset
+MetStations_TMAX = MetStations_TMAX$StationList
+
+#   Minimum Temperature----
+MetStations_TMIN = FillMissingDates_par(Dataset = NOAAstations_locs[NOAAstations_locs$element == 'TMIN',], StationList = MetStations[names(MetStations) %in% NOAAstations_locs[NOAAstations_locs$element == 'TMIN',]$id], Var = 'tmin', Date = 'date', gapType = 'd', site_no_D = 'id', site_no_SL = 'id', NoNAcols = 'id')
+#Extract data from the function return
+NOAAstations_locs_TMIN = MetStations_TMIN$Dataset
+MetStations_TMIN = MetStations_TMIN$StationList
+
+# Plot the met station timeseries----
+#  Precipitation----
+for (i in 1:length(MetStations_Precip)){
+  png(paste0('Precip_Timeseries_', MetStations_Precip[[i]]$id[1], '.png'), res = 300, units = 'in', width = 6, height = 6)
+  plot(y = MetStations_Precip[[i]]$prcp/10, x = as.Date(MetStations_Precip[[i]]$date), type = 'o', pch = 16, cex = 0.3,
+       xlab = 'Year', 
+       ylab = 'Precipitation (mm)', 
+       main = paste0('Station #', MetStations_Precip[[i]]$id[1]), cex.lab = 1.5, cex.axis = 1.5)
+  dev.off()
+  
+  #With map and timeseries
+  png(paste0('Precip_Timeseries_Map', MetStations_Precip[[i]]$id[1], '.png'), res = 300, units = 'in', width = 10, height = 10)
+  layout(rbind(c(1,2)))
+  
+  plot(y = MetStations_Precip[[i]]$prcp/10, x = as.Date(MetStations_Precip[[i]]$date), type = 'o', pch = 16, cex = 0.3,
+       xlab = 'Year', 
+       ylab = 'Precipitation (mm)', 
+       main = paste0('Station #', MetStations_Precip[[i]]$id[1]), cex.lab = 1.5, cex.axis = 1.5)
+  
+  #map
+  plot(NOAAstations_locs, col = 'white')
+  plot(ROI, add = T)
+  #All temperature gauges
+  plot(NOAAstations_locs_Precip, pch = 16, col = 'black', add = TRUE)
+  #Gauge selected for timeseries plot
+  plot(NOAAstations_locs_Precip[i,], pch = 16, col = 'blue', add = TRUE)
+  
+  # Add coordinates
+  axis(side = 1)
+  axis(side = 2)
+  box()
+  north.arrow(xb = 370000, yb = 4343000, len = 700, col = 'black', lab = 'N')
+  legend('bottomleft', title = 'NOAA Precipitation Stations', legend = c('Selected', 'Other'), pch = 16, col = c('blue', 'black'), bty = 'n')
+  title(main = paste0('Station #', MetStations_Precip[[i]]$id[1]))
+  dev.off()
+}
+rm(i)
+
+#  Max and Min Temperature----
+for (i in 1:length(MetStations_TMAX)){
+  png(paste0('Temp_Timeseries_', MetStations_TMAX[[i]]$id[1], '.png'), res = 300, units = 'in', width = 6, height = 6)
+  plot(y = MetStations_TMAX[[i]]$tmax/10, x = as.Date(MetStations_TMAX[[i]]$date), type = 'o', pch = 16, cex = 0.3,
+       xlab = 'Year', 
+       ylab = expression(paste('Temperature (', degree, 'C)')), 
+       main = paste0('Station #', MetStations_TMAX[[i]]$id[1]), col = 'red', ylim = c(-20,50), cex.lab = 1.5, cex.axis = 1.5)
+  par(new = TRUE)
+  plot(y = MetStations_TMIN[[i]]$tmin/10, x = as.Date(MetStations_TMIN[[i]]$date), type = 'o', pch = 16, cex = 0.3,
+       xlab = '', ylab = '', axes = FALSE, 
+       main = paste0('Station #', MetStations_TMIN[[i]]$id[1]), col = 'blue', ylim = c(-20,50))
+  dev.off()
+  
+  #With map and timeseries
+  png(paste0('Temp_Timeseries_Map', MetStations_TMAX[[i]]$id[1], '.png'), res = 300, units = 'in', width = 10, height = 10)
+  layout(rbind(c(1,2)))
+  
+  plot(y = MetStations_TMAX[[i]]$tmax/10, x = as.Date(MetStations_TMAX[[i]]$date), type = 'o', pch = 16, cex = 0.3,
+       xlab = 'Year', 
+       ylab = expression(paste('Temperature (', degree, 'C)')), 
+       main = paste0('Station #', MetStations_TMAX[[i]]$id[1]), col = 'red', ylim = c(-20,50), cex.lab = 1.5, cex.axis = 1.5)
+  par(new = TRUE)
+  plot(y = MetStations_TMIN[[i]]$tmin/10, x = as.Date(MetStations_TMIN[[i]]$date), type = 'o', pch = 16, cex = 0.3,
+       xlab = '', ylab = '', axes = FALSE, 
+       main = paste0('Station #', MetStations_TMIN[[i]]$id[1]), col = 'blue', ylim = c(-20,50))
+  
+  #map
+  plot(NOAAstations_locs, col = 'white')
+  plot(ROI, add = T)
+  #All temperature gauges
+  plot(NOAAstations_locs_TMAX, pch = 16, col = 'black', add = TRUE)
+  #Gauge selected for timeseries plot
+  plot(NOAAstations_locs_TMAX[i,], pch = 16, col = 'purple', add = TRUE)
+  
+  # Add coordinates
+  axis(side = 1)
+  axis(side = 2)
+  box()
+  north.arrow(xb = 370000, yb = 4343000, len = 700, col = 'black', lab = 'N')
+  legend('bottomleft', title = 'Temperature Stations', legend = c('Selected', 'Other'), pch = 16, col = c('purple', 'black'), bty = 'n')
+  title(main = paste0('Station #', MetStations_TMAX[[i]]$id[1]))
+  dev.off()
+}
+rm(i)
+
+# Fixme: ACF for precip and temp datasets----
+# Fixme: evaluate outliers for precip and temp (possible multivariate outliers) - make scatterplots of precip and temp----
+# Fixme: Spatial predicton of precip and temperature----
+# Write met station data to files----
+setwd(dir = wd_NOAA)
+writeOGR(NOAAstations_locs, dsn = getwd(), layer = f_NOAAstationsROI, driver = "ESRI Shapefile")
+list.save(x = MetStations, file = f_NOAAstationsDataList, type = "YAML")
+
+# #Other Weather Station Data Processing - In Development----
+# setwd(dir_sfgauges)
+# #Load file containing hyperlinks to the climate data
+# ClimGauges = read.csv("NOAA_HyperlinksToGauges.csv", stringsAsFactors = FALSE, header = FALSE)
+# 
+# #Make new directory for weather data
+# wd_clim = paste0(getwd(), '\\Weather')
+# dir.create(wd_clim)
+# setwd(wd_clim)
+# 
+# #Fixme: some AllStations data are climate stations when loaded from the csv file from the website specified in the readme.
+# #Fixme: add DEM elevation to dataset and compare
+# 
+# #Load from NWIS
+# TempCStations = whatNWISsites(statecode = "MD", parameterCd = '00020')
+# TempFStations = whatNWISsites(statecode = "MD", parameterCd = '00021')
+# TotalPrecipStations = whatNWISsites(statecode = "MD", parameterCd = '00045')
+# TempCStations = readNWISsite(TempCStations$site_no)
+# TempFStations = readNWISsite(TempFStations$site_no)
+# TotalPrecipStations = readNWISsite(TotalPrecipStations$site_no)
+# 
+# #Make spatial data
+# GaugesLocs_NAD27 = TempCStations[which(TempCStations$coord_datum_cd == 'NAD27'), ]
+# coordinates(GaugesLocs_NAD27) = c('dec_long_va', 'dec_lat_va')
+# proj4string(GaugesLocs_NAD27) = CRS('+init=epsg:4267')
+# GaugesLocs_NAD83 = TempCStations[which(TempCStations$coord_datum_cd == 'NAD83'), ]
+# coordinates(GaugesLocs_NAD83) = c('dec_long_va', 'dec_lat_va')
+# proj4string(GaugesLocs_NAD83) = CRS('+init=epsg:4269')
+# #Transform to NAD83 UTM Zone 18N
+# GaugeLocs_NAD27 = spTransform(GaugesLocs_NAD27, CRS(pCRS))
+# GaugeLocs_NAD83 = spTransform(GaugesLocs_NAD83, CRS(pCRS))
+# #Join to one dataset again
+# TempCStations = rbind(GaugeLocs_NAD27, GaugeLocs_NAD83)
+# #Remove separate datasets
+# rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugesLocs_NAD27, GaugesLocs_NAD83)
+# 
+# GaugesLocs_NAD83 = TempFStations[which(TempFStations$coord_datum_cd == 'NAD83'), ]
+# coordinates(GaugesLocs_NAD83) = c('dec_long_va', 'dec_lat_va')
+# proj4string(GaugesLocs_NAD83) = CRS('+init=epsg:4269')
+# #Transform to NAD83 UTM Zone 18N
+# GaugeLocs_NAD83 = spTransform(GaugesLocs_NAD83, CRS(pCRS))
+# #Join to one dataset again
+# TempFStations = GaugeLocs_NAD83
+# #Remove separate datasets
+# rm(GaugeLocs_NAD83, GaugesLocs_NAD83)
+# 
+# GaugesLocs_NAD27 = TotalPrecipStations[which(TotalPrecipStations$coord_datum_cd == 'NAD27'), ]
+# coordinates(GaugesLocs_NAD27) = c('dec_long_va', 'dec_lat_va')
+# proj4string(GaugesLocs_NAD27) = CRS('+init=epsg:4267')
+# GaugesLocs_NAD83 = TotalPrecipStations[which(TotalPrecipStations$coord_datum_cd == 'NAD83'), ]
+# coordinates(GaugesLocs_NAD83) = c('dec_long_va', 'dec_lat_va')
+# proj4string(GaugesLocs_NAD83) = CRS('+init=epsg:4269')
+# #Transform to NAD83 UTM Zone 18N
+# GaugeLocs_NAD27 = spTransform(GaugesLocs_NAD27, CRS(pCRS))
+# GaugeLocs_NAD83 = spTransform(GaugesLocs_NAD83, CRS(pCRS))
+# #Join to one dataset again
+# TotalPrecipStations = rbind(GaugeLocs_NAD27, GaugeLocs_NAD83)
+# #Remove separate datasets
+# rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugesLocs_NAD27, GaugesLocs_NAD83)
+# 
+# #Read the hyperlinks and place data into separate text files per gauge
+# #List of climate stations named by the station number
+# ClimateStationList = list()
+# for (i in 1:nrow(ClimGauges)){
+#   #First save the file as a *.txt
+#   if (is.na(strsplit(strsplit(ClimGauges[i,], split = 'NWIS=')[[1]][2], split = '%', fixed = TRUE)[[1]][1])){
+#     #ACIS stations
+#     fname = paste0(strsplit(strsplit(ClimGauges[i,], split = 'ACIS=')[[1]][2], split = '%', fixed = TRUE)[[1]][1], '.txt')
+#   }else{
+#     #NWIS stations
+#     fname = paste0(strsplit(strsplit(ClimGauges[i,], split = 'NWIS=')[[1]][2], split = '%', fixed = TRUE)[[1]][1], '.txt')
+#   }
+#   
+#   download.file(url = ClimGauges[i,], destfile = fname, mode = 'wb', method = "curl")
+#   ClimStationData = read.table(fname, header = TRUE, stringsAsFactors = FALSE, sep = '\t')
+#   #Reformat the time to standard format
+#   ClimStationData$time = as.POSIXct(ClimStationData$time, format = '%m/%d/%Y %H:%M')
+#   
+#   #Place the measurements in chronological order by the sort date and time
+#   ClimStationData = ClimStationData[order(as.POSIXct(ClimStationData$time)),]
+#   
+#   #Add to list
+#   ClimateStationList = c(ClimateStationList, list(ClimStationData))
+#   names(ClimateStationList)[length(ClimateStationList)] = strsplit(fname, split = '.txt', fixed = TRUE)[[1]][1]
+# }
+# rm(i, ClimStationData, fname)
 
 #Get the site information for each of those gauges
 
-
-
-
+#Another alternative - not recommended, and not tested.
+#Get the FIPS code for Maryland
+#MDfips = rnoaa::fipscodes[which(rnoaa::fipscodes$state == 'Maryland'),]
+#Download GHCND data - requires access code requested from: https://www.ncdc.noaa.gov/cdo-web/token
+# This code takes a while to be emailed to you. AND one can only download a year at a time - not recommended
+#NOAAstations = ncdc(datasetid='GHCND', locationid = paste0('FIPS:', MDfips$fips_state), startdate = '1998-01-01', enddate = '2018-12-31')
+#For metadata
+#rnoaa::homr(state = 'MD', county = 'Baltimore')
+#Python alternative: https://k3.cicsnc.org/jared/GHCNpy
