@@ -1,4 +1,4 @@
-#Script to read USGS streamflow and water quality data from gauges
+#Script to read USGS streamflow and water quality, and NOAA weather station data from gauges
 
 #Author Credits:
 # Portions of the function for the streamflow download were provided by:
@@ -8,8 +8,6 @@
 
 #Fixme: make each method a separate function or script
 #Fixme: add methods for handling detection limits in time series
-#Fixme: Add component for downloading weather station data 
-#       stored on the USGS database (which includes NOAA ACIS data)
 
 #Set directory names----
 #Region of interest shapefile directory
@@ -76,6 +74,20 @@ f_NOAAstationsDataList = 'NOAA_MetStations.yaml'
 # It is not the coordinate system of your data (although it could be)
 # EPSG codes from: https://spatialreference.org/ref/?page=2
 pCRS = '+init=epsg:26918'
+
+#Set plot limits - set to NULL to ignore use----
+#Streamflow dates
+xlim_dates = c(as.Date("1950-01-01"), as.Date("2020-01-01"))
+#Water quality dates
+xlim_WQdates = c(as.Date("1980-01-01"), as.Date("2010-01-01"))
+#Streamflow y axis limits
+ylim_SF = c(0, 7000)
+#TN y-axis limits
+ylim_TN = c(0, 10)
+#TP y-axis limits
+ylim_TP = c(0, 0.5)
+#Temperature y-axis limits
+ylim_Temp = c(-20,50)
 
 #Define a small buffer to use for the ROI, in pCRS map units----
 #For streamflow and water quality
@@ -529,7 +541,7 @@ for (i in 1:length(StreamStationList)){
   png(paste0('StreamflowTimeseries_', StreamStationList[[i]]$site_no[1],'.png'), res = 300, units = 'in', width = 6, height = 6)
   plot(x = StreamStationList[[i]]$Date, y = StreamStationList[[i]]$X_00060_00003, type = 'o', pch = 16, cex = 0.3,
        xlab = 'Year', ylab = 'Daily Mean Streamflow (cfs)', main = paste0('Station #', StreamStationList[[i]]$site_no[1]),
-       ylim = c(0, 7000), xlim = c(as.Date("1950-01-01"), as.Date("2020-01-01")))
+       ylim = ylim_SF, xlim = xlim_dates)
   #Add colors
   for (cc in 1:length(colCodes)){
     par(new = TRUE)
@@ -537,7 +549,7 @@ for (i in 1:length(StreamStationList)){
          y = StreamStationList[[i]]$X_00060_00003[which(StreamStationList[[i]]$X_00060_00003_cd == ErrCodes[cc])], 
          pch = 16, cex = 0.3,
          col = colCodes[cc],
-         ylim = c(0, 7000), xlim = c(as.Date("1950-01-01"), as.Date("2020-01-01")), axes = FALSE, xlab = '', ylab = '')
+         ylim = ylim_SF, xlim = xlim_dates, axes = FALSE, xlab = '', ylab = '')
   }
   legend('topleft', legend = ErrCodes[codes], col = colCodes[codes], pch = 16)
   dev.off()
@@ -593,7 +605,7 @@ for (i in 1:length(StreamStationList)){
   plot(x = StreamStationList[[i]]$Date, y = StreamStationList[[i]]$X_00060_00003, type = 'o', pch = 16, cex = 0.3,
        xlab = 'Year', ylab = 'Daily Mean Streamflow (cfs)', main = paste0('Station #', StreamStationList[[i]]$site_no[1]),
        ylim = c(min(StreamStationList[[i]]$X_00060_00003, na.rm = TRUE), max(StreamStationList[[i]]$X_00060_00003, na.rm = TRUE)), 
-       xlim = c(as.Date("1950-01-01"), as.Date("2020-01-01")))
+       xlim = xlim_dates)
   #Add colors
   for (cc in 1:length(colCodes)){
     par(new = TRUE)
@@ -601,7 +613,7 @@ for (i in 1:length(StreamStationList)){
          y = StreamStationList[[i]]$X_00060_00003[which(StreamStationList[[i]]$X_00060_00003_cd == ErrCodes[cc])], 
          pch = 16, cex = 0.3, col = colCodes[cc], axes = FALSE, xlab = '', ylab = '',
          ylim = c(min(StreamStationList[[i]]$X_00060_00003, na.rm = TRUE), max(StreamStationList[[i]]$X_00060_00003, na.rm = TRUE)), 
-         xlim = c(as.Date("1950-01-01"), as.Date("2020-01-01")))
+         xlim = xlim_dates)
   }
   legend('topleft', legend = ErrCodes[codes], col = colCodes[codes], pch = 16)
   dev.off()
@@ -1233,7 +1245,7 @@ for (i in 1:length(TN)){
        xlab = 'Year', 
        ylab = paste0(TN[[i]]$ResultSampleFractionText[1], " ", TN[[i]]$CharacteristicName[1], " (", TN[[i]]$ResultMeasure.MeasureUnitCode[1], ")"), 
        main = paste0('Station #', TN[[i]]$MonitoringLocationIdentifier[1]),
-       ylim = c(0, 10), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")))
+       ylim = ylim_TN, xlim = xlim_WQdates)
   
   #Check for and add detection limits
   dl = unique(TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue)
@@ -1247,7 +1259,7 @@ for (i in 1:length(TN)){
          x = as.Date(TN[[i]]$SortDate[grep(pattern = "Low", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = ylim_TN, xlim = xlim_WQdates, axes = FALSE,
          col = 'blue')
     #Upper detection limit
     par(new = TRUE)
@@ -1255,7 +1267,7 @@ for (i in 1:length(TN)){
          x = as.Date(TN[[i]]$SortDate[grep(pattern = "Up", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = ylim_TN, xlim = xlim_WQdates, axes = FALSE,
          col = 'red')
     
     legend('topright', title = 'Detection Limits', legend = c('Upper', 'Lower'), col = c('red', 'blue'), pch = 16)
@@ -1267,7 +1279,7 @@ for (i in 1:length(TN)){
          x = as.Date(TN[[i]]$SortDate[which(is.na(TN[[i]]$ResultMeasureValue) & is.na(TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]), pch = 4, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = ylim_TN, xlim = xlim_WQdates, axes = FALSE,
          col = 'grey')
     legend('right', legend = 'NA values', col = 'grey', pch = 4)
   }
@@ -1281,7 +1293,7 @@ for (i in 1:length(TN)){
        xlab = 'Year', 
        ylab = paste0(TN[[i]]$ResultSampleFractionText[1], " ", TN[[i]]$CharacteristicName[1], " (", TN[[i]]$ResultMeasure.MeasureUnitCode[1], ")"), 
        main = paste0('Station #', TN[[i]]$MonitoringLocationIdentifier[1]),
-       ylim = c(0, 10), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")))
+       ylim = ylim_TN, xlim = xlim_WQdates)
   if(length(dl) != 0){
     #Add detection limits
     #Lower detection limit
@@ -1290,7 +1302,7 @@ for (i in 1:length(TN)){
          x = as.Date(TN[[i]]$SortDate[grep(pattern = "Low", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = ylim_TN, xlim = xlim_WQdates, axes = FALSE,
          col = 'blue')
     #Upper detection limit
     par(new = TRUE)
@@ -1298,7 +1310,7 @@ for (i in 1:length(TN)){
          x = as.Date(TN[[i]]$SortDate[grep(pattern = "Up", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = ylim_TN, xlim = xlim_WQdates, axes = FALSE,
          col = 'red')
     
     legend('topright', title = 'Detection Limits', legend = c('Upper', 'Lower'), col = c('red', 'blue'), pch = 16)
@@ -1310,7 +1322,7 @@ for (i in 1:length(TN)){
          x = as.Date(TN[[i]]$SortDate[which(is.na(TN[[i]]$ResultMeasureValue) & is.na(TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]), pch = 4, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = ylim_TN, xlim = xlim_WQdates, axes = FALSE,
          col = 'grey')
     legend('right', legend = 'NA values', col = 'grey', pch = 4)
   }
@@ -1454,7 +1466,7 @@ for (i in 1:length(TP)){
        xlab = 'Year', 
        ylab = paste0(TP[[i]]$ResultSampleFractionText[1], " ", TP[[i]]$CharacteristicName[1], " (", TP[[i]]$ResultMeasure.MeasureUnitCode[1], ")"), 
        main = paste0('Station #', TP[[i]]$MonitoringLocationIdentifier[1]),
-       ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")))
+       ylim = ylim_TP, xlim = xlim_WQdates)
   
   #Check for and add detection limits
   dl = unique(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue)
@@ -1468,7 +1480,7 @@ for (i in 1:length(TP)){
          x = as.Date(TP[[i]]$SortDate[grep(pattern = "Low", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = ylim_TP, xlim = xlim_WQdates, axes = FALSE,
          col = 'blue')
     #Upper detection limit
     par(new = TRUE)
@@ -1476,7 +1488,7 @@ for (i in 1:length(TP)){
          x = as.Date(TP[[i]]$SortDate[grep(pattern = "Up", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = ylim_TP, xlim = xlim_WQdates, axes = FALSE,
          col = 'red')
     
     legend('topright', title = 'Detection Limits', legend = c('Upper', 'Lower'), col = c('red', 'blue'), pch = 16)
@@ -1488,7 +1500,7 @@ for (i in 1:length(TP)){
          x = as.Date(TP[[i]]$SortDate[which(is.na(TP[[i]]$ResultMeasureValue) & is.na(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]), pch = 4, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = ylim_TP, xlim = xlim_WQdates, axes = FALSE,
          col = 'grey')
     legend('right', legend = 'NA values', col = 'grey', pch = 4)
   }
@@ -1502,7 +1514,7 @@ for (i in 1:length(TP)){
        xlab = 'Year', 
        ylab = paste0(TP[[i]]$ResultSampleFractionText[1], " ", TP[[i]]$CharacteristicName[1], " (", TP[[i]]$ResultMeasure.MeasureUnitCode[1], ")"), 
        main = paste0('Station #', TP[[i]]$MonitoringLocationIdentifier[1]),
-       ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")))
+       ylim = ylim_TP, xlim = xlim_WQdates)
   
   #Check for and add detection limits
   dl = unique(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue)
@@ -1516,7 +1528,7 @@ for (i in 1:length(TP)){
          x = as.Date(TP[[i]]$SortDate[grep(pattern = "Low", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = ylim_TP, xlim = xlim_WQdates, axes = FALSE,
          col = 'blue')
     #Upper detection limit
     par(new = TRUE)
@@ -1524,7 +1536,7 @@ for (i in 1:length(TP)){
          x = as.Date(TP[[i]]$SortDate[grep(pattern = "Up", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = ylim_TP, xlim = xlim_WQdates, axes = FALSE,
          col = 'red')
     
     legend('topright', title = 'Detection Limits', legend = c('Upper', 'Lower'), col = c('red', 'blue'), pch = 16)
@@ -1536,7 +1548,7 @@ for (i in 1:length(TP)){
          x = as.Date(TP[[i]]$SortDate[which(is.na(TP[[i]]$ResultMeasureValue) & is.na(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]), pch = 4, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = ylim_TP, xlim = xlim_WQdates, axes = FALSE,
          col = 'grey')
     legend('right', legend = 'NA values', col = 'grey', pch = 4)
   }
@@ -1622,7 +1634,7 @@ ROI_buffer_WGS = spTransform(ROI_buffer, CRS('+init=epsg:4326'))
 NOAAstations_locs = AllNOAAstations[ROI_buffer_WGS,]
 NOAAstations_locs = spTransform(NOAAstations_locs, CRS(pCRS))
 
-#  Download data and store in a list----
+# Download data and store in a list----
 MetStations = list()
 #Fixme: downloading in parallel throws errors.
 #cl = makeCluster(detectCores() - 1)
@@ -1650,7 +1662,7 @@ dir.create(path = wd_NOAA)
 file.copy(from = user_cache_dir(appname = 'rnoaa', version = NULL, opinion = TRUE, expand = TRUE), to = wd_NOAA, recursive = TRUE)
 setwd(wd_NOAA)
 
-#  Map of the type of data at each station----
+# Map of the type of data at each station----
 for (i in 1:length(unique(NOAAstations_locs$element))){
   #map for each type of data recorded
   png(paste0('NOAA_Datatype_', unique(NOAAstations_locs$element)[i],'.png'), width = 5, height = 5, units = 'in', res = 300)
@@ -1669,7 +1681,7 @@ for (i in 1:length(unique(NOAAstations_locs$element))){
 }
 rm(i)
 
-#  Plot the DEM of the station vs. the DEM of the grid cell----
+# Plot the DEM of the station vs. the DEM of the grid cell----
 NOAAstations_locs$DEMelev = raster::extract(DEM, y = NOAAstations_locs)
 png('CompareNOAAGaugeElevToDEM.png', res = 300, units = 'in', width = 5, height = 5)
 plot(NOAAstations_locs$elevation, NOAAstations_locs$DEMelev,
@@ -1677,23 +1689,23 @@ plot(NOAAstations_locs$elevation, NOAAstations_locs$DEMelev,
 lines(c(-100,1100), c(-100,1100), col = 'red')
 dev.off()
 
-#  Fill in missing dates----
+# Fill in missing dates----
 #make dataframe of the spatial dataset
 NOAAstations_locs@data = as.data.frame(NOAAstations_locs@data)
 
-#   Precipitation----
+#  Precipitation----
 MetStations_Precip = FillMissingDates_par(Dataset = NOAAstations_locs[NOAAstations_locs$element == 'PRCP',], StationList = MetStations[names(MetStations) %in% NOAAstations_locs[NOAAstations_locs$element == 'PRCP',]$id], Var = 'prcp', Date = 'date', gapType = 'd', site_no_D = 'id', site_no_SL = 'id', NoNAcols = 'id')
 #Extract data from the function return
 NOAAstations_locs_Precip = MetStations_Precip$Dataset
 MetStations_Precip = MetStations_Precip$StationList
 
-#   Maximum Temperature----
+#  Maximum Temperature----
 MetStations_TMAX = FillMissingDates_par(Dataset = NOAAstations_locs[NOAAstations_locs$element == 'TMAX',], StationList = MetStations[names(MetStations) %in% NOAAstations_locs[NOAAstations_locs$element == 'TMAX',]$id], Var = 'tmax', Date = 'date', gapType = 'd', site_no_D = 'id', site_no_SL = 'id', NoNAcols = 'id')
 #Extract data from the function return
 NOAAstations_locs_TMAX = MetStations_TMAX$Dataset
 MetStations_TMAX = MetStations_TMAX$StationList
 
-#   Minimum Temperature----
+#  Minimum Temperature----
 MetStations_TMIN = FillMissingDates_par(Dataset = NOAAstations_locs[NOAAstations_locs$element == 'TMIN',], StationList = MetStations[names(MetStations) %in% NOAAstations_locs[NOAAstations_locs$element == 'TMIN',]$id], Var = 'tmin', Date = 'date', gapType = 'd', site_no_D = 'id', site_no_SL = 'id', NoNAcols = 'id')
 #Extract data from the function return
 NOAAstations_locs_TMIN = MetStations_TMIN$Dataset
@@ -1743,11 +1755,11 @@ for (i in 1:length(MetStations_TMAX)){
   plot(y = MetStations_TMAX[[i]]$tmax/10, x = as.Date(MetStations_TMAX[[i]]$date), type = 'o', pch = 16, cex = 0.3,
        xlab = 'Year', 
        ylab = expression(paste('Temperature (', degree, 'C)')), 
-       main = paste0('Station #', MetStations_TMAX[[i]]$id[1]), col = 'red', ylim = c(-20,50), cex.lab = 1.5, cex.axis = 1.5)
+       main = paste0('Station #', MetStations_TMAX[[i]]$id[1]), col = 'red', ylim = ylim_Temp, cex.lab = 1.5, cex.axis = 1.5)
   par(new = TRUE)
   plot(y = MetStations_TMIN[[i]]$tmin/10, x = as.Date(MetStations_TMIN[[i]]$date), type = 'o', pch = 16, cex = 0.3,
        xlab = '', ylab = '', axes = FALSE, 
-       main = paste0('Station #', MetStations_TMIN[[i]]$id[1]), col = 'blue', ylim = c(-20,50))
+       main = paste0('Station #', MetStations_TMIN[[i]]$id[1]), col = 'blue', ylim = ylim_Temp)
   dev.off()
   
   #With map and timeseries
@@ -1757,11 +1769,11 @@ for (i in 1:length(MetStations_TMAX)){
   plot(y = MetStations_TMAX[[i]]$tmax/10, x = as.Date(MetStations_TMAX[[i]]$date), type = 'o', pch = 16, cex = 0.3,
        xlab = 'Year', 
        ylab = expression(paste('Temperature (', degree, 'C)')), 
-       main = paste0('Station #', MetStations_TMAX[[i]]$id[1]), col = 'red', ylim = c(-20,50), cex.lab = 1.5, cex.axis = 1.5)
+       main = paste0('Station #', MetStations_TMAX[[i]]$id[1]), col = 'red', ylim = ylim_Temp, cex.lab = 1.5, cex.axis = 1.5)
   par(new = TRUE)
   plot(y = MetStations_TMIN[[i]]$tmin/10, x = as.Date(MetStations_TMIN[[i]]$date), type = 'o', pch = 16, cex = 0.3,
        xlab = '', ylab = '', axes = FALSE, 
-       main = paste0('Station #', MetStations_TMIN[[i]]$id[1]), col = 'blue', ylim = c(-20,50))
+       main = paste0('Station #', MetStations_TMIN[[i]]$id[1]), col = 'blue', ylim = ylim_Temp)
   
   #map
   plot(NOAAstations_locs, col = 'white')
