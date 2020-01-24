@@ -24,6 +24,7 @@ It is likely that others have made similar functions to process these and other 
 ---
 ### Other R Sources and Code Influences
 [hydroTSM vignette](https://cran.r-project.org/web/packages/hydroTSM/vignettes/hydroTSM_Vignette-knitr.pdf)
+
 [hydroTSM boxplots and flow duration curves](https://rstudio-pubs-static.s3.amazonaws.com/30850_e9f98501a0c3420897eb59de6abae6ab.html)
 
 ---
@@ -43,11 +44,13 @@ Examples are provided for downloading weather station gauges, and selecting site
 
   This code was developed on Windows 10 OS. The compatibility on other OS is untested. File an issue on GitHub if you experience issues with your OS.
 
+
 **0. Preparing to Use the Code**
 
 **_Install R Libraries_**
 
   Users may need to install several R libraries if using this code for the first time. These are listed in the "Load libraries and functions" heading within the script.
+
 
 **_Prepare Input Data_**
 
@@ -56,27 +59,34 @@ Examples are provided for downloading weather station gauges, and selecting site
   OR
   2. Method 2 (streamflow and water quality only): Scenario is that you already have data. Supply a csv file of streamflow gauges (water quality gauges). The streamflow file must contain columns called Source, and GaugeNum. It may contain other columns. The water quality file must be the same as downloaded from the section below entitled "Water Quality Retrieval Method 2".
 
+
 **_Set directory and file names_**
 
   The directories of input and output files, and the names of the files are specified at the top of the script.
+
 
 **_Set the Project Coordinate System_**
 
   Users will need the [EPSG Code](https://spatialreference.org/ref/?page=2) for their coordinate system of choice for their project. All data will be projected into and saved in this coordinate system.
 
+
 **_Set plot x- and y-axis limits_**
 
   If you do not want to use a particular limit, set equal to NULL. Other plot modifications will require editing of the script.
 
+
 **_Obtain DEM Tiles (optional)_**
 
   Users who want to use the DEM tile merging/mosaicking functionality, processDEM, will have to download DEM raster tiles manually. These must have the same raster pixel resolution, be in the same coordinate system, and be spatially adjacent to each other. 
+
+
 
 **1a. Streamflow Gauge Retrieval**
 
   There are two methods implemented to download streamflow gauge data, depending on what information you're starting with. Throughout the code there are labels for Method 1 only and Method 2 only processing steps. 
 
   There are likely many other ways to setup data for download. If you have suggestions, please write to the repository authors.
+
 
 **_Streamflow Gauge Retrieval Method 1:_**  
 
@@ -90,6 +100,7 @@ The function `whatNWISsites()` will return gauge numbers with coordinates for a 
    - Note: this function must use something like grep when characteristicName is specified. Searching for Phosphorus returned all instances of Phosphorus in the table. If you want a specific type of metric only, specify the parameterCd (parameter code) instead of the characteristicName.  
    - This function does not return full site information. For full site information, use `readNWISsite()` with the vector of gauge numbers that is returned using `whatNWISsites()`.
 
+
 **_Streamflow Gauge Retrieval Method 2:_**  
 
 You can find USGS gauges of any type in your region of interest [here](https://cida.usgs.gov/enddat/dataDiscovery.jsp)  
@@ -98,33 +109,43 @@ You can find USGS gauges of any type in your region of interest [here](https://c
      The USGS function `readNWISsite()` can look up the coordinates and all site info, given the gauge numbers :)  
      You can also find coordinates for your gauges if you provide a bounding box of coordinates [here](https://waterdata.usgs.gov/nwis/inventory?search_criteria=lat_long_bounding_box&submitted_form=introduction)
 
+
 **1b. Streamflow Data Coordinate Reprojection**
 
   The downloaded gauges may be in several different coordinate systems. An automatic reprojection and merging is in development. For now, a manual method is implemented that requires users to look up EPSG codes for the projections of their downloaded datasets.
 The reprojections are found under the headers "Make a spatial dataframe: Method X" where X is 1 or 2.
+
+
 
 **2a. Water Quality Portal Data Retrieval**
 
   There are two methods implemented to download water quality data. Throughout the code there are labels for Method 1 only and Method 2 only processing steps.
 
   There are other water quality data that are not contained within the water quality portal. These datasets may also be processed by some functions in this repository, but may require the user to modify their dataset to be compatible with the functions.
-  
+
+
 **_Water Quality Portal Retrieval Method 1:_**  
 
   You can use the `whatWQPsites()`, using the same query criteria as the `whatNWISsites()` function, described in 1a. above. The `whatWQPsites()` function returns all site information, same as the waterqualitydata website described in Method 2 below. You will have to modify the function choices to meet your specific needs. These functions are below the header "Method 1: Read water quality station data using the USGS function"
+
 
 **_Water Quality Portal Retrieval Method 2:_**  
 
 You can find water quality sites [here](https://www.waterqualitydata.us/portal/)  
   Download "site data only" to receive a csv file with gauge/site information with coordinates. The MonitoringLocationIdentifier field is used to download data for each gauge/site.
 
+
 **2b. Streamflow Data Coordinate Reprojection**
 
   Similarly to 1b above, the downloaded information may have several coordinate systems. The places where manual reprojections can be found are under the headers "Make a spatial dataframe: Method X" where X is 1 or 2.
 
+
+
 **3. Weather Data Retrieval from NOAA**
 
   The `ghcnd_stations()` funuction grabs all available weather stations. The region of interest shapefile with radial buffer is used to select gauges.
+
+
 
 **4. Comparing altitude of gauge vs. DEM**  
 
@@ -134,6 +155,8 @@ Downloaded gauge/site coordinates may include the altitude of the gauge, which c
   - [Altitude datum codes](https://help.waterdata.usgs.gov/code/alt_datum_cd_query?fmt=html)  
   - [Altitude collection method codes](https://help.waterdata.usgs.gov/code/alt_meth_cd_query?fmt=html)
 
+
+
 **5. Check Data Quality Codes**  
 
 You can find data quality codes for USGS datasets [here](https://help.waterdata.usgs.gov/codes-and-parameters/codes#discharge_cd)  
@@ -141,6 +164,8 @@ You can find data quality codes for USGS datasets [here](https://help.waterdata.
   - [codes for streamflow 1](https://help.waterdata.usgs.gov/codes-and-parameters/daily-value-qualification-code-dv_rmk_cd)  
   - [codes for streamflow 2](https://help.waterdata.usgs.gov/codes-and-parameters/instantaneous-and-daily-value-status-codes)  
   Yes, there are 2 separate reference schemes for streamflow data.
+
+
 
 **6. Process Data**
 
@@ -150,6 +175,8 @@ ii.	Check for zeros and negative values
 iii.	Fill date gaps (add NA values to dates that are missing from timeseries)
 iv.	Aggregate to daily, monthly, and annual timesteps
 v.	Spatio-temporal outlier detection (simple at the moment)
+
+
 
 **7. Make Plots**
 
