@@ -223,4 +223,4 @@ Julianne D. Quinn (jdq6nn@virginia.edu)
 ---
 ## License Information
 
-You must cite this repository if you use it for your work. Please see the license file.
+Please see the LICENSE file. You must cite this repository if you use it for your work.
