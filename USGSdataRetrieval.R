@@ -906,8 +906,6 @@ if (exists(x = "NWIS_ROI_fn")){
 }
 
 # Write streamflow datasets to files----
-setwd(dir_DEM_out)
-writeRaster(x = DEM, filename = f_DEM_mosiac, format = "GTiff")
 setwd(wd_sf)
 if (exists(x = "NWIS_ROI_fn")){
   writeOGR(obj = NWIS_ROI_fn, dsn = getwd(), driver = 'ESRI Shapefile', layer = f_NWIS_ROI_out)
@@ -928,6 +926,9 @@ list.save(x = StreamStationList, file = f_StreamStationList, type = "YAML")
 #  Add DEM elevation to the gauge datasets----
 #  Gather all of the DEM files together and mosaic into one file
 DEM = processDEM(dir_DEMs = dir_DEM, f_DEMs = f_DEM, pCRS = pCRS)
+setwd(dir_DEM_out)
+writeRaster(x = DEM, filename = f_DEM_mosiac, format = "GTiff")
+setwd(wd_sf)
 #Add the DEM elevation to the gauge dataset
 #Method 1
 if (exists(x = "GaugeLocs_fn")){
@@ -976,6 +977,11 @@ if (exists(x = "GaugeLocs")){
 setwd(wd_sf)
 if (exists(x = "GaugeLocs_fn")){
   #  Method 1 only
+  #assign elevation to the dataset
+  for (i in 1:nrow(NWIS_ROI_fn)){
+    NWIS_ROI_fn$ElevDEM[i] = GaugeLocs_fn$ElevDEM[GaugeLocs_fn$site_no == NWIS_ROI_fn$site_no[i]]
+  }
+  
   png('CompareGaugeElevToDEM_ROI_fn.png', res = 300, units = 'in', width = 5, height = 5)
   plot(NWIS_ROI_fn$alt_va, NWIS_ROI_fn$ElevDEM/.3048,
        xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations in ROI')
@@ -984,6 +990,11 @@ if (exists(x = "GaugeLocs_fn")){
 }
 if (exists(x = "GaugeLocs")){
   #  Method 2 only
+  #assign elevation to the dataset
+  for (i in 1:nrow(NWIS_ROI)){
+    NWIS_ROI$ElevDEM[i] = GaugeLocs$ElevDEM[GaugeLocs$site_no == NWIS_ROI$site_no[i]]
+  }
+  
   png('CompareGaugeElevToDEM_ROI.png', res = 300, units = 'in', width = 5, height = 5)
   plot(NWIS_ROI$alt_va, NWIS_ROI$ElevDEM/.3048,
        xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations in ROI')
