@@ -135,6 +135,7 @@ The reprojections are found under the headers "Make a spatial dataframe: Method 
 
 You can find water quality sites [here](https://www.waterqualitydata.us/portal/)  
   Download "site data only" to receive a csv file with gauge/site information with coordinates. The MonitoringLocationIdentifier field is used to download data for each gauge/site.
+  Note that the example in this script shows loading and processing data from a file, but makes plots only for the Method 1 approach. The sites selected may be different between the two methods, as shown on the maps that are plotted for each method's water quality sites.
 
 
 **2b. Streamflow Data Coordinate Reprojection**
