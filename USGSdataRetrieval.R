@@ -207,55 +207,7 @@ GaugeLocs = rbind(GaugeLocs_NAD27, GaugeLocs_NAD83)
 #Remove separate datasets
 rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugesLocs, GaugesLocs_NAD27, GaugesLocs_NAD83)
 
-# Add DEM elevation to the gauge datasets----
-#  Gather all of the DEM files together and mosaic into one file
-DEM = processDEM(dir_DEMs = dir_DEM, f_DEMs = f_DEM, pCRS = pCRS)
-#Add the DEM elevation to the gauge dataset
-#Method 1
-if (exists(x = "GaugeLocs_fn")){
-  GaugeLocs_fn$ElevDEM = raster::extract(x = DEM, y = GaugeLocs_fn)
-}
-#Method 2
-if (exists(x = "GaugeLocs")){
-  GaugeLocs$ElevDEM = raster::extract(x = DEM, y = GaugeLocs)
-}
-
-#  Compare the DEM elevation to the listed elevation----
-setwd(wd_sf)
-#Method 1
-if (exists(x = "GaugeLocs_fn")){
-  png('CompareStreamflowGaugeElevToDEM_fn.png', res = 300, units = 'in', width = 5, height = 5)
-  plot(GaugeLocs_fn$alt_va[which((is.na(GaugeLocs_fn$alt_va) == FALSE) & (is.na(GaugeLocs_fn$ElevDEM) == FALSE))], 
-       GaugeLocs_fn$ElevDEM[which((is.na(GaugeLocs_fn$alt_va) == FALSE)  & (is.na(GaugeLocs_fn$ElevDEM) == FALSE))]/.3048,
-       xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations')
-  lines(c(-100,1100), c(-100,1100), col = 'red')
-  dev.off()
-}
-#Method 2
-if (exists(x = "GaugeLocs")){
-  png('CompareStreamflowGaugeElevToDEM.png', res = 300, units = 'in', width = 5, height = 5)
-  plot(GaugeLocs$alt_va[which((is.na(GaugeLocs$alt_va) == FALSE) & (is.na(GaugeLocs$ElevDEM) == FALSE))], 
-       GaugeLocs$ElevDEM[which((is.na(GaugeLocs$alt_va) == FALSE) & (is.na(GaugeLocs$ElevDEM) == FALSE))]/.3048,
-       xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations')
-  lines(c(-100,1100), c(-100,1100), col = 'red')
-  dev.off()
-}
-
-#Fixme: Correct the elevations for those gauges that are very different than the DEM
-# and have collection codes that suggest lower data quality
-# Some of the gauges were likely reported in m instead of in ft in the USGS database
-#Identify spatially those gauges that are more than X feet different
-#plot(GaugeLocs)
-#plot(GaugeLocs[which(abs(GaugeLocs$ElevDEM/.3048 - GaugeLocs$alt_va) >= 50),], col = 'red', add =T)
-#plot(GaugeLocs[which(abs(GaugeLocs$ElevDEM/.3048 - GaugeLocs$alt_va) >= 100),], col = 'blue', add =T)
-#plot(GaugeLocs[which(abs(GaugeLocs$ElevDEM/.3048 - GaugeLocs$alt_va) >= 200),], col = 'green', add =T)
-#plot(GaugeLocs_fn)
-#plot(GaugeLocs_fn[which(abs(GaugeLocs_fn$ElevDEM/.3048 - GaugeLocs_fn$alt_va) >= 50),], col = 'red', add =T)
-#plot(GaugeLocs_fn[which(abs(GaugeLocs_fn$ElevDEM/.3048 - GaugeLocs_fn$alt_va) >= 100),], col = 'blue', add =T)
-#plot(GaugeLocs_fn[which(abs(GaugeLocs_fn$ElevDEM/.3048 - GaugeLocs_fn$alt_va) >= 200),], col = 'green', add =T)
-
-
-#  Method 2 only: Add coordinates, elevation, and other data to the NWISstations data----
+#  Add coordinates and other data to the NWISstations data:Methodd 2 only----
 if (exists(x = "GaugeLocs")){
   for (i in 1:nrow(NWISstations)){
     #NOTE: if your data are not both character, errors stating the following will appear:
@@ -326,40 +278,6 @@ if (exists(x = "GaugeLocs")){
   legend('topleft', title = 'Streamflow Stations', legend = c('In ROI', 'Not in ROI'), pch = 16, col = c('red', 'black'))
   dev.off()
 }
-
-# Plot reported vs. DEM elevation of gauges within the ROI----
-setwd(wd_sf)
-if (exists(x = "GaugeLocs_fn")){
-  #  Method 1 only
-  png('CompareGaugeElevToDEM_ROI_fn.png', res = 300, units = 'in', width = 5, height = 5)
-  plot(NWIS_ROI_fn$alt_va, NWIS_ROI_fn$ElevDEM/.3048,
-       xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations in ROI')
-  lines(c(-100,1100), c(-100,1100), col = 'red')
-  dev.off()
-}
-if (exists(x = "GaugeLocs")){
-  #  Method 2 only
-  png('CompareGaugeElevToDEM_ROI.png', res = 300, units = 'in', width = 5, height = 5)
-  plot(NWIS_ROI$alt_va, NWIS_ROI$ElevDEM/.3048,
-       xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations in ROI')
-  lines(c(-100,1100), c(-100,1100), col = 'red')
-  dev.off()
-}
-
-# Hypsometric plot for DEM in the ROI----
-#Clip DEM to the ROI (no buffer) and make a spatial grid dataframe
-DEM_ROI = as(mask(DEM, ROI), 'SpatialGridDataFrame')
-#Plot curve
-setwd(dir_DEM_out)
-png('HypsometricCurve.png', res = 300, units = 'in', width = 5, height = 5)
-par(mar =c(4,4,1,1))
-hypsometric(DEM_ROI, col = 'black', main = 'Gwynns Falls Hypsometric Curve')
-dev.off()
-
-#Fixme: add gauges to this plot - requires modifying the function.
-# Can shade in the areas above each gauge or select outlet points as horizontal steps
-# Show with a map of where the elevation thresholds are located in the DEM
-#  This would require plotting the line as points that are colored by their elevation values.
 
 # Statistics to download for each streamflow gauge, if available----
 # All codes defined here: https://help.waterdata.usgs.gov/code/stat_cd_nm_query?stat_nm_cd=%25&fmt=html
@@ -1005,6 +923,88 @@ for (i in names(StreamStationList)){
 }
 rm(i)
 list.save(x = StreamStationList, file = f_StreamStationList, type = "YAML")
+
+# DEM for Streamflow----
+#  Add DEM elevation to the gauge datasets----
+#  Gather all of the DEM files together and mosaic into one file
+DEM = processDEM(dir_DEMs = dir_DEM, f_DEMs = f_DEM, pCRS = pCRS)
+#Add the DEM elevation to the gauge dataset
+#Method 1
+if (exists(x = "GaugeLocs_fn")){
+  GaugeLocs_fn$ElevDEM = raster::extract(x = DEM, y = GaugeLocs_fn)
+}
+#Method 2
+if (exists(x = "GaugeLocs")){
+  GaugeLocs$ElevDEM = raster::extract(x = DEM, y = GaugeLocs)
+}
+
+#   Compare the DEM elevation to the listed elevation----
+setwd(wd_sf)
+#Method 1
+if (exists(x = "GaugeLocs_fn")){
+  png('CompareStreamflowGaugeElevToDEM_fn.png', res = 300, units = 'in', width = 5, height = 5)
+  plot(GaugeLocs_fn$alt_va[which((is.na(GaugeLocs_fn$alt_va) == FALSE) & (is.na(GaugeLocs_fn$ElevDEM) == FALSE))], 
+       GaugeLocs_fn$ElevDEM[which((is.na(GaugeLocs_fn$alt_va) == FALSE)  & (is.na(GaugeLocs_fn$ElevDEM) == FALSE))]/.3048,
+       xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations')
+  lines(c(-100,1100), c(-100,1100), col = 'red')
+  dev.off()
+}
+#Method 2
+if (exists(x = "GaugeLocs")){
+  png('CompareStreamflowGaugeElevToDEM.png', res = 300, units = 'in', width = 5, height = 5)
+  plot(GaugeLocs$alt_va[which((is.na(GaugeLocs$alt_va) == FALSE) & (is.na(GaugeLocs$ElevDEM) == FALSE))], 
+       GaugeLocs$ElevDEM[which((is.na(GaugeLocs$alt_va) == FALSE) & (is.na(GaugeLocs$ElevDEM) == FALSE))]/.3048,
+       xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations')
+  lines(c(-100,1100), c(-100,1100), col = 'red')
+  dev.off()
+}
+
+#Fixme: Correct the elevations for those gauges that are very different than the DEM
+# and have collection codes that suggest lower data quality
+# Some of the gauges were likely reported in m instead of in ft in the USGS database
+#Identify spatially those gauges that are more than X feet different
+#plot(GaugeLocs)
+#plot(GaugeLocs[which(abs(GaugeLocs$ElevDEM/.3048 - GaugeLocs$alt_va) >= 50),], col = 'red', add =T)
+#plot(GaugeLocs[which(abs(GaugeLocs$ElevDEM/.3048 - GaugeLocs$alt_va) >= 100),], col = 'blue', add =T)
+#plot(GaugeLocs[which(abs(GaugeLocs$ElevDEM/.3048 - GaugeLocs$alt_va) >= 200),], col = 'green', add =T)
+#plot(GaugeLocs_fn)
+#plot(GaugeLocs_fn[which(abs(GaugeLocs_fn$ElevDEM/.3048 - GaugeLocs_fn$alt_va) >= 50),], col = 'red', add =T)
+#plot(GaugeLocs_fn[which(abs(GaugeLocs_fn$ElevDEM/.3048 - GaugeLocs_fn$alt_va) >= 100),], col = 'blue', add =T)
+#plot(GaugeLocs_fn[which(abs(GaugeLocs_fn$ElevDEM/.3048 - GaugeLocs_fn$alt_va) >= 200),], col = 'green', add =T)
+
+#  Plot reported vs. DEM elevation of gauges within the ROI----
+setwd(wd_sf)
+if (exists(x = "GaugeLocs_fn")){
+  #  Method 1 only
+  png('CompareGaugeElevToDEM_ROI_fn.png', res = 300, units = 'in', width = 5, height = 5)
+  plot(NWIS_ROI_fn$alt_va, NWIS_ROI_fn$ElevDEM/.3048,
+       xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations in ROI')
+  lines(c(-100,1100), c(-100,1100), col = 'red')
+  dev.off()
+}
+if (exists(x = "GaugeLocs")){
+  #  Method 2 only
+  png('CompareGaugeElevToDEM_ROI.png', res = 300, units = 'in', width = 5, height = 5)
+  plot(NWIS_ROI$alt_va, NWIS_ROI$ElevDEM/.3048,
+       xlab = 'USGS Reported Elevation (ft)', ylab = 'DEM Elevation (ft)', main = 'Gauge Elevations in ROI')
+  lines(c(-100,1100), c(-100,1100), col = 'red')
+  dev.off()
+}
+
+#  Hypsometric plot for DEM in the ROI----
+#Clip DEM to the ROI (no buffer) and make a spatial grid dataframe
+DEM_ROI = as(mask(DEM, ROI), 'SpatialGridDataFrame')
+#Plot curve
+setwd(dir_DEM_out)
+png('HypsometricCurve.png', res = 300, units = 'in', width = 5, height = 5)
+par(mar =c(4,4,1,1))
+hypsometric(DEM_ROI, col = 'black', main = 'Gwynns Falls Hypsometric Curve')
+dev.off()
+
+#Fixme: add gauges to this plot - requires modifying the function.
+# Can shade in the areas above each gauge or select outlet points as horizontal steps
+# Show with a map of where the elevation thresholds are located in the DEM
+#  This would require plotting the line as points that are colored by their elevation values.
 
 #Water Quality----
 setwd(dir_wq)
@@ -1733,14 +1733,6 @@ for (i in 1:length(unique(NOAAstations_locs$element))){
 }
 rm(i)
 
-# Plot the DEM of the station vs. the DEM of the grid cell----
-NOAAstations_locs$DEMelev = raster::extract(DEM, y = NOAAstations_locs)
-png('CompareNOAAGaugeElevToDEM.png', res = 300, units = 'in', width = 5, height = 5)
-plot(NOAAstations_locs$elevation, NOAAstations_locs$DEMelev,
-     xlab = 'Reported Elevation (m)', ylab = 'DEM Elevation (m)', main = 'NOAA Gauge Elevations')
-lines(c(-100,1100), c(-100,1100), col = 'red')
-dev.off()
-
 # Fill in missing dates----
 #make dataframe of the spatial dataset
 NOAAstations_locs@data = as.data.frame(NOAAstations_locs@data)
@@ -1862,6 +1854,15 @@ rm(i)
 setwd(dir = wd_NOAA)
 writeOGR(NOAAstations_locs, dsn = getwd(), layer = f_NOAAstationsROI, driver = "ESRI Shapefile")
 list.save(x = MetStations, file = f_NOAAstationsDataList, type = "YAML")
+
+# DEM for Weather Gauges----
+#  Plot the DEM of the station vs. the DEM of the grid cell----
+NOAAstations_locs$DEMelev = raster::extract(DEM, y = NOAAstations_locs)
+png('CompareNOAAGaugeElevToDEM.png', res = 300, units = 'in', width = 5, height = 5)
+plot(NOAAstations_locs$elevation, NOAAstations_locs$DEMelev,
+     xlab = 'Reported Elevation (m)', ylab = 'DEM Elevation (m)', main = 'NOAA Gauge Elevations')
+lines(c(-100,1100), c(-100,1100), col = 'red')
+dev.off()
 
 # #Other Weather Station Data Processing - In Development----
 # setwd(dir_sfgauges)
