@@ -34,7 +34,8 @@ It is likely that others have made similar functions to process these and other 
 ---
 ### Main script: USGSdataRetrieval.R
 **Code Notes**
-
+  This code was developed using R version 3.5.3, and all R packages were also downloaded for that version of R. You may try using other versions, but compatibility is not guaranteed.
+  
   There are comment section and sub-section headers throughout this script that indicate blocks of code used for tasks and sub-tasks, respectively. Sub-headers are indented by one space more than the main header. In RStudio, these blocks can be opened and closed with arrows on the left side of the scripting window. This can be useful for navigating the script.
 
   Because of the wide variety of needs for different projects, this main script serves as examples of how downloading and processing data could be completed, but you may want to modify for your project (e.g., if you do not want to use DEM processing).
