@@ -40,9 +40,11 @@ It is likely that others have made similar functions to process these and other 
 
   Because of the wide variety of needs for different projects, this main script serves as examples of how downloading and processing data could be completed, but you may want to modify for your project (e.g., if you do not want to use DEM processing).
 Input data for running this script are provided in the DataForExamples folder. Note that DEM data are too large to host on GitHub.
-Examples are provided for downloading and processing streamflow data using two methods.
-Examples are provided for downloading and processing Total Nitrogen and Total Phosphorus water quality data using two methods.
-Examples are provided for downloading weather station gauges, and selecting sites with precipitation, maximum temperature, and minimum temperature. Duplicates, negatives, and zeros are not checked in this example, but they could be using the functions employed for streamflow and water quality. Aggreation of timeseries to monthly and annual is also not shown, but could be implemented.
+All examples run independently of one another. 
+First run the lines of code through the section entitled "Make Region of Interest (ROI) buffer"
+Streamflow: Examples are provided for downloading and processing streamflow data using two methods.
+Water Quality: Examples are provided for downloading and processing Total Nitrogen and Total Phosphorus water quality data using two methods.
+NOAA weather station data: Examples are provided for downloading weather station gauges, and selecting sites with precipitation, maximum temperature, and minimum temperature. Duplicates, negatives, and zeros are not checked in this example, but they could be using the functions employed for streamflow and water quality. Aggreation of timeseries to monthly and annual is also not shown, but could be implemented.
 
   This code was developed on Windows 10 OS. The compatibility on other OS is untested. File an issue on GitHub if you experience issues with your OS.
 
@@ -151,6 +153,8 @@ You can find water quality sites [here](https://www.waterqualitydata.us/portal/)
 
 
 **4. Comparing altitude of gauge vs. DEM**  
+
+Sections for DEM processing are located at the end of the Streamflow and Weather Gauge section under the headers "DEM for Streamflow" and "DEM for Weather Gauges" respectively.
 
 Downloaded gauge/site coordinates may include the altitude of the gauge, which can be important vs. DEM elevation (e.g. if there's a cliff at the gauge vs. DEM mean elevation of the pixel).  
   - Ensure that the units and the vertical datum are the same for your DEM and all gauge altitudes. A common error in gauge altitudes is USGS data reported in m instead of in ft.  
