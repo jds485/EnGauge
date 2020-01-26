@@ -93,13 +93,6 @@ ROIbuff = 0
 #For weather stations
 ROIbuffWeather = 20000
 
-ROI = readOGR(dsn = dir_ROI, layer = f_ROI, stringsAsFactors = FALSE)
-ROI = spTransform(ROI, CRS(pCRS))
-
-#buffer
-ROI_buff = buffer(ROI, ROIbuff)
-ROI_bufferW = buffer(ROI, width = ROIbuffWeather)
-
 #Load libraries and functions----
 #USGS function library - note that a more recent version is available through Github
 library(dataRetrieval)
@@ -122,6 +115,7 @@ library(zoo)
 library(lubridate)
 library(hydroTSM)
 library(rnoaa)
+library(rappdirs)
 #Color functions for plots (R script from Jared Smith's Geothermal_ESDA Github Repo)
 setwd(dir_ColFuns)
 source('ColorFunctions.R')
@@ -137,6 +131,14 @@ source('checkZerosNegs.R')
 source('formatMonthlyMatrix.R')
 source('matplotDates.R')
 source('aggregateTimeseries.R')
+
+#Make Region of Interest (ROI) buffer----
+ROI = readOGR(dsn = dir_ROI, layer = f_ROI, stringsAsFactors = FALSE)
+ROI = spTransform(ROI, CRS(pCRS))
+
+#buffer
+ROI_buff = buffer(ROI, ROIbuff)
+ROI_bufferW = buffer(ROI, width = ROIbuffWeather)
 
 #Streamflow----
 setwd(dir_sfgauges)
@@ -1673,6 +1675,7 @@ list.save(x = TP_a, file = f_TPSiteList_annual, type = "YAML")
 
 # Fixme: Try plotting the water quality data using R tools like EGRET----
 #NOAA weather station data----
+setwd(dir_weather)
 #Gather all ghcnd stations
 AllNOAAstations = ghcnd_stations()
 #Make a spatial dataframe, and clip to ROI
