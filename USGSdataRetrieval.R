@@ -93,6 +93,13 @@ ROIbuff = 0
 #For weather stations
 ROIbuffWeather = 20000
 
+ROI = readOGR(dsn = dir_ROI, layer = f_ROI, stringsAsFactors = FALSE)
+ROI = spTransform(ROI, CRS(pCRS))
+
+#buffer
+ROI_buff = buffer(ROI, ROIbuff)
+ROI_bufferW = buffer(ROI, width = ROIbuffWeather)
+
 #Load libraries and functions----
 #USGS function library - note that a more recent version is available through Github
 library(dataRetrieval)
@@ -269,12 +276,6 @@ if (exists(x = "GaugeLocs")){
 }
 
 # Clip to ROI----
-ROI = readOGR(dsn = dir_ROI, layer = f_ROI, stringsAsFactors = FALSE)
-ROI = spTransform(ROI, CRS(pCRS))
-
-#buffer
-ROI_buff = buffer(ROI, ROIbuff)
-
 if (exists(x = "GaugeLocs_fn")){
   NWIS_ROI_fn = GaugeLocs_fn[ROI_buff,]
 }
@@ -1106,25 +1107,47 @@ rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugeLocs_WGS84, GaugeLocs_U, GaugesLocs_NA
 #  Clip to ROI----
 WQstations_ROI = WQGaugeLocs[ROI_buff,]
 
+#Phosphorus sites
+phosSites <- whatWQPsites(statecode="MD", characteristicName="Phosphorus")
+#Nitrogen sites
+NitroSites <- whatWQPsites(statecode="MD", characteristicName="Nitrogen")
+
 #Select only those sites in the ROI that have nitrogen data
-WQstations_ROI_N = WQstations_ROI[which(WQstations_ROI$MonitoringLocationIdentifier %in% NitroSites$MonitoringLocationIdentifier),]
+WQstations_ROI_N_f = WQstations_ROI[which(WQstations_ROI$MonitoringLocationIdentifier %in% NitroSites$MonitoringLocationIdentifier),]
 #Select only those sites in the ROI that have Phosphorus data
-WQstations_ROI_P = WQstations_ROI[which(WQstations_ROI$MonitoringLocationIdentifier %in% phosSites$MonitoringLocationIdentifier),]
+WQstations_ROI_P_f = WQstations_ROI[which(WQstations_ROI$MonitoringLocationIdentifier %in% phosSites$MonitoringLocationIdentifier),]
 
 # Plot TN and TP sampling locations on a map----
-png('TNTPsites.png', res = 300, units = 'in', width = 6, height = 6)
-plot(ROI)
-plot(WQstations_ROI_N, pch = 16, add = TRUE, col = 'red')
-plot(WQstations_ROI_P, pch = 16, add = TRUE, col = 'blue')
-plot(WQstations_ROI_P[WQstations_ROI_N,], pch = 16, add = TRUE, col = 'purple')
-plot(WQstations_ROI_N[WQstations_ROI_P,], pch = 16, add = TRUE, col = 'purple')
-# Add coordinates
-axis(side = 1)
-axis(side = 2)
-box()
-north.arrow(xb = 365000, yb = 4346000, len = 700, col = 'black', lab = 'N')
-legend('topright', title = 'Water Quality Sites', legend = c('T Nitrogen Only', 'T Phosphorus Only', 'Both'), col = c('red', 'blue', 'purple'), pch = 16)
-dev.off()
+if (exists(x = "WQstations_ROI_N")){
+  png('TNTPsites.png', res = 300, units = 'in', width = 6, height = 6)
+  plot(ROI)
+  plot(WQstations_ROI_N, pch = 16, add = TRUE, col = 'red')
+  plot(WQstations_ROI_P, pch = 16, add = TRUE, col = 'blue')
+  plot(WQstations_ROI_P[WQstations_ROI_N,], pch = 16, add = TRUE, col = 'purple')
+  plot(WQstations_ROI_N[WQstations_ROI_P,], pch = 16, add = TRUE, col = 'purple')
+  # Add coordinates
+  axis(side = 1)
+  axis(side = 2)
+  box()
+  north.arrow(xb = 365000, yb = 4346000, len = 700, col = 'black', lab = 'N')
+  legend('topright', title = 'Water Quality Sites', legend = c('T Nitrogen Only', 'T Phosphorus Only', 'Both'), col = c('red', 'blue', 'purple'), pch = 16)
+  dev.off()
+}
+if (exists(x = "WQstations_ROI_N_f")){
+  png('TNTPsites_f.png', res = 300, units = 'in', width = 6, height = 6)
+  plot(ROI)
+  plot(WQstations_ROI_N_f, pch = 16, add = TRUE, col = 'red')
+  plot(WQstations_ROI_P_f, pch = 16, add = TRUE, col = 'blue')
+  plot(WQstations_ROI_P_f[WQstations_ROI_N_f,], pch = 16, add = TRUE, col = 'purple')
+  plot(WQstations_ROI_N_f[WQstations_ROI_P_f,], pch = 16, add = TRUE, col = 'purple')
+  # Add coordinates
+  axis(side = 1)
+  axis(side = 2)
+  box()
+  north.arrow(xb = 365000, yb = 4346000, len = 700, col = 'black', lab = 'N')
+  legend('topright', title = 'Water Quality Sites', legend = c('T Nitrogen Only', 'T Phosphorus Only', 'Both'), col = c('red', 'blue', 'purple'), pch = 16)
+  dev.off()
+}
 
 # Download data for those sites in parallel----
 #   Use only the unique gauge numbers in the dataset 
@@ -1652,9 +1675,8 @@ AllNOAAstations = ghcnd_stations()
 coordinates(AllNOAAstations) = c('longitude', 'latitude')
 proj4string(AllNOAAstations) = CRS('+init=epsg:4326')
 #buffer the ROI a bit - assumes a UTM coordinate system. Will not work with other systems.
-ROI_buffer = buffer(ROI, width = ROIbuffWeather)
-ROI_buffer_WGS = spTransform(ROI_buffer, CRS('+init=epsg:4326'))
-NOAAstations_locs = AllNOAAstations[ROI_buffer_WGS,]
+ROI_bufferW_WGS = spTransform(ROI_bufferW, CRS('+init=epsg:4326'))
+NOAAstations_locs = AllNOAAstations[ROI_bufferW_WGS,]
 NOAAstations_locs = spTransform(NOAAstations_locs, CRS(pCRS))
 
 # Download data and store in a list----
