@@ -38,6 +38,7 @@ It is likely that others have made similar functions to process these and other 
   There are comment section and sub-section headers throughout this script that indicate blocks of code used for tasks and sub-tasks, respectively. Sub-headers are indented by one space more than the main header. In RStudio, these blocks can be opened and closed with arrows on the left side of the scripting window. This can be useful for navigating the script.
 
   Because of the wide variety of needs for different projects, this main script serves as examples of how downloading and processing data could be completed, but you may want to modify for your project (e.g., if you do not want to use DEM processing).
+Input data for running this script are provided in the DataForExamples folder. Note that DEM data are too large to host on GitHub.
 Examples are provided for downloading and processing streamflow data using two methods.
 Examples are provided for downloading and processing Total Nitrogen and Total Phosphorus water quality data using two methods.
 Examples are provided for downloading weather station gauges, and selecting sites with precipitation, maximum temperature, and minimum temperature. Duplicates, negatives, and zeros are not checked in this example, but they could be using the functions employed for streamflow and water quality. Aggreation of timeseries to monthly and annual is also not shown, but could be implemented.
