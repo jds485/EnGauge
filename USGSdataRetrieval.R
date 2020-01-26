@@ -35,8 +35,6 @@ dir_weather = 'C:\Users\js4yd\OneDrive - University of Virginia\BES_Data\BES_Dat
 f_ROI = "Watershed_GF"
 #Streamflow gauges and site coordinates filenames - Only used for Method 2 for Streamflow
 f_StreamGaugeData = "BES_USGS_GaugeStations.csv"
-#Optional site data. If not provided, will use function readNWISsite() to collect site coordinates
-#f_StreamGaugeSites = "USGS_GaugeSites.txt"
 #DEM - all separate DEM tiles should be added to this vector (e.g. c("w001001.adf", "w001002.adf") )
 f_DEM = c("w001001.adf", "w001001.adf")
 #Water quality gauges - Only used for Method 2 for Water Quality
@@ -149,6 +147,11 @@ AllStations_fn = readNWISsite(AllStations_fn$site_no)
 # Some of the data are NAD27 projection and others are NAD83 projection. Split the dataset to handle each
 #Fixme: function for splitting coordinate systems and returning one same-coordinate system file
 #       Would require being able to look up epsg codes.
+
+#vector of unique coordinate systems in station data
+StreamUniqueCoords = unique(AllStations_fn$coord_datum_cd)
+
+#Process to the pCRS coordinate system
 GaugesLocs_NAD27 = AllStations_fn[which(AllStations_fn$coord_datum_cd == 'NAD27'), ]
 coordinates(GaugesLocs_NAD27) = c('dec_long_va', 'dec_lat_va')
 proj4string(GaugesLocs_NAD27) = CRS('+init=epsg:4267')
@@ -178,11 +181,7 @@ NWISstations = AllStations[which(AllStations$Source == 'NWIS'),]
 #  Add Gauge locations to that dataset---- 
 #   Also contains altitudes of the gauges, which should be crosss-checked with DEM data
 #   NOTE: you may have to change the commands to match your file.
-if(exists("f_StreamGaugeSites")){
-  GaugesLocs = read.table(f_StreamGaugeSites, sep = "\t", header = TRUE, stringsAsFactors = FALSE)
-}else{
-  GaugesLocs = readNWISsite(NWISstations$GaugeNum)
-}
+GaugesLocs = readNWISsite(NWISstations$GaugeNum)
 
 #  Make spatial dataframe: Method 2----
 GaugesLocs_NAD27 = GaugesLocs[which(GaugesLocs$coord_datum_cd == 'NAD27'), ]
@@ -514,14 +513,16 @@ if (exists(x = "NWIS_ROI_fn")){
 if (exists(x = "NWIS_ROI_fn")){
   #  Method 1
   Fills = FillMissingDates_par(Dataset = NWIS_ROI_fn, StationList = StreamStationList, Var = 'X_00060_00003', 
-                           Date = 'Date', gapType = 'd', site_no_D = 'site_no', site_no_SL = 'site_no', NoNAcols = 'agency_cd')
+                           Date = 'Date', gapType = 'd', site_no_D = 'site_no', site_no_SL = 'site_no', NoNAcols = 'agency_cd', 
+                           NumCores = detectCores()-1)
   NWIS_ROI_fn = Fills$Dataset
   StreamStationList = Fills$StationList
   rm(Fills)
 }else if (exists(x = "NWIS_ROI")){
   #  Method 2
   Fills = FillMissingDates_par(Dataset = NWIS_ROI, StationList = StreamStationList, Var = 'X_00060_00003', 
-                               Date = 'Date', gapType = 'd', site_no_D = 'site_no', site_no_SL = 'site_no', NoNAcols = 'agency_cd')
+                               Date = 'Date', gapType = 'd', site_no_D = 'site_no', site_no_SL = 'site_no', NoNAcols = 'agency_cd', 
+                               NumCores = detectCores()-1)
   NWIS_ROI = Fills$Dataset
   StreamStationList = Fills$StationList
   rm(Fills)
@@ -646,15 +647,17 @@ for (i in 1:length(StreamStationList)){
   dev.off()
   
   #Seasonal flows
-  png(paste0('StreamflowEDA_Seasonal_', StreamStationList[[i]]$site_no[1],'.png'), res = 300, units = 'in', width = 10, height = 10)
-  hydroplot(dts, FUN = mean, col = 'black', var.unit = 'mean cfs', pfreq = 'seasonal', ylab = 'Mean Streamflow (cfs)')
-  dev.off()
+  if ((as.numeric((as.Date(max(StreamStationList[[i]]$Date)) - as.Date(min(StreamStationList[[i]]$Date)))) >= 366) 
+      & (length(StreamStationList[[i]]$X_00060_00003) >= 366)){
+    png(paste0('StreamflowEDA_Seasonal_', StreamStationList[[i]]$site_no[1],'.png'), res = 300, units = 'in', width = 10, height = 10)
+    hydroplot(dts, FUN = mean, col = 'black', var.unit = 'mean cfs', pfreq = 'seasonal', ylab = 'Mean Streamflow (cfs)')
+    dev.off()
+  }
   
   #Fixme: annual timeseries trace plots (overlay of annual hydrographs / shading of 10-25-75-90, plot median sf for water year)
   
   #Fixme: quantitative summary tables like: seasonalfunction(dts, FUN = mean)
   # hydropairs for correlation plot
-  
 }
 rm(i, cc, colCodes, codes, mts, dts, M, at.y, lab.y)
 
@@ -1218,14 +1221,16 @@ rm(TN_agg)
 #     Handle missing data in the daily, monthly, and annual aggregated timeseries----
 TN_d2 = FillMissingDates_par(Dataset = WQstations_ROI_N, StationList = TN_d, Var = 'ResultMeasureValue', 
                         Date = 'SortDate', gapType = 'd', site_no_D = 'MonitoringLocationIdentifier', 
-                        site_no_SL = 'MonitoringLocationIdentifier', NoNAcols = 'MonitoringLocationIdentifier')
+                        site_no_SL = 'MonitoringLocationIdentifier', NoNAcols = 'MonitoringLocationIdentifier', 
+                        NumCores = detectCores()-1)
 WQstations_ROI_N = TN_d2$Dataset
 TN_d = TN_d2$StationList
 rm(TN_d2)
 
 TN_m2 = FillMissingDates_par(Dataset = WQstations_ROI_N, StationList = TN_m, Var = 'ResultMeasureValue', 
                          Date = 'YrMthDy', gapType = 'm', site_no_D = 'MonitoringLocationIdentifier', 
-                         site_no_SL = 'MonitoringLocationIdentifier', NoNAcols = c('MonitoringLocationIdentifier'))
+                         site_no_SL = 'MonitoringLocationIdentifier', NoNAcols = c('MonitoringLocationIdentifier'), 
+                         NumCores = detectCores()-1)
 WQstations_ROI_N = TN_m2$Dataset
 TN_m = TN_m2$StationList
 rm(TN_m2)
@@ -1440,14 +1445,16 @@ rm(TP_agg)
 #     Handle missing data in the daily, monthly, and annual aggregated timeseries----
 TP_d2 = FillMissingDates_par(Dataset = WQstations_ROI_P, StationList = TP_d, Var = 'ResultMeasureValue', 
                          Date = 'SortDate', gapType = 'd', site_no_D = 'MonitoringLocationIdentifier', 
-                         site_no_SL = 'MonitoringLocationIdentifier', NoNAcols = 'MonitoringLocationIdentifier')
+                         site_no_SL = 'MonitoringLocationIdentifier', NoNAcols = 'MonitoringLocationIdentifier', 
+                         NumCores = detectCores()-1)
 WQstations_ROI_P = TP_d2$Dataset
 TP_d = TP_d2$StationList
 rm(TP_d2)
 
 TP_m2 = FillMissingDates_par(Dataset = WQstations_ROI_P, StationList = TP_m, Var = 'ResultMeasureValue', 
                          Date = 'YrMthDy', gapType = 'm', site_no_D = 'MonitoringLocationIdentifier', 
-                         site_no_SL = 'MonitoringLocationIdentifier', NoNAcols = c('MonitoringLocationIdentifier'))
+                         site_no_SL = 'MonitoringLocationIdentifier', NoNAcols = c('MonitoringLocationIdentifier'), 
+                         NumCores = detectCores()-1)
 WQstations_ROI_P = TP_m2$Dataset
 TP_m = TP_m2$StationList
 rm(TP_m2)
@@ -1694,19 +1701,28 @@ dev.off()
 NOAAstations_locs@data = as.data.frame(NOAAstations_locs@data)
 
 #  Precipitation----
-MetStations_Precip = FillMissingDates_par(Dataset = NOAAstations_locs[NOAAstations_locs$element == 'PRCP',], StationList = MetStations[names(MetStations) %in% NOAAstations_locs[NOAAstations_locs$element == 'PRCP',]$id], Var = 'prcp', Date = 'date', gapType = 'd', site_no_D = 'id', site_no_SL = 'id', NoNAcols = 'id')
+MetStations_Precip = FillMissingDates_par(Dataset = NOAAstations_locs[NOAAstations_locs$element == 'PRCP',], 
+                                          StationList = MetStations[names(MetStations) %in% NOAAstations_locs[NOAAstations_locs$element == 'PRCP',]$id], 
+                                          Var = 'prcp', Date = 'date', gapType = 'd', site_no_D = 'id', site_no_SL = 'id', NoNAcols = 'id',
+                                          NumCores = detectCores()-1)
 #Extract data from the function return
 NOAAstations_locs_Precip = MetStations_Precip$Dataset
 MetStations_Precip = MetStations_Precip$StationList
 
 #  Maximum Temperature----
-MetStations_TMAX = FillMissingDates_par(Dataset = NOAAstations_locs[NOAAstations_locs$element == 'TMAX',], StationList = MetStations[names(MetStations) %in% NOAAstations_locs[NOAAstations_locs$element == 'TMAX',]$id], Var = 'tmax', Date = 'date', gapType = 'd', site_no_D = 'id', site_no_SL = 'id', NoNAcols = 'id')
+MetStations_TMAX = FillMissingDates_par(Dataset = NOAAstations_locs[NOAAstations_locs$element == 'TMAX',], 
+                                        StationList = MetStations[names(MetStations) %in% NOAAstations_locs[NOAAstations_locs$element == 'TMAX',]$id], 
+                                        Var = 'tmax', Date = 'date', gapType = 'd', site_no_D = 'id', site_no_SL = 'id', NoNAcols = 'id',
+                                        NumCores = detectCores()-1)
 #Extract data from the function return
 NOAAstations_locs_TMAX = MetStations_TMAX$Dataset
 MetStations_TMAX = MetStations_TMAX$StationList
 
 #  Minimum Temperature----
-MetStations_TMIN = FillMissingDates_par(Dataset = NOAAstations_locs[NOAAstations_locs$element == 'TMIN',], StationList = MetStations[names(MetStations) %in% NOAAstations_locs[NOAAstations_locs$element == 'TMIN',]$id], Var = 'tmin', Date = 'date', gapType = 'd', site_no_D = 'id', site_no_SL = 'id', NoNAcols = 'id')
+MetStations_TMIN = FillMissingDates_par(Dataset = NOAAstations_locs[NOAAstations_locs$element == 'TMIN',], 
+                                        StationList = MetStations[names(MetStations) %in% NOAAstations_locs[NOAAstations_locs$element == 'TMIN',]$id], 
+                                        Var = 'tmin', Date = 'date', gapType = 'd', site_no_D = 'id', site_no_SL = 'id', NoNAcols = 'id',
+                                        NumCores = detectCores()-1)
 #Extract data from the function return
 NOAAstations_locs_TMIN = MetStations_TMIN$Dataset
 MetStations_TMIN = MetStations_TMIN$StationList
