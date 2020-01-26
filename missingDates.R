@@ -126,7 +126,8 @@ FillMissingDates_par = function(Dataset,
                             gapType = NA,  
                             site_no_D = 'site_no', 
                             site_no_SL = 'site_no', 
-                            NoNAcols 
+                            NoNAcols,
+                            NumCores #number of cores to use for parallel processing. Minimum is 2. Max is number of cores - 1.
 ){
   if (is.na(gapType)){
     stop('Error: gapType must be specified.')
@@ -145,7 +146,7 @@ FillMissingDates_par = function(Dataset,
     Dataset$MissingData_a = NA
   }
   
-  cl = makeCluster(detectCores() - 1)
+  cl = makeCluster(min((detectCores() - 1), max(NumCores, 2)))
   registerDoParallel(cl)
   lst = foreach (i = 1:length(StationList), .combine = 'c', .packages = 'lubridate') %dopar%{
     #Sort the streamflow series by date
