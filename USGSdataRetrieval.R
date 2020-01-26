@@ -1076,6 +1076,10 @@ rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugesLocs_NAD27, GaugesLocs_NAD83, GaugeLo
 WQstations_ROI_N = GaugeLocs_WQN[ROI_buff,]
 WQstations_ROI_P = GaugeLocs_WQP[ROI_buff,]
 
+#Fix the dataframe from tibble
+WQstations_ROI_N@data = as.data.frame(WQstations_ROI_N@data)
+WQstations_ROI_P@data = as.data.frame(WQstations_ROI_P@data)
+
 # Method 2: Read water quality station data from file----
 WQstations = read.csv(f_WQgauges, stringsAsFactors = FALSE)
 #  Make a spatial dataframe: Method 2----
