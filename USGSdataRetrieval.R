@@ -1016,6 +1016,10 @@ NitroSites <- whatWQPsites(statecode="MD", characteristicName="Nitrogen")
 
 #  Make a spatial dataframe: Method 1----
 #Nitrogen
+#vector of unique coordinate systems in station data
+NitroUniqueCoords = unique(NitroSites$HorizontalCoordinateReferenceSystemDatumName)
+
+#Process to the pCRS coordinate system
 GaugesLocs_NAD27 = NitroSites[which(NitroSites$HorizontalCoordinateReferenceSystemDatumName == 'NAD27'), ]
 coordinates(GaugesLocs_NAD27) = c('LongitudeMeasure', 'LatitudeMeasure')
 proj4string(GaugesLocs_NAD27) = CRS('+init=epsg:4267')
@@ -1040,6 +1044,10 @@ GaugeLocs_WQN = rbind(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugeLocs_WGS84, GaugeLo
 rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugesLocs_NAD27, GaugesLocs_NAD83, GaugeLocs_WGS84, GaugeLocs_U, GaugesLocs_U, GaugesLocs_WGS84)
 
 #Phosphorus
+#vector of unique coordinate systems in station data
+PhosUniqueCoords = unique(phosSites$HorizontalCoordinateReferenceSystemDatumName)
+
+#Process to the pCRS coordinate system
 GaugesLocs_NAD27 = phosSites[which(phosSites$HorizontalCoordinateReferenceSystemDatumName == 'NAD27'), ]
 coordinates(GaugesLocs_NAD27) = c('LongitudeMeasure', 'LatitudeMeasure')
 proj4string(GaugesLocs_NAD27) = CRS('+init=epsg:4267')
@@ -1072,20 +1080,28 @@ WQstations = read.csv(f_WQgauges, stringsAsFactors = FALSE)
 #  Make a spatial dataframe: Method 2----
 coordinates(WQstations) = c('LongitudeMeasure', 'LatitudeMeasure')
 #Split dataset according to the coordinate reference systems used
+#vector of unique coordinate systems in station data
+WQStationUniqueCoords = unique(WQstations$HorizontalCoordinateReferenceSystemDatumName)
+
+#Process to the pCRS coordinate system
 GaugesLocs_NAD27 = WQstations[which(WQstations$HorizontalCoordinateReferenceSystemDatumName == 'NAD27'), ]
 proj4string(GaugesLocs_NAD27) = CRS('+init=epsg:4267')
 GaugesLocs_NAD83 = WQstations[which(WQstations$HorizontalCoordinateReferenceSystemDatumName == 'NAD83'), ]
 proj4string(GaugesLocs_NAD83) = CRS('+init=epsg:4269')
+#Assuming unknown is NAD83
+GaugesLocs_U = WQstations[which(WQstations$HorizontalCoordinateReferenceSystemDatumName == 'UNKWN'), ]
+proj4string(GaugesLocs_U) = CRS('+init=epsg:4269')
 GaugesLocs_WGS84 = WQstations[which(WQstations$HorizontalCoordinateReferenceSystemDatumName == 'WGS84'), ]
 proj4string(GaugesLocs_WGS84) = CRS('+init=epsg:4326')
 #Transform to NAD83 UTM Zone 18N
 GaugeLocs_NAD27 = spTransform(GaugesLocs_NAD27, CRS(pCRS))
 GaugeLocs_NAD83 = spTransform(GaugesLocs_NAD83, CRS(pCRS))
 GaugeLocs_WGS84 = spTransform(GaugesLocs_WGS84, CRS(pCRS))
+GaugeLocs_U = spTransform(GaugesLocs_U, CRS(pCRS))
 #Join to one dataset again
-WQGaugeLocs = rbind(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugeLocs_WGS84)
+WQGaugeLocs = rbind(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugeLocs_WGS84, GaugeLocs_U)
 #Remove separate datasets
-rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugeLocs_WGS84, GaugesLocs_NAD27, GaugesLocs_NAD83, GaugesLocs_WGS84)
+rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugeLocs_WGS84, GaugeLocs_U, GaugesLocs_NAD27, GaugesLocs_NAD83, GaugesLocs_WGS84, GaugesLocs_U)
 
 #  Clip to ROI----
 WQstations_ROI = WQGaugeLocs[ROI_buff,]
