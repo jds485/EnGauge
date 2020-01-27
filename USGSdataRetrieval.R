@@ -6,6 +6,7 @@
 # Modified by Jared Smith (js4yd@virginia.edu) in June, 2019, and started git tracking.
 # See git commit history for all later contributions
 
+#Fixme: catch all print statements for each section and write to text file(s)
 #Fixme: make each method a separate function or script
 #Fixme: add methods for handling detection limits in time series
 
@@ -98,6 +99,9 @@ ylim_Temp = c(-20,50)
 ROIbuff = 0
 #For weather stations
 ROIbuffWeather = 20000
+
+#Set high outlier quantile----
+HighOutProb = 0.99
 
 #Load libraries and functions----
 #USGS function library - note that a more recent version is available through Github
@@ -597,7 +601,7 @@ rm(i, cc, colCodes, codes, mts, dts, M, at.y, lab.y)
 for (i in 1:length(StreamStationList)){
   #Hacky spatiotemporal outlier detection method
   #select all values in the 99th percentile or above
-  highs = StreamStationList[[i]][which(StreamStationList[[i]]$X_00060_00003 > quantile(StreamStationList[[i]]$X_00060_00003, probs = 0.99, na.rm = TRUE)),c('X_00060_00003', 'Date')]
+  highs = StreamStationList[[i]][which(StreamStationList[[i]]$X_00060_00003 > quantile(StreamStationList[[i]]$X_00060_00003, probs = HighOutProb, na.rm = TRUE)),c('X_00060_00003', 'Date')]
   #empirical quantile for all of the flows
   qhighs = highs
   qhighs$X_00060_00003 = ecdf(StreamStationList[[i]]$X_00060_00003)(highs$X_00060_00003)
@@ -621,8 +625,8 @@ for (i in 1:length(StreamStationList)){
   ahighs[,2] = NA
   bqhighs[,2] = NA
   aqhighs[,2] = NA
-  bInds = which(StreamStationList[[i]]$X_00060_00003 > quantile(StreamStationList[[i]]$X_00060_00003, probs = 0.99, na.rm = TRUE))-1
-  aInds = which(StreamStationList[[i]]$X_00060_00003 > quantile(StreamStationList[[i]]$X_00060_00003, probs = 0.99, na.rm = TRUE))+1
+  bInds = which(StreamStationList[[i]]$X_00060_00003 > quantile(StreamStationList[[i]]$X_00060_00003, probs = HighOutProb, na.rm = TRUE))-1
+  aInds = which(StreamStationList[[i]]$X_00060_00003 > quantile(StreamStationList[[i]]$X_00060_00003, probs = HighOutProb, na.rm = TRUE))+1
   if (min(bInds) != 0){
     bhighs[,2] = StreamStationList[[i]][bInds,'X_00060_00003']
     bqhighs[,2] = ecdf(StreamStationList[[i]]$X_00060_00003)(bhighs[,2])
