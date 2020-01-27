@@ -20,6 +20,7 @@ It is likely that others have made similar functions to process these and other 
   [Slideshow](https://owi.usgs.gov/R/dataRetrieval.html#1)
 
 2. rnoaa - main package for NOAA weather station data retrieval.
+  [Documentation](https://www.rdocumentation.org/packages/rnoaa/versions/0.2.0)
 
 ---
 ### Other R Sources and Code Influences
@@ -146,7 +147,7 @@ You can find water quality sites [here](https://www.waterqualitydata.us/portal/)
   Note that the example in this script shows loading and processing data from a file, but makes plots only for the Method 1 approach. The sites selected may be different between the two methods, as shown on the maps that are plotted for each method's water quality sites.
 
 
-**2b. Streamflow Data Coordinate Reprojection**
+**2b. Water Quality Data Coordinate Reprojection**
 
   Similarly to 1b above, the downloaded information may have several coordinate systems. The places where manual reprojections can be found are under the headers "Make a spatial dataframe: Method X" where X is 1 or 2.
 
