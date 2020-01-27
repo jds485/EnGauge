@@ -926,8 +926,6 @@ list.save(x = StreamStationList, file = f_StreamStationList, type = "YAML")
 #  Add DEM elevation to the gauge datasets----
 #  Gather all of the DEM files together and mosaic into one file
 DEM = processDEM(dir_DEMs = dir_DEM, f_DEMs = f_DEM, pCRS = pCRS)
-setwd(dir_DEM_out)
-writeRaster(x = DEM, filename = f_DEM_mosiac, format = "GTiff")
 setwd(wd_sf)
 #Add the DEM elevation to the gauge dataset
 #Method 1
@@ -1016,6 +1014,17 @@ dev.off()
 # Can shade in the areas above each gauge or select outlet points as horizontal steps
 # Show with a map of where the elevation thresholds are located in the DEM
 #  This would require plotting the line as points that are colored by their elevation values.
+
+# Write DEM + streamflow datasets to files----
+setwd(dir_DEM_out)
+writeRaster(x = DEM, filename = f_DEM_mosiac, format = "GTiff")
+setwd(wd_sf)
+if (exists(x = "NWIS_ROI_fn")){
+  writeOGR(obj = NWIS_ROI_fn, dsn = getwd(), driver = 'ESRI Shapefile', layer = paste0(f_NWIS_ROI_out, '_withDEM'))
+}else if (exists(x = "NWIS_ROI")){
+  writeOGR(obj = NWIS_ROI, dsn = getwd(), driver = 'ESRI Shapefile', layer = paste0(f_NWIS_ROI_out, '_withDEM'))
+  writeOGR(obj = NWISstations, dsn = getwd(), driver = 'ESRI Shapefile', layer = paste0(f_NWIS_bb_out, '_withDEM'))
+}
 
 #Water Quality----
 setwd(dir_wq)
@@ -1868,12 +1877,18 @@ list.save(x = MetStations, file = f_NOAAstationsDataList, type = "YAML")
 
 # DEM for Weather Gauges----
 #  Plot the DEM of the station vs. the DEM of the grid cell----
+DEM = processDEM(dir_DEMs = dir_DEM, f_DEMs = f_DEM, pCRS = pCRS)
+
 NOAAstations_locs$DEMelev = raster::extract(DEM, y = NOAAstations_locs)
 png('CompareNOAAGaugeElevToDEM.png', res = 300, units = 'in', width = 5, height = 5)
 plot(NOAAstations_locs$elevation, NOAAstations_locs$DEMelev,
      xlab = 'Reported Elevation (m)', ylab = 'DEM Elevation (m)', main = 'NOAA Gauge Elevations')
 lines(c(-100,1100), c(-100,1100), col = 'red')
 dev.off()
+
+# Write DEM + met station data to files----
+setwd(dir = wd_NOAA)
+writeOGR(NOAAstations_locs, dsn = getwd(), layer = paste0(f_NOAAstationsROI, '_withDEM'), driver = "ESRI Shapefile")
 
 # #Other Weather Station Data Processing - In Development----
 # setwd(dir_sfgauges)
