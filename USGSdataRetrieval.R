@@ -18,6 +18,11 @@ dir_ColFuns = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BE
 dir_EnGauge = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge"
 #Directory where USGS streamflow gauge data will be downloaded. This directory must already exist.
 dir_sfgauges = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges"
+#Directory where water quality gauge data will be downloaded. This directory must already exist.
+dir_wq = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges'
+#Directory where weather station data will be downloaded. This directory must already exist.
+dir_weather = 'C:\Users\js4yd\OneDrive - University of Virginia\BES_Data\BES_Data\Hydrology\Precipitation'
+
 #DEM - specify as a vector of directories if there are multiple tiles to be mosaicked together.
 # The directory order has to match the file name order for f_DEM below.
 # Fixme: can DEMs be downloaded from a server instead of downloading manually before using this script?
@@ -25,24 +30,20 @@ dir_DEM = c("C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_
             'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\DEM\\USGS_NED_1_n40w078_ArcGrid\\grdn40w078_1')
 #Output directory for processed DEM. This directory must already exist.
 dir_DEM_out = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\DEM\\'
-#Directory where water quality gauge data will be downloaded. This directory must already exist.
-dir_wq = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges'
-#Directory where weather station data will be downloaded. This directory must already exist.
-dir_weather = 'C:\Users\js4yd\OneDrive - University of Virginia\BES_Data\BES_Data\Hydrology\Precipitation'
 
 #Set input filenames----
 #Region of interest shapefile name
 f_ROI = "Watershed_GF"
+
 #Streamflow gauges and site coordinates filenames - Only used for Method 2 for Streamflow
 f_StreamGaugeData = "BES_USGS_GaugeStations.csv"
-#DEM - all separate DEM tiles should be added to this vector (e.g. c("w001001.adf", "w001002.adf") )
-f_DEM = c("w001001.adf", "w001001.adf")
 #Water quality gauges - Only used for Method 2 for Water Quality
 f_WQgauges = "BES_WaterQualityGaugeStations.csv"
 
+#DEM - all separate DEM tiles should be added to this vector (e.g. c("w001001.adf", "w001002.adf") )
+f_DEM = c("w001001.adf", "w001001.adf")
+
 #Set output filenames----
-#DEM - GeoTiff format is the default. You can change in the script.
-f_DEM_mosiac = "DEM_mosaic"
 #NWIS streamflow gauges in ROI
 f_NWIS_ROI_out = 'NWIS_ROI'
 #NWIS streamflow gauges in bounding box. Only for Method 2 streamflow.
@@ -52,6 +53,7 @@ f_NWIS_bb_out = 'NWIS_bb'
 f_sf_processKey = '_p'
 #Name for the list of all streamflow gauge timeseries. YAML list type is used below.
 f_StreamStationList = 'SF.yaml'
+
 #Name for the list of all TN water quality site timeseries. YAML list type is used below.
 f_TNSiteList = 'TN.yaml'
 f_TNSiteList_daily = 'TN_d.yaml'
@@ -62,10 +64,14 @@ f_TPSiteList = 'TP.yaml'
 f_TPSiteList_daily = 'TP_d.yaml'
 f_TPSiteList_monthly = 'TP_m.yaml'
 f_TPSiteList_annual = 'TP_a.yaml'
+
 #NOAA weather station data locations
 f_NOAAstationsROI = 'NOAA_StationLocs'
 #Name for the list of all NOAA weather station timeseries. YAML list type is used below.
 f_NOAAstationsDataList = 'NOAA_MetStations.yaml'
+
+#DEM - GeoTiff format is the default. You can change in the script.
+f_DEM_mosiac = "DEM_mosaic"
 
 #Set project coordinate system----
 #This is the coordinate system that all data will be plotted and written in
