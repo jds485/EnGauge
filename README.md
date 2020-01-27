@@ -34,19 +34,22 @@ It is likely that others have made similar functions to process these and other 
 ---
 ### Main script: USGSdataRetrieval.R
 **Code Notes**
+  
   This code was developed using R version 3.5.3, and all R packages were also downloaded for that version of R. You may try using other versions, but compatibility is not guaranteed.
+  
+  This code was developed on Windows 10 OS. The compatibility on other OS is untested. File an issue on GitHub if you experience issues with your OS.
   
   There are comment section and sub-section headers throughout this script that indicate blocks of code used for tasks and sub-tasks, respectively. Sub-headers are indented by one space more than the main header. In RStudio, these blocks can be opened and closed with arrows on the left side of the scripting window. This can be useful for navigating the script.
 
-  Because of the wide variety of needs for different projects, this main script serves as examples of how downloading and processing data could be completed, but you may want to modify for your project (e.g., if you do not want to use DEM processing).
-Input data for running this script are provided in the DataForExamples folder. Note that DEM data are too large to host on GitHub.
-All examples run independently of one another. 
-First run the lines of code through the section entitled "Make Region of Interest (ROI) buffer"
-Streamflow: Examples are provided for downloading and processing streamflow data using two methods.
-Water Quality: Examples are provided for downloading and processing Total Nitrogen and Total Phosphorus water quality data using two methods.
-NOAA weather station data: Examples are provided for downloading weather station gauges, and selecting sites with precipitation, maximum temperature, and minimum temperature. Duplicates, negatives, and zeros are not checked in this example, but they could be using the functions employed for streamflow and water quality. Aggreation of timeseries to monthly and annual is also not shown, but could be implemented.
+  Because of the wide variety of needs for different projects, this main script serves as examples of how downloading and processing data could be completed; you may want to modify for your project (e.g., if you do not want to use DEM processing, or have no water quality data needs).
+  
+  Input data for running this script are provided in the DataForExamples folder. Note that DEM data are too large to host on GitHub, but you can download the 2 DEM tiles used for the examples using [The National Map](https://viewer.nationalmap.gov/advanced-viewer/) and select the NED tiles corresponding to "1 arc-second n40w078 1 x 1 degree ArcGrid" and "1 arc-second n40w077 1 x 1 degree ArcGrid". You can also run the script without running the DEM sections, which all have "DEM" in their section header.
 
-  This code was developed on Windows 10 OS. The compatibility on other OS is untested. File an issue on GitHub if you experience issues with your OS.
+All examples in this script run independently of one another after specifying directory and file information, and code options.
+   - Run the lines of code through the section entitled "Make Region of Interest (ROI) buffer"
+   - Streamflow Example: Downloading and processing streamflow data using two methods.
+   - Water Quality Example: Downloading and processing Total Nitrogen and Total Phosphorus water quality data using two methods. Outliers are not checked in this example because for this area the temporal data length is not great, and it would be difficult to detect and/or define an outlier.
+   - NOAA Weather Station Example: Downloading weather station gauges and selecting sites with precipitation, maximum temperature, and minimum temperature. Duplicates, negatives, and zeros are not checked in this example, but they could be using the functions employed for streamflow and water quality. Aggreation of timeseries to monthly and annual is also not shown, but could be implemented.
 
 
 **0. Preparing to Use the Code**
@@ -59,9 +62,9 @@ NOAA weather station data: Examples are provided for downloading weather station
 **_Prepare Input Data_**
 
   For each acquisition of streamflow, water quality, and weather station data, users should have either: 
-  1. Method 1 (recommended, applies to streamflow, water quality, and weather stations): Scenario is that you know your region of interest but do not yet have data. Supply a polygon shapefile of the region of interest (ROI). The code will use this shapefile and an optional radial buffer around this shapefile to acquire data for streamflow, water quality, and weather station sites. There is an option to specify a different buffer for weather stations because it's common to need a larger region for these information. 
+  1. Method 1 (recommended, applies to streamflow, water quality, and weather stations): Scenario is that you know your region of interest but do not yet have data. Supply a polygon shapefile of the region of interest (ROI). The code will use this shapefile and an optional radial buffer around this shapefile to acquire data. There is an option to specify a different buffer for weather stations because it's common to need a larger region for these information. 
   OR
-  2. Method 2 (streamflow and water quality only): Scenario is that you already have data. Supply a csv file of streamflow gauges (water quality gauges). The streamflow file must contain columns called Source, and GaugeNum. It may contain other columns. The water quality file must be the same as downloaded from the section below entitled "Water Quality Retrieval Method 2".
+  2. Method 2 (streamflow and water quality only): Scenario is that you already have data (e.g. a gauge number). Supply a csv file of streamflow gauges (water quality gauges). The streamflow file must contain columns called Source, and GaugeNum. It may contain other columns. The water quality file must be the same as downloaded from the section below entitled "Water Quality Retrieval Method 2".
 
 
 **_Set directory and file names_**
@@ -79,6 +82,11 @@ NOAA weather station data: Examples are provided for downloading weather station
   If you do not want to use a particular limit, set equal to NULL. Other plot modifications will require editing of the script.
 
 
+**_Set the quantile that defines a high outlier_**
+
+  The default is 0.99, for the 99th percentile.
+
+
 **_Obtain DEM Tiles (optional)_**
 
   Users who want to use the DEM tile merging/mosaicking functionality, processDEM, will have to download DEM raster tiles manually. These must have the same raster pixel resolution, be in the same coordinate system, and be spatially adjacent to each other. 
@@ -88,8 +96,6 @@ NOAA weather station data: Examples are provided for downloading weather station
 **1a. Streamflow Gauge Retrieval**
 
   There are two methods implemented to download streamflow gauge data, depending on what information you're starting with. Throughout the code there are labels for Method 1 only and Method 2 only processing steps. 
-
-  There are likely many other ways to setup data for download. If you have suggestions, please write to the repository authors.
 
 
 **_Streamflow Gauge Retrieval Method 1:_**  
@@ -154,7 +160,7 @@ You can find water quality sites [here](https://www.waterqualitydata.us/portal/)
 
 **4. Comparing altitude of gauge vs. DEM**  
 
-Sections for DEM processing are located at the end of the Streamflow and Weather Gauge section under the headers "DEM for Streamflow" and "DEM for Weather Gauges" respectively.
+Sections for DEM processing are located at the end of the Streamflow and Weather Gauge sections under the headers "DEM for Streamflow" and "DEM for Weather Gauges" respectively.
 
 Downloaded gauge/site coordinates may include the altitude of the gauge, which can be important vs. DEM elevation (e.g. if there's a cliff at the gauge vs. DEM mean elevation of the pixel).  
   - Ensure that the units and the vertical datum are the same for your DEM and all gauge altitudes. A common error in gauge altitudes is USGS data reported in m instead of in ft.  
@@ -210,7 +216,7 @@ Hypsometric curves for DEMs
 11. scatterHistCols.R - modified scatterHist() function from the psych package to accept colors, and provide density smoothing by color.
 
 ---
-### Example files - In Development:
+### Other Example Files - In development, data not all available here:
 
 Example 1 is less in development than example 2. Both of these are based on earlier versions of the main script.
 1. Method1Example_GFBR.R - example employing only the Method 1 downloads to the Baltimore Ecosystem Study Long Term Ecological Research Site in Gwynns Falls and Baisman Run (GFBR)
