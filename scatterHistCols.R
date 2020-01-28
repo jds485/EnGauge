@@ -45,7 +45,7 @@ scatterHist_mod = function (x, y = NULL, smooth = TRUE, ab = FALSE, correl = TRU
   yhist <- hist(y, breaks = y.breaks, plot = FALSE)
   nf <- layout(matrix(c(2, 4, 1, 3), 2, 2, byrow = TRUE), 
                c(3, 1), c(1, 3), TRUE)
-  par(mar = c(5, 4, 1, 1))
+  par(mar = c(5, 5, 1, 1))
   if (smoother) {
     smoothScatter(x, y, nrpoints = nrpoints, xlim = xlim, 
                   ylim = ylim, xlab = xlab, ylab = ylab, )
