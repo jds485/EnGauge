@@ -140,6 +140,7 @@ library(EGRET)
 library(survival)
 library(pracma)
 library(psych)
+library(car)
 #Functions from repository
 setwd(dir_EnGauge)
 source('missingDates.R')
@@ -1334,12 +1335,9 @@ for (i in seq(1,(length(BES_PrecipList)-1),2)){
   dev.off()
 }
 
-#Fixme: Do some diagnostics on the sites to come up with a single timeseries for each site----
-
-
+# Fixme: Do some diagnostics on the sites to come up with a single timeseries for each site----
 # Fixme: check if the high bias days are also biased on the previous and following day----
 # Fixme: color the bias by the rainfall rate (> 1.5"/hr is prone to errors)
-
 # NOAA weather station data----
 #Get the FIPS code for Maryland
 MDfips = rnoaa::fipscodes[which(rnoaa::fipscodes$state == 'Maryland'),]
@@ -1570,7 +1568,6 @@ dev.off()
 
 #Fixme: ACF for precip and temp datasets----
 #Fixme: evaluate outliers for precip and temp (possible multivariate outliers) - make scatterplots of precip and temp----
-
 #Write met station data to files----
 #BES data
 setwd(dir = dir_precip)
@@ -1594,7 +1591,6 @@ list.save(x = MetStations, file = f_NOAAstationsDataList, type = "YAML")
 #Fixme: correlation plots of streamflow and N across watershed for different sites----
 #       need to have matching timeseries to do this. Hydropairs function may work.
 #       can help the spatial prediction
-
 #Process hydro nexrad radar info----
 #Initial test with year 2000
 setwd(paste0(dir_Nexrad, "/Balto2000"))
@@ -1841,7 +1837,7 @@ pairs.panels(x = log10(BaisNexPrecipMat[,-1]+.01), scale = FALSE, density = FALS
              digits = 3, lm = TRUE, jiggle = FALSE, rug = FALSE, cex.cor = .7, method = 'spearman')
 dev.off()
 
-# Compare to the Oregon Riddge rain gauge----
+# Compare to the Oregon Ridge rain gauge----
 min(as.Date(BES_Precip_d$WXORDG_RG1$SortDate))
 max(as.Date(BaisNex_Precip_d[[1]]$Date))
 IndStart = which(as.Date(BaisNex_Precip_d[[1]]$Date) == min(as.Date(BES_Precip_d$WXORDG_RG1$SortDate)))
@@ -1859,7 +1855,6 @@ dev.off()
 
 
 # Fixme: Fill in rasters with gauge values on days without radar information----
-
 # Fixme: Convert to a raster for use in RHESSys patch precip assignment----
 gridded(Nexrad) = TRUE
 gridded(Nexrad2) = TRUE
@@ -1870,11 +1865,10 @@ NexradRas2 = raster(Nexrad2)
 NexradRas2 = projectRaster(NexradRas2, crs = CRS(pCRS))
 
 #Fixme: Download climate indices (ENSO, PDO, etc.) and evaluate timeseries relative to those----
-
-#Fixme: add weather station download info to the main repository----
-
 #Create Observation timeseries for RHESSys calibration----
 #Baisman USGS Streamflow and TN----
+setwd("C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs")
+
 #Streamflow and Nitrogen are both available in the BES_TN_d list
 BES_TN_d_load = list.load('C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\WaterChemistry\\Nitrogen\\BES_TN_d.yaml', type = "YAML")
 
@@ -1921,6 +1915,17 @@ options(scipen = 999)
 write.table(x = StreamVal, file = 'BaismanStreamflow_Val.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
 options(scipen = 0)
 
+#Streamflow - Calibration - Pond Branch
+StreamCal_POBR = data.frame(Date = as.character(as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01')[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') < "2013-10-01"]), Flow = BES_TN_d_load$POBR$Flow[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') < "2013-10-01"], stringsAsFactors = FALSE)
+options(scipen = 999)
+write.table(x = StreamCal_POBR, file = 'BaismanStreamflow_POBR_Cal.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+options(scipen = 0)
+#Streamflow - Validation - Pond Branch
+StreamVal_POBR = data.frame(Date = as.character(as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01')[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') >= "2008-11-15"]), Flow = BES_TN_d_load$POBR$Flow[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') >= "2008-11-15"], stringsAsFactors = FALSE)
+options(scipen = 999)
+write.table(x = StreamVal_POBR, file = 'BaismanStreamflow_POBR_Val.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+options(scipen = 0)
+
 #TN - Calibration
 TNCal = data.frame(Date = as.character(as.Date(BES_TN_d_load$BARN$SortDate, origin='1970-01-01')[as.Date(BES_TN_d_load$BARN$SortDate, origin='1970-01-01') < "2013-10-01"]), TN = BES_TN_d_load$BARN$TN..mg.N.L.[as.Date(BES_TN_d_load$BARN$SortDate, origin='1970-01-01') < "2013-10-01"], stringsAsFactors = FALSE)
 TNCal_WRTDS = data.frame(Date = as.character(as.Date(BES_TN_d_load$BARN$SortDate, origin='1970-01-01')[as.Date(BES_TN_d_load$BARN$SortDate, origin='1970-01-01') < "2013-10-01"]), remark = rep('', length(BES_TN_d_load$BARN$TN..mg.N.L.[as.Date(BES_TN_d_load$BARN$SortDate, origin='1970-01-01') < "2013-10-01"])), TN = BES_TN_d_load$BARN$TN..mg.N.L.[as.Date(BES_TN_d_load$BARN$SortDate, origin='1970-01-01') < "2013-10-01"], stringsAsFactors = FALSE)
@@ -1934,6 +1939,21 @@ TNVal_WRTDS = data.frame(Date = as.character(as.Date(BES_TN_d_load$BARN$SortDate
 options(scipen = 999)
 write.table(x = TNVal, file = 'TN_Val.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
 write.table(x = TNVal_WRTDS, file = 'TN_Val_WRTDS.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+options(scipen = 0)
+
+#TN - Calibration - Pond Branch
+TNCal_POBR = data.frame(Date = as.character(as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01')[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') < "2013-10-01"]), TN = BES_TN_d_load$POBR$TN..mg.N.L.[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') < "2013-10-01"], stringsAsFactors = FALSE)
+TNCal_POBR_WRTDS = data.frame(Date = as.character(as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01')[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') < "2013-10-01"]), remark = rep('', length(BES_TN_d_load$POBR$TN..mg.N.L.[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') < "2013-10-01"])), TN = BES_TN_d_load$POBR$TN..mg.N.L.[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') < "2013-10-01"], stringsAsFactors = FALSE)
+options(scipen = 999)
+write.table(x = TNCal_POBR, file = 'TN_POBR_Cal.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+write.table(x = TNCal_POBR_WRTDS, file = 'TN_POBR_Cal_WRTDS.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+options(scipen = 0)
+#TN - Validation - Pond Branch
+TNVal_POBR = data.frame(Date = as.character(as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01')[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') >= "2008-11-15"]), TN = BES_TN_d_load$POBR$TN..mg.N.L.[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') >= "2008-11-15"], stringsAsFactors = FALSE)
+TNVal_POBR_WRTDS = data.frame(Date = as.character(as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01')[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') >= "2008-11-15"]), remark = rep('', length(BES_TN_d_load$POBR$TN..mg.N.L.[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') >= "2008-11-15"])), TN = BES_TN_d_load$POBR$TN..mg.N.L.[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') >= "2008-11-15"], stringsAsFactors = FALSE)
+options(scipen = 999)
+write.table(x = TNVal_POBR, file = 'TN_POBR_Val.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+write.table(x = TNVal_POBR_WRTDS, file = 'TN_POBR_Val_WRTDS.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
 options(scipen = 0)
 
 #Create climate station timeseries for RHESSys----
@@ -2171,6 +2191,7 @@ a = lm(StreamStationList$`01583580`$X_00060_00003[Ind1:Ind2] ~ StreamStationList
 
 
 #Estimate WRTDS interpolation tables----
+#Fixme: Was the regression made with cms instead of cfs? Does it matter?
 #Load the streamflow data into WRTDS format
 Daily = readUserDaily(filePath = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs", fileName = 'BaismanStreamflow_Cal.txt', hasHeader = TRUE, separator = '\t', qUnit = 1, verbose = FALSE)
 #Read the TN data
@@ -2601,44 +2622,46 @@ png('TabLogErr.png', units = 'in', res = 300, height = 7, width = 7)
 plotContours(WRTDSmod4m, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,.5,0.05),qUnit=1, qBottom = 0.001, qTop = 50, whatSurface = 2)
 dev.off()
 #WRTDS for hillslopes----
-#Kenworth 2001-2002----
+# Data: Kenworth 2001-2002----
 setwd(dir_SynWChem_Kenworth)
 K_Q = read.csv(file = "Kenworth_Q.csv",stringsAsFactors = FALSE)
+#Convert to m^3/s
+K_Q[,-1] = K_Q[,-1]/1000
 K_TN = read.csv(file = "Kenworth_TN.csv",stringsAsFactors = FALSE)
 K_Sites = readOGR(dsn = getwd(), layer = "Kenworth_Chem_Sites", stringsAsFactors = FALSE)
 
-#Smith 2006-2007----
+# Data: Smith 2006-2007----
 setwd(dir_SynWChem_Smith)
 S_Q = read.csv(file = "Smith_discharge.csv",stringsAsFactors = FALSE)
 S_TN = read.csv(file = "Smith_TN.csv",stringsAsFactors = FALSE)
 S_Sites = readOGR(dsn = getwd(), layer = "Smith_Chem_Sites", stringsAsFactors = FALSE)
 
-#Make a relation for the hillslopes that were also sampled by Kenworth----
-#BR3----
+# Make regressions for the hillslopes that were sampled by both Kenworth and Smith----
+#  BR3----
 BR3_Q = K_Q[K_Q$Site == 'BR3',]
 BR3_Q = cbind(BR3_Q, S_Q[S_Q$Site == 'BA3',-1])
 
 BR3_TN = K_TN[K_TN$Site == 'BR3',]
 BR3_TN = cbind(BR3_TN, S_TN[S_TN$Site == 'BA3',-1])
 
-#Relation using only the dates that match the BARN outlet sampling----
-Dates = colnames(BR3_TN)[which(!is.na(BR3_TN))][-1]
-for(i in 1:length(Dates)){
-  Dates[i] = strcat(strsplit(x = Dates[i], split = '.', fixed = TRUE)[[1]][-1], collapse = '-')
+#   Relation using only the dates that match the BARN outlet sampling----
+Dates_BR3 = colnames(BR3_TN)[which(!is.na(BR3_TN))][-1]
+for(i in 1:length(Dates_BR3)){
+  Dates_BR3[i] = strcat(strsplit(x = Dates_BR3[i], split = '.', fixed = TRUE)[[1]][-1], collapse = '-')
 }
 
-BR3_NSamps = which(as.Date(Dates) %in% as.Date(Sample$Date))
+BR3_NSamps = which(as.Date(Dates_BR3) %in% as.Date(Sample$Date))
 
-#Relation using all available data for BR3----
-Dates = colnames(BR3_TN)[which(!is.na(BR3_TN))][-1]
-for(i in 1:length(Dates)){
-  Dates[i] = strcat(strsplit(x = Dates[i], split = '.', fixed = TRUE)[[1]][-1], collapse = '-')
+#   Relation using all available data for BR3----
+Dates_BR3 = colnames(BR3_TN)[which(!is.na(BR3_TN))][-1]
+for(i in 1:length(Dates_BR3)){
+  Dates_BR3[i] = strcat(strsplit(x = Dates_BR3[i], split = '.', fixed = TRUE)[[1]][-1], collapse = '-')
 }
-Flows = as.numeric(BR3_Q[which(!is.na(BR3_TN))][-1])
+Flows_BR3 = as.numeric(BR3_Q[which(!is.na(BR3_TN))][-1])
 
-BR3_PredTN = matrix(NA, ncol = 3, nrow = length(Flows))
-for(i in 1:length(Flows)){
-  BR3_PredTN[i,] = predictWRTDS(Date = as.character(as.Date(Dates))[i], Flow = Flows[i], rowt = as.numeric(rownames(TabInt)), colt = as.numeric(colnames(TabInt)))
+BR3_PredTN = matrix(NA, ncol = 3, nrow = length(Flows_BR3))
+for(i in 1:length(Flows_BR3)){
+  BR3_PredTN[i,] = predictWRTDS(Date = as.character(as.Date(Dates_BR3))[i], Flow = Flows_BR3[i], rowt = as.numeric(rownames(TabInt)), colt = as.numeric(colnames(TabInt)))
 }
 rm(i)
 colnames(BR3_PredTN) = c('05', 'Med', '95')
@@ -2647,6 +2670,7 @@ BR3_PredTN = as.data.frame(BR3_PredTN)
 BR3_PredTN$True = as.numeric(BR3_TN[which(!is.na(BR3_TN))][-1])
 BR3_PredTN$DiffMed = BR3_PredTN$True - BR3_PredTN$Med
 
+setwd(wd_BESN)
 png('BR3_TrueTNvsWRTDS.png', res = 300, units = 'in', height = 5, width = 5)
 plot(BR3_PredTN$True, BR3_PredTN$Med, ylim = c(0,9), xlim = c(0,9), xlab = 'True BR3 TN (mg N/L)', ylab = 'WRTDS Predicted BR3 TN (mg N/L)')
 lines(c(-10,10), c(-10,10))
@@ -2660,13 +2684,13 @@ DateNumMat = matrix(NA, nrow = 366, ncol = 2)
 DateNumMat[,1] = seq(as.Date("2000-01-01"), as.Date("2000-12-31"), 1)
 DateNumMat[,2] = seq(1, 366, 1)
 
-DatesNums = vector('numeric', length=length(Dates))
-for(i in 1:length(Dates)){
-  DatesNums[i] = DateNumMat[which((month(as.Date(DateNumMat[,1])) == month(Dates[i])) & (day(as.Date(DateNumMat[,1])) == day(Dates[i]))), 2]
+DatesNums_BR3 = vector('numeric', length=length(Dates_BR3))
+for(i in 1:length(Dates_BR3)){
+  DatesNums_BR3[i] = DateNumMat[which((month(as.Date(DateNumMat[,1])) == month(as.Date(Dates_BR3[i]))) & (day(as.Date(DateNumMat[,1])) == day(as.Date(Dates_BR3[i])))), 2]
 }
 
 lm_BR3 = lm(BR3_PredTN$DiffMed ~ BR3_PredTN$Med)
-lm_BR3_Dates = lm(BR3_PredTN$DiffMed ~ BR3_PredTN$Med + sin(2*pi*DatesNums/366) + cos(2*pi*DatesNums/366))
+lm_BR3_Dates = lm(BR3_PredTN$DiffMed ~ BR3_PredTN$Med + sin(2*pi*DatesNums_BR3/366) + cos(2*pi*DatesNums_BR3/366))
 
 summary(lm_BR3)
 plot(lm_BR3)
@@ -2676,53 +2700,58 @@ plot(lm_BR3_Dates)
 
 #plot of regression y vs. x
 plot(y = BR3_PredTN$DiffMed, x = BR3_PredTN$Med)
-plot(y = BR3_PredTN$DiffMed, x = sin(2*pi*DatesNums/366))
-plot(y = BR3_PredTN$DiffMed, x = cos(2*pi*DatesNums/366))
+plot(y = BR3_PredTN$DiffMed, x = Flows_BR3)
+plot(y = BR3_PredTN$DiffMed, x = sin(2*pi*DatesNums_BR3/366))
+plot(y = BR3_PredTN$DiffMed, x = cos(2*pi*DatesNums_BR3/366))
 
-#Relation dropping suspeccted outlier----
+#   Relation dropping suspeccted outlier----
 lm_BR3 = lm(BR3_PredTN$DiffMed[BR3_PredTN$True > 1] ~ BR3_PredTN$Med[BR3_PredTN$True > 1])
-lm_BR3_Dates = lm(BR3_PredTN$DiffMed[BR3_PredTN$True > 1] ~ BR3_PredTN$Med[BR3_PredTN$True > 1] + sin(2*pi*DatesNums[BR3_PredTN$True > 1]/366) + cos(2*pi*DatesNums[BR3_PredTN$True > 1]/366))
+lm_BR3_Flows_BR3 = lm(BR3_PredTN$DiffMed[BR3_PredTN$True > 1] ~ BR3_PredTN$Med[BR3_PredTN$True > 1]*Flows_BR3[BR3_PredTN$True > 1])
+lm_BR3_Dates = lm(BR3_PredTN$DiffMed[BR3_PredTN$True > 1] ~ BR3_PredTN$Med[BR3_PredTN$True > 1] + sin(2*pi*DatesNums_BR3[BR3_PredTN$True > 1]/366) + cos(2*pi*DatesNums_BR3[BR3_PredTN$True > 1]/366))
 
 summary(lm_BR3)
 plot(lm_BR3)
+
+summary(lm_BR3_Flows)
+plot(lm_BR3_Flows)
 
 summary(lm_BR3_Dates)
 plot(lm_BR3_Dates)
 
 #plot of regression y vs. x
 plot(y = BR3_PredTN$DiffMed[BR3_PredTN$True > 1], x = BR3_PredTN$Med[BR3_PredTN$True > 1])
-plot(y = BR3_PredTN$DiffMed[BR3_PredTN$True > 1], x = Flows[BR3_PredTN$True > 1])
-plot(y = BR3_PredTN$DiffMed[BR3_PredTN$True > 1], x = sin(2*pi*DatesNums[BR3_PredTN$True > 1]/366))
-plot(y = BR3_PredTN$DiffMed[BR3_PredTN$True > 1], x = cos(2*pi*DatesNums[BR3_PredTN$True > 1]/366))
+plot(y = BR3_PredTN$DiffMed[BR3_PredTN$True > 1], x = Flows_BR3[BR3_PredTN$True > 1])
+plot(y = BR3_PredTN$DiffMed[BR3_PredTN$True > 1], x = sin(2*pi*DatesNums_BR3[BR3_PredTN$True > 1]/366))
+plot(y = BR3_PredTN$DiffMed[BR3_PredTN$True > 1], x = cos(2*pi*DatesNums_BR3[BR3_PredTN$True > 1]/366))
 
-#BR5----
+#  BR5----
 BR5_Q = K_Q[K_Q$Site == 'BR5A',]
 BR5_Q = cbind(BR5_Q, S_Q[S_Q$Site == 'BA5AJC2',-1])
 
 BR5_TN = K_TN[K_TN$Site == 'BR5A',]
 BR5_TN = cbind(BR5_TN, S_TN[S_TN$Site == 'BA5AJC2',-1])
 
-#Relation using all of the dates that match the BARN outlet sampling----
-Dates = colnames(BR5_TN)[which(!is.na(BR5_TN))][-1]
-for(i in 1:length(Dates)){
-  Dates[i] = strcat(strsplit(x = Dates[i], split = '.', fixed = TRUE)[[1]][-1], collapse = '-')
+#   Relation using all of the dates that match the BARN outlet sampling----
+Dates_BR5 = colnames(BR5_TN)[which(!is.na(BR5_TN))][-1]
+for(i in 1:length(Dates_BR5)){
+  Dates_BR5[i] = strcat(strsplit(x = Dates_BR5[i], split = '.', fixed = TRUE)[[1]][-1], collapse = '-')
 }
 
-BR5_NSamps = which(as.Date(Dates) %in% as.Date(Sample$Date))
+BR5_NSamps = which(as.Date(Dates_BR5) %in% as.Date(Sample$Date))
 
-#Relation using all available data for BR5----
-Dates = colnames(BR5_TN)[which(!is.na(BR5_TN))][-1]
-for(i in 1:length(Dates)){
-  Dates[i] = strcat(strsplit(x = Dates[i], split = '.', fixed = TRUE)[[1]][-1], collapse = '-')
+#   Relation using all available data for BR5----
+Dates_BR5 = colnames(BR5_TN)[which(!is.na(BR5_TN))][-1]
+for(i in 1:length(Dates_BR5)){
+  Dates_BR5[i] = strcat(strsplit(x = Dates_BR5[i], split = '.', fixed = TRUE)[[1]][-1], collapse = '-')
 }
-Flows = as.numeric(BR5_Q[which(!is.na(BR5_TN))][-1])
+Flows_BR5 = as.numeric(BR5_Q[which(!is.na(BR5_TN))][-1])
 #Drop the NA flow date
-Dates = Dates[-length(Dates)]
-Flows = Flows[-length(Flows)]
+Dates_BR5 = Dates_BR5[-length(Dates_BR5)]
+Flows_BR5 = Flows_BR5[-length(Flows_BR5)]
 
-BR5_PredTN = matrix(NA, ncol = 3, nrow = length(Flows))
-for(i in 1:length(Flows)){
-  BR5_PredTN[i,] = predictWRTDS(Date = as.character(as.Date(Dates))[i], Flow = Flows[i], rowt = as.numeric(rownames(TabInt)), colt = as.numeric(colnames(TabInt)))
+BR5_PredTN = matrix(NA, ncol = 3, nrow = length(Flows_BR5))
+for(i in 1:length(Flows_BR5)){
+  BR5_PredTN[i,] = predictWRTDS(Date = as.character(as.Date(Dates_BR5))[i], Flow = Flows_BR5[i], rowt = as.numeric(rownames(TabInt)), colt = as.numeric(colnames(TabInt)))
 }
 rm(i)
 colnames(BR5_PredTN) = c('05', 'Med', '95')
@@ -2744,13 +2773,13 @@ DateNumMat = matrix(NA, nrow = 366, ncol = 2)
 DateNumMat[,1] = seq(as.Date("2000-01-01"), as.Date("2000-12-31"), 1)
 DateNumMat[,2] = seq(1, 366, 1)
 
-DatesNums = vector('numeric', length=length(Dates))
-for(i in 1:length(Dates)){
-  DatesNums[i] = DateNumMat[which((month(as.Date(DateNumMat[,1])) == month(Dates[i])) & (day(as.Date(DateNumMat[,1])) == day(Dates[i]))), 2]
+DatesNums_BR5 = vector('numeric', length=length(Dates_BR5))
+for(i in 1:length(Dates_BR5)){
+  DatesNums_BR5[i] = DateNumMat[which((month(as.Date(DateNumMat[,1])) == month(as.Date(Dates_BR5[i]))) & (day(as.Date(DateNumMat[,1])) == day(as.Date(Dates_BR5[i])))), 2]
 }
 
 lm_BR5 = lm(BR5_PredTN$DiffMed ~ BR5_PredTN$Med)
-lm_BR5_Dates = lm(BR5_PredTN$DiffMed ~ BR5_PredTN$Med + sin(2*pi*DatesNums/366) + cos(2*pi*DatesNums/366))
+lm_BR5_Dates = lm(BR5_PredTN$DiffMed ~ BR5_PredTN$Med + sin(2*pi*DatesNums_BR5/366) + cos(2*pi*DatesNums_BR5/366))
 
 summary(lm_BR5)
 plot(lm_BR5)
@@ -2760,33 +2789,37 @@ plot(lm_BR5_Dates)
 
 #plot of regression y vs. x
 plot(y = BR5_PredTN$DiffMed, x = BR5_PredTN$Med)
-plot(y = BR5_PredTN$DiffMed, x = sin(2*pi*DatesNums/366))
-plot(y = BR5_PredTN$DiffMed, x = cos(2*pi*DatesNums/366))
+plot(y = BR5_PredTN$DiffMed, x = sin(2*pi*DatesNums_BR5/366))
+plot(y = BR5_PredTN$DiffMed, x = cos(2*pi*DatesNums_BR5/366))
 
-#Relation dropping suspeccted outlier----
+#   Relation dropping suspeccted outlier----
 lm_BR5 = lm(BR5_PredTN$DiffMed[BR5_PredTN$True > 1] ~ BR5_PredTN$Med[BR5_PredTN$True > 1])
-lm_BR5_Dates = lm(BR5_PredTN$DiffMed[BR5_PredTN$True > 1] ~ BR5_PredTN$Med[BR5_PredTN$True > 1] + sin(2*pi*DatesNums[BR5_PredTN$True > 1]/366) + cos(2*pi*DatesNums[BR5_PredTN$True > 1]/366))
+lm_BR5_Flows = lm(BR5_PredTN$DiffMed[BR5_PredTN$True > 1] ~ BR5_PredTN$Med[BR5_PredTN$True > 1] + Flows_BR5[BR5_PredTN$True > 1])
+lm_BR5_Dates = lm(BR5_PredTN$DiffMed[BR5_PredTN$True > 1] ~ BR5_PredTN$Med[BR5_PredTN$True > 1] + sin(2*pi*DatesNums_BR5[BR5_PredTN$True > 1]/366) + cos(2*pi*DatesNums_BR5[BR5_PredTN$True > 1]/366) + Flows_BR5[BR5_PredTN$True > 1])
 
 summary(lm_BR5)
 plot(lm_BR5)
+
+summary(lm_BR5_Flows)
+plot(lm_BR5_Flows)
 
 summary(lm_BR5_Dates)
 plot(lm_BR5_Dates)
 
 #plot of regression y vs. x
 plot(y = BR5_PredTN$DiffMed[BR5_PredTN$True > 1], x = BR5_PredTN$Med[BR5_PredTN$True > 1], xlab = 'Predicted Mean TN (mg N/L)', ylab = 'Difference from True TN (mg N/L)')
-plot(y = BR5_PredTN$DiffMed[BR5_PredTN$True > 1], x = Flows[BR5_PredTN$True > 1])
-plot(y = BR5_PredTN$DiffMed[BR5_PredTN$True > 1], x = sin(2*pi*DatesNums[BR5_PredTN$True > 1]/366))
-plot(y = BR5_PredTN$DiffMed[BR5_PredTN$True > 1], x = cos(2*pi*DatesNums[BR5_PredTN$True > 1]/366))
+plot(y = BR5_PredTN$DiffMed[BR5_PredTN$True > 1], x = Flows_BR5[BR5_PredTN$True > 1])
+plot(y = BR5_PredTN$DiffMed[BR5_PredTN$True > 1], x = sin(2*pi*DatesNums_BR5[BR5_PredTN$True > 1]/366))
+plot(y = BR5_PredTN$DiffMed[BR5_PredTN$True > 1], x = cos(2*pi*DatesNums_BR5[BR5_PredTN$True > 1]/366))
 
-#Make a relation for Pond Branch using the Basin Outlet and the Pond Branch gauged site----
+#  Pond Branch----
 setwd(paste0(dir_WChem, '/Nitrogen'))
 BES_TN_d = list.load(file = "BES_TN_d.yaml", type = 'YAML')
 
-#For only those dates that the POBR and BARN gauges have water quality samples----
-length(which(as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]) %in% as.Date(BES_TN_d$BARN$SortDate[!is.na(BES_TN_d$BARN$TN..mg.N.L.)])))
-which(as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]) %in% as.Date(BES_TN_d$BARN$SortDate[!is.na(BES_TN_d$BARN$TN..mg.N.L.)]))
-which(as.Date(BES_TN_d$BARN$SortDate[!is.na(BES_TN_d$BARN$TN..mg.N.L.)]) %in% as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]))
+#   Relation using only the dates that match the BARN outlet sampling----
+#length(which(as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]) %in% as.Date(BES_TN_d$BARN$SortDate[!is.na(BES_TN_d$BARN$TN..mg.N.L.)])))
+#which(as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]) %in% as.Date(BES_TN_d$BARN$SortDate[!is.na(BES_TN_d$BARN$TN..mg.N.L.)]))
+#which(as.Date(BES_TN_d$BARN$SortDate[!is.na(BES_TN_d$BARN$TN..mg.N.L.)]) %in% as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]))
 
 #Plot of TN in POBR vs. BARN
 plot(x = BES_TN_d$BARN$TN..mg.N.L.[!is.na(BES_TN_d$BARN$TN..mg.N.L.)][which(as.Date(BES_TN_d$BARN$SortDate[!is.na(BES_TN_d$BARN$TN..mg.N.L.)]) %in% as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]))],
@@ -2794,19 +2827,19 @@ plot(x = BES_TN_d$BARN$TN..mg.N.L.[!is.na(BES_TN_d$BARN$TN..mg.N.L.)][which(as.D
      ylab = 'Pond Branch TN (mg N/L)', xlab = 'Baisman Run TN (mg N/L)', )
 
 #Now use BARN WRTDS with POBR flows to predict POBR TN
-#Get the POBR streamflows that match those dates
-Flows = BES_TN_d$POBR$Flow[!is.na(BES_TN_d$POBR$TN..mg.N.L.)][which(as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]) %in% as.Date(BES_TN_d$BARN$SortDate[!is.na(BES_TN_d$BARN$TN..mg.N.L.)]))]
-Dates = BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)][which(as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]) %in% as.Date(BES_TN_d$BARN$SortDate[!is.na(BES_TN_d$BARN$TN..mg.N.L.)]))]
+#Get the POBR streamflows that match those dates. Only use the data up until 2014 because interplation tables stop at 2014.
+Flows_POBR = BES_TN_d$POBR$Flow[!is.na(BES_TN_d$POBR$TN..mg.N.L.)][which((as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]) %in% as.Date(BES_TN_d$BARN$SortDate[!is.na(BES_TN_d$BARN$TN..mg.N.L.)])) & (as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]) <= '2014-01-01'))]
+Dates_POBR = BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)][which((as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]) %in% as.Date(BES_TN_d$BARN$SortDate[!is.na(BES_TN_d$BARN$TN..mg.N.L.)])) & (as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]) <= '2014-01-01'))]
 
-POBR_PredTN = matrix(NA, ncol = 3, nrow = length(Flows))
-for(i in 1:length(Flows)){
-  POBR_PredTN[i,] = predictWRTDS(Date = as.character(as.Date(Dates))[i], Flow = Flows[i], rowt = as.numeric(rownames(TabInt)), colt = as.numeric(colnames(TabInt)))
+POBR_PredTN = matrix(NA, ncol = 3, nrow = length(Flows_POBR))
+for(i in 1:length(Flows_POBR)){
+  POBR_PredTN[i,] = predictWRTDS(Date = as.character(as.Date(Dates_POBR))[i], Flow = Flows_POBR[i], rowt = as.numeric(rownames(TabInt)), colt = as.numeric(colnames(TabInt)))
 }
 rm(i)
 colnames(POBR_PredTN) = c('05', 'Med', '95')
 
 POBR_PredTN = as.data.frame(POBR_PredTN)
-POBR_PredTN$True = BES_TN_d$POBR$TN..mg.N.L.[!is.na(BES_TN_d$POBR$TN..mg.N.L.)][which(as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]) %in% as.Date(BES_TN_d$BARN$SortDate[!is.na(BES_TN_d$BARN$TN..mg.N.L.)]))]
+POBR_PredTN$True = BES_TN_d$POBR$TN..mg.N.L.[!is.na(BES_TN_d$POBR$TN..mg.N.L.)][which((as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]) %in% as.Date(BES_TN_d$BARN$SortDate[!is.na(BES_TN_d$BARN$TN..mg.N.L.)])) & (as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]) <= '2014-01-01'))]
 POBR_PredTN$DiffMed = POBR_PredTN$True - POBR_PredTN$Med
 
 plot(POBR_PredTN$True, POBR_PredTN$Med)
@@ -2814,21 +2847,34 @@ lines(c(-10,10), c(-10,10))
 plot(POBR_PredTN$True, POBR_PredTN$`05`)
 plot(POBR_PredTN$True, POBR_PredTN$`95`)
 
-lm_POBR = lm(POBR_PredTN$DiffMed ~ Flows + POBR_PredTN$Med)
+#Assign number values to the dates to be used in regression. 1 - 366
+DateNumMat = matrix(NA, nrow = 366, ncol = 2)
+DateNumMat[,1] = seq(as.Date("2000-01-01"), as.Date("2000-12-31"), 1)
+DateNumMat[,2] = seq(1, 366, 1)
 
-#Using all of the POBR water chemistry data----
-Flows = BES_TN_d$POBR$Flow[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]
-Dates = as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)])
+DatesNums_POBR = vector('numeric', length=length(Dates_POBR))
+for(i in 1:length(Dates_POBR)){
+  DatesNums_POBR[i] = DateNumMat[which((month(as.Date(DateNumMat[,1])) == month(as.Date(Dates_POBR[i]))) & (day(as.Date(DateNumMat[,1])) == day(as.Date(Dates_POBR[i])))), 2]
+}
 
-POBR_PredTN = matrix(NA, ncol = 3, nrow = length(Flows))
-for(i in 1:length(Flows)){
-  POBR_PredTN[i,] = predictWRTDS(Date = as.character(as.Date(Dates))[i], Flow = Flows[i], rowt = as.numeric(rownames(TabInt)), colt = as.numeric(colnames(TabInt)))
+lm_POBR = lm(POBR_PredTN$DiffMed ~ Flows_POBR + POBR_PredTN$Med + sin(2*pi*DatesNums_POBR/366) + cos(2*pi*DatesNums_POBR/366))
+
+summary(lm_POBR)
+plot(lm_POBR)
+
+#   Relation using all available data for Pond Branch----
+Flows_POBR = BES_TN_d$POBR$Flow[which((!is.na(BES_TN_d$POBR$TN..mg.N.L.)) & (as.Date(BES_TN_d$POBR$SortDate) <= '2014-01-01'))]
+Dates_POBR = as.Date(BES_TN_d$POBR$SortDate[which((!is.na(BES_TN_d$POBR$TN..mg.N.L.)) & (as.Date(BES_TN_d$POBR$SortDate) <= '2014-01-01'))])
+
+POBR_PredTN = matrix(NA, ncol = 3, nrow = length(Flows_POBR))
+for(i in 1:length(Flows_POBR)){
+  POBR_PredTN[i,] = predictWRTDS(Date = as.character(as.Date(Dates_POBR))[i], Flow = Flows_POBR[i], rowt = as.numeric(rownames(TabInt)), colt = as.numeric(colnames(TabInt)))
 }
 rm(i)
 colnames(POBR_PredTN) = c('05', 'Med', '95')
 
 POBR_PredTN = as.data.frame(POBR_PredTN)
-POBR_PredTN$True = BES_TN_d$POBR$TN..mg.N.L.[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]
+POBR_PredTN$True = BES_TN_d$POBR$TN..mg.N.L.[which((!is.na(BES_TN_d$POBR$TN..mg.N.L.)) & (as.Date(BES_TN_d$POBR$SortDate) <= '2014-01-01'))]
 POBR_PredTN$DiffMed = POBR_PredTN$True - POBR_PredTN$Med
 
 png('POBR_TrueTNvsWRTDS.png', res = 300, units = 'in', height = 5, width = 5)
@@ -2844,28 +2890,802 @@ DateNumMat = matrix(NA, nrow = 366, ncol = 2)
 DateNumMat[,1] = seq(as.Date("2000-01-01"), as.Date("2000-12-31"), 1)
 DateNumMat[,2] = seq(1, 366, 1)
 
-DatesNums = vector('numeric', length=length(Dates))
-for(i in 1:length(Dates)){
-  DatesNums[i] = DateNumMat[which((month(as.Date(DateNumMat[,1])) == month(Dates[i])) & (day(as.Date(DateNumMat[,1])) == day(Dates[i]))), 2]
+DatesNums_POBR = vector('numeric', length=length(Dates_POBR))
+for(i in 1:length(Dates_POBR)){
+  DatesNums_POBR[i] = DateNumMat[which((month(as.Date(DateNumMat[,1])) == month(as.Date(Dates_POBR[i]))) & (day(as.Date(DateNumMat[,1])) == day(as.Date(Dates_POBR[i])))), 2]
 }
 
 #Fixme - this needs to be a censored regression because of the y censoring. Thresholds change over time. Great.
-lm_POBR = lm(POBR_PredTN$DiffMed ~ Flows + POBR_PredTN$Med)
-lm_POBR_Dates = lm(POBR_PredTN$DiffMed ~ Flows + POBR_PredTN$Med + sin(2*pi*DatesNums/366) + cos(2*pi*DatesNums/366))
-lm_POBR_log = lm(log10(POBR_PredTN$DiffMed + abs(min(POBR_PredTN$DiffMed)) + .001) ~ POBR_PredTN$Med + sin(2*pi*DatesNums/366) + cos(2*pi*DatesNums/366))
+lm_POBR = lm(POBR_PredTN$DiffMed ~ Flows_POBR + POBR_PredTN$Med)
+lm_POBR_Dates = lm(POBR_PredTN$DiffMed ~ Flows_POBR + POBR_PredTN$Med + sin(2*pi*DatesNums_POBR/366) + cos(2*pi*DatesNums_POBR/366))
+lm_POBR_log = lm(log10(POBR_PredTN$DiffMed + abs(min(POBR_PredTN$DiffMed)) + .001) ~ POBR_PredTN$Med + sin(2*pi*DatesNums_POBR/366) + cos(2*pi*DatesNums_POBR/366))
 
 summary(lm_POBR)
 plot(lm_POBR)
 
 summary(lm_POBR_Dates)
-plot(lm_POBR_dates)
+plot(lm_POBR_Dates)
 
 summary(lm_POBR_log)
 
 #plot of regression y vs. x
 plot(y = POBR_PredTN$DiffMed, x = POBR_PredTN$Med)
-plot(y = POBR_PredTN$DiffMed, x = sin(2*pi*DatesNums/366))
-plot(y = POBR_PredTN$DiffMed, x = cos(2*pi*DatesNums/366))
+plot(y = POBR_PredTN$DiffMed, x = sin(2*pi*DatesNums_POBR/366))
+plot(y = POBR_PredTN$DiffMed, x = cos(2*pi*DatesNums_POBR/366))
+
+# Make regressions based on the TN load instead of the TN concentration----
+#  Load at Basin Outlet----
+#This load must result from the loadings at all other sites, minus the uptake by plants and organisms along the river. Ignoring uptake for now.
+BES_TN_d$BARN$Load = BES_TN_d$BARN$TN..mg.N.L.*1000*BES_TN_d$BARN$Flow*12^3*2.54^3/100^3
+
+#  Load at Pond Branch----
+BES_TN_d$POBR$Load = BES_TN_d$POBR$TN..mg.N.L.*1000*BES_TN_d$POBR$Flow*12^3*2.54^3/100^3
+
+#Make indicators for likely detection limits
+BES_TN_d$POBR$LowTNLim[BES_TN_d$POBR$TN..mg.N.L. == min(BES_TN_d$POBR$TN..mg.N.L.[1:5000], na.rm = TRUE)] = 1
+BES_TN_d$POBR$LowTNLim[BES_TN_d$POBR$TN..mg.N.L. == min(BES_TN_d$POBR$TN..mg.N.L.[5001:length(BES_TN_d$POBR$TN..mg.N.L.)], na.rm = TRUE)] = 2
+POBR_PredTN$LowTNLim = NA
+POBR_PredTN$LowTNLim[POBR_PredTN$True == min(POBR_PredTN$True[1:650])] = 1
+POBR_PredTN$LowTNLim[POBR_PredTN$True == min(POBR_PredTN$True[651:length(POBR_PredTN$True)])] = 2
+
+#Use WRTDS regression for predicted concentration and transform to loads. Compare predicted to true load.
+POBR_PredTN$TrueLoad = POBR_PredTN$True*Flows_POBR*12^3*2.54^3/100^3
+POBR_PredTN$Load05 = POBR_PredTN$`05`*Flows_POBR*12^3*2.54^3/100^3
+POBR_PredTN$MedLoad = POBR_PredTN$Med*Flows_POBR*12^3*2.54^3/100^3
+POBR_PredTN$Load95 = POBR_PredTN$`95`*Flows_POBR*12^3*2.54^3/100^3
+
+png('POBR_TrueTNLoadvsWRTDSLoad.png', res = 300, units = 'in', height = 5, width = 5)
+plot(POBR_PredTN$TrueLoad, POBR_PredTN$MedLoad, ylim=range(c(POBR_PredTN$MedLoad-POBR_PredTN$Load05, POBR_PredTN$MedLoad+POBR_PredTN$Load95)), xlim = c(0,.1), xlab = 'True Pond Branch TN Load (mg N/s)', ylab = 'WRTDS Predicted Load of Pond Branch TN (mg N/s)')
+arrows(POBR_PredTN$TrueLoad, POBR_PredTN$MedLoad-POBR_PredTN$Load05, POBR_PredTN$TrueLoad, POBR_PredTN$MedLoad+POBR_PredTN$Load95, length=0.05, angle=90, code=3)
+lines(c(-10,10), c(-10,10))
+dev.off()
+
+png('POBR_TrueTNLoadvsWRTDSLoad_log.png', res = 300, units = 'in', height = 5, width = 5)
+plot(POBR_PredTN$TrueLoad, POBR_PredTN$MedLoad, ylim=range(c(POBR_PredTN$MedLoad-POBR_PredTN$Load05, POBR_PredTN$MedLoad+POBR_PredTN$Load95)), xlab = 'True Pond Branch TN Load (mg N/s)', ylab = 'WRTDS Predicted Load of Pond Branch TN (mg N/s)', log = 'xy')
+arrows(POBR_PredTN$TrueLoad, POBR_PredTN$MedLoad-POBR_PredTN$Load05, POBR_PredTN$TrueLoad, POBR_PredTN$MedLoad+POBR_PredTN$Load95, length=0.05, angle=90, code=3)
+lines(c(1e-7,1e7), c(1e-7,1e7))
+dev.off()
+
+png('POBR_TrueTNLoadvsWRTDSLoad_log_colors.png', res = 300, units = 'in', height = 5, width = 5)
+plot(POBR_PredTN$TrueLoad, POBR_PredTN$MedLoad, ylim=range(c(POBR_PredTN$MedLoad-POBR_PredTN$Load05, POBR_PredTN$MedLoad+POBR_PredTN$Load95)),
+     xlim=range(POBR_PredTN$TrueLoad),
+     xlab = 'True Pond Branch TN Load (mg N/s)', ylab = 'WRTDS Predicted Load of Pond Branch TN (mg N/s)', log = 'xy')
+par(new = TRUE)
+plot(POBR_PredTN$TrueLoad[POBR_PredTN$LowTNLim == 1], POBR_PredTN$MedLoad[POBR_PredTN$LowTNLim == 1], 
+     xlim=range(POBR_PredTN$TrueLoad),
+     ylim=range(c(POBR_PredTN$MedLoad-POBR_PredTN$Load05, POBR_PredTN$MedLoad+POBR_PredTN$Load95)), xlab = '', ylab = '', 
+     log = 'xy', col = 'blue', axes = FALSE)
+par(new = TRUE)
+plot(POBR_PredTN$TrueLoad[POBR_PredTN$LowTNLim == 2], POBR_PredTN$MedLoad[POBR_PredTN$LowTNLim == 2], 
+     xlim=range(POBR_PredTN$TrueLoad),
+     ylim=range(c(POBR_PredTN$MedLoad-POBR_PredTN$Load05, POBR_PredTN$MedLoad+POBR_PredTN$Load95)), xlab = '', ylab = '', 
+     log = 'xy', col = 'red', axes = FALSE)
+#arrows(POBR_PredTN$TrueLoad, POBR_PredTN$MedLoad-POBR_PredTN$Load05, POBR_PredTN$TrueLoad, POBR_PredTN$MedLoad+POBR_PredTN$Load95, length=0.05, angle=90, code=3)
+lines(c(1e-7,1e7), c(1e-7,1e7))
+legend('bottomright', title = 'Detection Limits (mg N/L)', legend = c('0.01', '0.05'), pch = 1, col = c('blue', 'red'))
+dev.off()
+
+#Add colors for seasons to this dataset
+POBR_PredTN$cols = BES_TN_d$POBR$cols[as.Date(BES_TN_d$POBR$SortDate) %in% as.Date(Dates_POBR)]
+
+png('POBR_TN_ScatterHist.png', res = 300, units = 'in', width = 10, height = 10)
+scatterHist_mod(x = log10(POBR_PredTN$TrueLoad), y = log10(POBR_PredTN$MedLoad), density = FALSE, freq = FALSE, x.breaks = 100, y.breaks = 100, correl = FALSE, xlab = expression(paste('log'[10] ~ '(True TN Load [mg N/s])')), ylab = expression(paste('log'[10] ~ 'Predicted TN Load (mg N/s)')), cex.lab = 1.5, cex.axis = 1.5, title = '', pch = 16, ellipse = FALSE, smooth = FALSE, col = POBR_PredTN$cols)
+dev.off()
+
+POBR_PredTN$DiffMedLoad = POBR_PredTN$TrueLoad - POBR_PredTN$MedLoad
+
+#plot of regression y vs. x
+plot(y = POBR_PredTN$DiffMedLoad, x = POBR_PredTN$MedLoad)
+plot(y = POBR_PredTN$DiffMedLoad, x = Flows_POBR*12^3*2.54^3/100^3)
+plot(y = POBR_PredTN$DiffMedLoad, x = sin(2*pi*DatesNums_POBR/366))
+plot(y = POBR_PredTN$DiffMedLoad, x = cos(2*pi*DatesNums_POBR/366))
+
+#Fixme - this needs to be a censored regression because of the y censoring. Thresholds change over time. Great.
+lm_POBRLoad = lm(POBR_PredTN$DiffMedLoad ~ I(Flows_POBR*12^3*2.54^3/100^3) + POBR_PredTN$MedLoad)
+lm_POBRLoad_Dates = lm(POBR_PredTN$DiffMedLoad ~ I(Flows_POBR*12^3*2.54^3/100^3) + POBR_PredTN$MedLoad + sin(2*pi*DatesNums_POBR/366) + cos(2*pi*DatesNums_POBR/366))
+lm_POBRLoad_Dates_Interaction = lm(POBR_PredTN$DiffMedLoad ~ I(Flows_POBR*12^3*2.54^3/100^3)*POBR_PredTN$Med + sin(2*pi*DatesNums_POBR/366) + cos(2*pi*DatesNums_POBR/366))
+lm_POBRLoad_log = lm(log10(POBR_PredTN$DiffMedLoad + abs(min(POBR_PredTN$DiffMedLoad)) + .001) ~ POBR_PredTN$MedLoad + sin(2*pi*DatesNums_POBR/366) + cos(2*pi*DatesNums_POBR/366))
+
+summary(lm_POBRLoad)
+plot(lm_POBRLoad)
+
+summary(lm_POBRLoad_Dates)
+plot(lm_POBRLoad_Dates)
+
+summary(lm_POBRLoad_Dates_Interaction)
+plot(lm_POBRLoad_Dates_Interaction)
+
+summary(lm_POBRLoad_log)
+plot(lm_POBRLoad_log)
+
+#From the POBRLoad_Dates, use Box-Cox transform to attempt normality
+BoxCoxtest = boxcox(I(POBR_PredTN$DiffMedLoad + 1) ~ I(Flows_POBR*12^3*2.54^3/100^3)*POBR_PredTN$Med + sin(2*pi*DatesNums_POBR/366) + cos(2*pi*DatesNums_POBR/366), lambda = seq(-20,0, length = 1000))
+lambda = BoxCoxtest$x[which(BoxCoxtest$y == max(BoxCoxtest$y))]
+POBR_PredTN$DiffMedLoad_BC = bcPower(U = POBR_PredTN$DiffMedLoad+1, gamma = 0, lambda = lambda, jacobian.adjusted = FALSE)
+lm_POBRLoad_Dates_BC = lm((((POBR_PredTN$DiffMedLoad + 1)^lambda - 1)/lambda) ~ I(Flows_POBR*12^3*2.54^3/100^3)*POBR_PredTN$Med + sin(2*pi*DatesNums_POBR/366) + cos(2*pi*DatesNums_POBR/366))
+
+summary(lm_POBRLoad_Dates_BC)
+plot(lm_POBRLoad_Dates_BC)
+
+#plot of regression y vs. x
+plot(y = POBR_PredTN$DiffMedLoad_BC, x = POBR_PredTN$MedLoad)
+plot(y = POBR_PredTN$DiffMedLoad_BC, x = I(Flows_POBR*12^3*2.54^3/100^3))
+plot(y = POBR_PredTN$DiffMedLoad_BC, x = sin(2*pi*DatesNums_POBR/366))
+plot(y = POBR_PredTN$DiffMedLoad_BC, x = cos(2*pi*DatesNums_POBR/366))
+
+#Color outlier
+plot(POBR_PredTN$DiffMedLoad_BC, POBR_PredTN$MedLoad, xlim = c(-.05, 0.03), ylim = c(-0.01,0.05))
+par(new = T)
+plot(POBR_PredTN$DiffMedLoad_BC[719], POBR_PredTN$MedLoad[719], col = 'red', xlim = c(-.05, 0.03), ylim = c(-0.01,0.05))
+
+#Model without outlier
+# BoxCoxtest = boxcox(I(POBR_PredTN$DiffMedLoad[-719] + 1) ~ I(Flows_POBR[-719]*12^3*2.54^3/100^3)*POBR_PredTN$Med[-719] + sin(2*pi*DatesNums_POBR[-719]/366) + cos(2*pi*DatesNums_POBR[-719]/366), lambda = seq(-20,0, length = 1000))
+# lambda = BoxCoxtest$x[which(BoxCoxtest$y == max(BoxCoxtest$y))]
+# POBR_PredTN$DiffMedLoad_BC[-719] = bcPower(U = POBR_PredTN$DiffMedLoad[-719]+1, gamma = 0, lambda = lambda, jacobian.adjusted = FALSE)
+# lm_POBRLoad_Dates_BC = lm((((POBR_PredTN$DiffMedLoad[-719] + 1)^lambda - 1)/lambda) ~ I(Flows_POBR[-719]*12^3*2.54^3/100^3)*POBR_PredTN$Med[-719] + sin(2*pi*DatesNums_POBR[-719]/366) + cos(2*pi*DatesNums_POBR[-719]/366))
+# 
+# summary(lm_POBRLoad_Dates_BC)
+# plot(lm_POBRLoad_Dates_BC)
+
+#  Load at BR3----
+#mg/s
+BR3_Load = BR3_Q[-1]*BR3_TN[-1]*1000
+
+#Use WRTDS regression for predicted concentration and transform to loads. Compare predicted to true load.
+BR3_PredTN$TrueLoad = BR3_PredTN$True*Flows_BR3*12^3*2.54^3/100^3
+BR3_PredTN$Load05 = BR3_PredTN$`05`*Flows_BR3*12^3*2.54^3/100^3
+BR3_PredTN$MedLoad = BR3_PredTN$Med*Flows_BR3*12^3*2.54^3/100^3
+BR3_PredTN$Load95 = BR3_PredTN$`95`*Flows_BR3*12^3*2.54^3/100^3
+
+png('BR3_TrueTNLoadvsWRTDSLoad.png', res = 300, units = 'in', height = 5, width = 5)
+plot(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1], ylim=range(c(BR3_PredTN$MedLoad[BR3_PredTN$True > 1]-BR3_PredTN$Load05[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1]+BR3_PredTN$Load95[BR3_PredTN$True > 1])), xlab = 'True BR3 TN Load (mg N/s)', ylab = 'WRTDS Predicted Load of BR3 TN (mg N/s)')
+arrows(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1]-BR3_PredTN$Load05[BR3_PredTN$True > 1], BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1]+BR3_PredTN$Load95[BR3_PredTN$True > 1], length=0.05, angle=90, code=3)
+lines(c(-10,10), c(-10,10))
+dev.off()
+
+png('BR3_TrueTNLoadvsWRTDSLoad_log.png', res = 300, units = 'in', height = 5, width = 5)
+plot(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1], ylim=range(c(BR3_PredTN$MedLoad[BR3_PredTN$True > 1]-BR3_PredTN$Load05[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1]+BR3_PredTN$Load95[BR3_PredTN$True > 1])), xlab = expression(paste('log'[10] ~ 'True BR3 TN Load (mg N/s)')), ylab = expression(paste('log'[10] ~ 'WRTDS Predicted Load of BR3 TN (mg N/s)')), log='xy')
+arrows(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1]-BR3_PredTN$Load05[BR3_PredTN$True > 1], BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1]+BR3_PredTN$Load95[BR3_PredTN$True > 1], length=0.05, angle=90, code=3)
+lines(c(1e-7,10), c(1e-7,10))
+dev.off()
+
+BR3_PredTN$DiffMedLoad = BR3_PredTN$TrueLoad - BR3_PredTN$MedLoad
+
+#plot of regression y vs. x
+plot(y = BR3_PredTN$DiffMedLoad[BR3_PredTN$True > 1], x = BR3_PredTN$MedLoad[BR3_PredTN$True > 1])
+plot(y = BR3_PredTN$DiffMedLoad[BR3_PredTN$True > 1], x = I(Flows_BR3[BR3_PredTN$True > 1]*12^3*2.54^3/100^3))
+plot(y = BR3_PredTN$DiffMedLoad[BR3_PredTN$True > 1], x = sin(2*pi*DatesNums_BR3[BR3_PredTN$True > 1]/366))
+plot(y = BR3_PredTN$DiffMedLoad[BR3_PredTN$True > 1], x = cos(2*pi*DatesNums_BR3[BR3_PredTN$True > 1]/366))
+
+#Regression w/o suspected outlier
+lm_BR3Load = lm(BR3_PredTN$DiffMedLoad[BR3_PredTN$True > 1] ~ I(Flows_BR3[BR3_PredTN$True > 1]*12^3*2.54^3/100^3) + BR3_PredTN$MedLoad[BR3_PredTN$True > 1])
+lm_BR3Load_Dates = lm(BR3_PredTN$DiffMedLoad[BR3_PredTN$True > 1] ~ I(Flows_BR3[BR3_PredTN$True > 1]*12^3*2.54^3/100^3) + BR3_PredTN$MedLoad[BR3_PredTN$True > 1] + sin(2*pi*DatesNums_BR3[BR3_PredTN$True > 1]/366) + cos(2*pi*DatesNums_BR3[BR3_PredTN$True > 1]/366))
+lm_BR3Load_Dates_Interaction = lm(BR3_PredTN$DiffMedLoad[BR3_PredTN$True > 1] ~ I(Flows_BR3[BR3_PredTN$True > 1]*12^3*2.54^3/100^3)*BR3_PredTN$Med[BR3_PredTN$True > 1] + sin(2*pi*DatesNums_BR3[BR3_PredTN$True > 1]/366) + cos(2*pi*DatesNums_BR3[BR3_PredTN$True > 1]/366))
+lm_BR3Load_Interaction = lm(BR3_PredTN$DiffMedLoad[BR3_PredTN$True > 1] ~ I(Flows_BR3[BR3_PredTN$True > 1]*12^3*2.54^3/100^3)*BR3_PredTN$Med[BR3_PredTN$True > 1])
+lm_BR3Load_log = lm(log10(BR3_PredTN$DiffMedLoad[BR3_PredTN$True > 1] + abs(min(BR3_PredTN$DiffMedLoad[BR3_PredTN$True > 1])) + .001) ~ BR3_PredTN$MedLoad[BR3_PredTN$True > 1] + sin(2*pi*DatesNums_BR3[BR3_PredTN$True > 1]/366) + cos(2*pi*DatesNums_BR3[BR3_PredTN$True > 1]/366))
+
+summary(lm_BR3Load)
+plot(lm_BR3Load)
+
+summary(lm_BR3Load_Dates)
+plot(lm_BR3Load_Dates)
+
+summary(lm_BR3Load_Dates_Interaction)
+plot(lm_BR3Load_Dates_Interaction)
+
+summary(lm_BR3Load_Interaction)
+plot(lm_BR3Load_Interaction)
+
+summary(lm_BR3Load_log)
+plot(lm_BR3Load_log)
+
+
+#From the BR3Load_Dates, use Box-Cox transform to attempt normality
+BoxCoxtest_BR3 = boxcox(I(BR3_PredTN$DiffMedLoad[BR3_PredTN$True > 1]+0.00001) ~ I(Flows_BR3[BR3_PredTN$True > 1]*12^3*2.54^3/100^3) + BR3_PredTN$MedLoad[BR3_PredTN$True > 1] + sin(2*pi*DatesNums_BR3[BR3_PredTN$True > 1]/366) + cos(2*pi*DatesNums_BR3[BR3_PredTN$True > 1]/366), lambda = seq(0,1, length = 1000))
+lambda_BR3 = BoxCoxtest_BR3$x[which(BoxCoxtest_BR3$y == max(BoxCoxtest_BR3$y))]
+
+BR3_PredTN$DiffMedLoad_BC[BR3_PredTN$True > 1] = bcPower(U = BR3_PredTN$DiffMedLoad[BR3_PredTN$True > 1]+0.00001, gamma = 0, lambda = lambda_BR3, jacobian.adjusted = FALSE)
+lm_BR3Load_Dates_BC = lm(BR3_PredTN$DiffMedLoad_BC[BR3_PredTN$True > 1] ~ I(Flows_BR3[BR3_PredTN$True > 1]*12^3*2.54^3/100^3) + BR3_PredTN$MedLoad[BR3_PredTN$True > 1] + sin(2*pi*DatesNums_BR3[BR3_PredTN$True > 1]/366) + cos(2*pi*DatesNums_BR3[BR3_PredTN$True > 1]/366))
+
+summary(lm_BR3Load_Dates_BC)
+plot(lm_BR3Load_Dates_BC)
+
+#plot of regression y vs. x
+plot(y = BR3_PredTN$DiffMedLoad_BC, x = BR3_PredTN$MedLoad)
+plot(y = BR3_PredTN$DiffMedLoad_BC, x = I(Flows_BR3*12^3*2.54^3/100^3))
+plot(y = BR3_PredTN$DiffMedLoad_BC, x = sin(2*pi*DatesNums_BR3/366))
+plot(y = BR3_PredTN$DiffMedLoad_BC, x = cos(2*pi*DatesNums_BR3/366))
+
+#  Load at BR5----
+#mg/s
+BR5_Load = BR5_Q[-1]*BR5_TN[-1]*1000
+
+#Use WRTDS regression for predicted concentration and transform to loads. Compare predicted to true load.
+BR5_PredTN$TrueLoad = BR5_PredTN$True*Flows_BR5*12^3*2.54^3/100^3
+BR5_PredTN$Load05 = BR5_PredTN$`05`*Flows_BR5*12^3*2.54^3/100^3
+BR5_PredTN$MedLoad = BR5_PredTN$Med*Flows_BR5*12^3*2.54^3/100^3
+BR5_PredTN$Load95 = BR5_PredTN$`95`*Flows_BR5*12^3*2.54^3/100^3
+
+png('BR5_TrueTNLoadvsWRTDSLoad.png', res = 300, units = 'in', height = 5, width = 5)
+plot(BR5_PredTN$TrueLoad, BR5_PredTN$MedLoad, ylim=range(c(BR5_PredTN$MedLoad-BR5_PredTN$Load05, BR5_PredTN$MedLoad+BR5_PredTN$Load95)), xlab = 'True BR5 TN Load (mg N/s)', ylab = 'WRTDS Predicted Load of BR5 TN (mg N/s)')
+arrows(BR5_PredTN$TrueLoad, BR5_PredTN$MedLoad-BR5_PredTN$Load05, BR5_PredTN$TrueLoad, BR5_PredTN$MedLoad+BR5_PredTN$Load95, length=0.05, angle=90, code=3)
+lines(c(-10,10), c(-10,10))
+dev.off()
+
+png('BR5_TrueTNLoadvsWRTDSLoad_log.png', res = 300, units = 'in', height = 5, width = 5)
+plot(BR5_PredTN$TrueLoad[BR5_PredTN$True > 1], BR5_PredTN$MedLoad[BR5_PredTN$True > 1], ylim=range(c(BR5_PredTN$MedLoad[BR5_PredTN$True > 1]-BR5_PredTN$Load05[BR5_PredTN$True > 1], BR5_PredTN$MedLoad[BR5_PredTN$True > 1]+BR5_PredTN$Load95[BR5_PredTN$True > 1])), xlab = expression(paste('log'[10] ~ 'True BR5 TN Load (mg N/s)')), ylab = expression(paste('log'[10] ~ 'WRTDS Predicted Load of BR5 TN (mg N/s)')), log='xy')
+arrows(BR5_PredTN$TrueLoad[BR5_PredTN$True > 1], BR5_PredTN$MedLoad[BR5_PredTN$True > 1]-BR5_PredTN$Load05[BR5_PredTN$True > 1], BR5_PredTN$TrueLoad[BR5_PredTN$True > 1], BR5_PredTN$MedLoad[BR5_PredTN$True > 1]+BR5_PredTN$Load95[BR5_PredTN$True > 1], length=0.05, angle=90, code=3)
+lines(c(1e-7,10), c(1e-7,10))
+dev.off()
+
+BR5_PredTN$DiffMedLoad = BR5_PredTN$TrueLoad - BR5_PredTN$MedLoad
+
+#plot of regression y vs. x
+plot(y = BR5_PredTN$DiffMedLoad[BR5_PredTN$True > 1], x = BR5_PredTN$MedLoad[BR5_PredTN$True > 1])
+plot(y = BR5_PredTN$DiffMedLoad[BR5_PredTN$True > 1], x = I(Flows_BR5[BR5_PredTN$True > 1]*12^3*2.54^3/100^3))
+plot(y = BR5_PredTN$DiffMedLoad[BR5_PredTN$True > 1], x = sin(2*pi*DatesNums_BR5[BR5_PredTN$True > 1]/366))
+plot(y = BR5_PredTN$DiffMedLoad[BR5_PredTN$True > 1], x = cos(2*pi*DatesNums_BR5[BR5_PredTN$True > 1]/366))
+
+#Regression w/o suspected outlier
+lm_BR5Load = lm(BR5_PredTN$DiffMedLoad[BR5_PredTN$True > 1] ~ I(Flows_BR5[BR5_PredTN$True > 1]*12^3*2.54^3/100^3) + BR5_PredTN$MedLoad[BR5_PredTN$True > 1])
+lm_BR5Load_Interaction = lm(BR5_PredTN$DiffMedLoad[BR5_PredTN$True > 1] ~ I(Flows_BR5[BR5_PredTN$True > 1]*12^3*2.54^3/100^3)*BR5_PredTN$MedLoad[BR5_PredTN$True > 1])
+lm_BR5Load_Dates = lm(BR5_PredTN$DiffMedLoad[BR5_PredTN$True > 1] ~ I(Flows_BR5[BR5_PredTN$True > 1]*12^3*2.54^3/100^3) + BR5_PredTN$MedLoad[BR5_PredTN$True > 1] + sin(2*pi*DatesNums_BR5[BR5_PredTN$True > 1]/366) + cos(2*pi*DatesNums_BR5[BR5_PredTN$True > 1]/366))
+lm_BR5Load_Dates_Interaction = lm(BR5_PredTN$DiffMedLoad[BR5_PredTN$True > 1] ~ I(Flows_BR5[BR5_PredTN$True > 1]*12^3*2.54^3/100^3)*BR5_PredTN$Med[BR5_PredTN$True > 1] + sin(2*pi*DatesNums_BR5[BR5_PredTN$True > 1]/366) + cos(2*pi*DatesNums_BR5[BR5_PredTN$True > 1]/366))
+lm_BR5Load_log = lm(log10(BR5_PredTN$DiffMedLoad[BR5_PredTN$True > 1] + abs(min(BR5_PredTN$DiffMedLoad[BR5_PredTN$True > 1])) + .001) ~ BR5_PredTN$MedLoad[BR5_PredTN$True > 1] + sin(2*pi*DatesNums_BR5[BR5_PredTN$True > 1]/366) + cos(2*pi*DatesNums_BR5[BR5_PredTN$True > 1]/366))
+
+summary(lm_BR5Load)
+plot(lm_BR5Load)
+
+summary(lm_BR5Load_Interaction)
+plot(lm_BR5Load_Interaction)
+
+summary(lm_BR5Load_Dates)
+plot(lm_BR5Load_Dates)
+
+summary(lm_BR5Load_Dates_Interaction)
+plot(lm_BR5Load_Dates_Interaction)
+
+summary(lm_BR5Load_log)
+plot(lm_BR5Load_log)
+
+
+# Fraction of Baisman Outlet Load----
+ProportionPond = BES_TN_d$POBR$Load[which(as.Date(BES_TN_d$POBR$SortDate) %in% as.Date(BES_TN_d$BARN$SortDate))]/BES_TN_d$BARN$Load[which(as.Date(BES_TN_d$BARN$SortDate) %in% as.Date(BES_TN_d$POBR$SortDate))]
+boxplot(ProportionPond)
+
+ProportionBR3 = BR3_Load[which(as.Date(Dates_BR3) %in% as.Date(BES_TN_d$BARN$SortDate))]/BES_TN_d$BARN$Load[which(as.Date(BES_TN_d$BARN$SortDate) %in% as.Date(Dates_BR3))]
+plot(x = rep(1, length(as.numeric(ProportionBR3))), y = as.numeric(ProportionBR3))
+
+ProportionBR5 = BR5_Load[which(as.Date(Dates_BR5) %in% as.Date(BES_TN_d$BARN$SortDate))]/BES_TN_d$BARN$Load[which(as.Date(BES_TN_d$BARN$SortDate) %in% as.Date(Dates_BR5))]
+plot(x = rep(1, length(as.numeric(ProportionBR5))), y = as.numeric(ProportionBR5))
+
+#Sum of the proportions for the matching dates
+ProportionSumPond = BES_TN_d$POBR$Load[which((as.Date(BES_TN_d$POBR$SortDate) %in% as.Date(BES_TN_d$BARN$SortDate)) & (as.Date(BES_TN_d$POBR$SortDate) %in% as.Date(Dates_BR5[c(1,2,3,4)])))]/BES_TN_d$BARN$Load[which((as.Date(BES_TN_d$BARN$SortDate) %in% as.Date(BES_TN_d$POBR$SortDate)) & (as.Date(BES_TN_d$BARN$SortDate) %in% as.Date(Dates_BR5[c(1,2,3,4)])))]
+
+ProportionBR5[c(2,3,4,5)] + ProportionBR3[c(2,3,4,5)] + ProportionSumPond
+
+
+# Regressions to predict load directly instead of predict the correction----
+#  Pond Branch----
+#plot of regression y vs. x
+plot(y = POBR_PredTN$TrueLoad, x = POBR_PredTN$MedLoad)
+plot(y = POBR_PredTN$TrueLoad, x = Flows_POBR*12^3*2.54^3/100^3)
+plot(y = POBR_PredTN$TrueLoad, x = sin(2*pi*DatesNums_POBR/366))
+plot(y = POBR_PredTN$TrueLoad, x = cos(2*pi*DatesNums_POBR/366))
+
+#Fixme - this needs to be a censored regression because of the y censoring. Thresholds change over time. Great.
+lm_POBRLoad = lm(POBR_PredTN$TrueLoad ~ I(Flows_POBR*12^3*2.54^3/100^3) + POBR_PredTN$MedLoad)
+lm_POBRLoad_Dates = lm(POBR_PredTN$TrueLoad ~ I(Flows_POBR*12^3*2.54^3/100^3) + POBR_PredTN$MedLoad + sin(2*pi*DatesNums_POBR/366) + cos(2*pi*DatesNums_POBR/366))
+lm_POBRLoad_Dates_Interaction = lm(POBR_PredTN$TrueLoad ~ I(Flows_POBR*12^3*2.54^3/100^3)*POBR_PredTN$Med + sin(2*pi*DatesNums_POBR/366) + cos(2*pi*DatesNums_POBR/366))
+lm_POBRLoad_log = lm(log10(POBR_PredTN$TrueLoad) ~ POBR_PredTN$MedLoad + sin(2*pi*DatesNums_POBR/366) + cos(2*pi*DatesNums_POBR/366))
+
+summary(lm_POBRLoad)
+plot(lm_POBRLoad)
+
+summary(lm_POBRLoad_Dates)
+plot(lm_POBRLoad_Dates)
+
+summary(lm_POBRLoad_Dates_Interaction)
+plot(lm_POBRLoad_Dates_Interaction)
+
+summary(lm_POBRLoad_log)
+plot(lm_POBRLoad_log)
+
+#From the POBRLoad_Dates, use Box-Cox transform to attempt normality
+BoxCoxtest = boxcox(I(POBR_PredTN$TrueLoad + 1) ~ I(Flows_POBR*12^3*2.54^3/100^3)*POBR_PredTN$Med + sin(2*pi*DatesNums_POBR/366) + cos(2*pi*DatesNums_POBR/366), lambda = seq(-20,0, length = 1000))
+lambda = BoxCoxtest$x[which(BoxCoxtest$y == max(BoxCoxtest$y))]
+POBR_PredTN$DiffMedLoad_BC = bcPower(U = POBR_PredTN$TrueLoad+1, gamma = 0, lambda = lambda, jacobian.adjusted = FALSE)
+lm_POBRLoad_Dates_BC = lm((((POBR_PredTN$TrueLoad + 1)^lambda - 1)/lambda) ~ I(Flows_POBR*12^3*2.54^3/100^3)*POBR_PredTN$Med + sin(2*pi*DatesNums_POBR/366) + cos(2*pi*DatesNums_POBR/366))
+
+summary(lm_POBRLoad_Dates_BC)
+plot(lm_POBRLoad_Dates_BC)
+
+#plot of regression y vs. x
+plot(y = POBR_PredTN$DiffMedLoad_BC, x = POBR_PredTN$MedLoad)
+plot(y = POBR_PredTN$DiffMedLoad_BC, x = I(Flows_POBR*12^3*2.54^3/100^3))
+plot(y = POBR_PredTN$DiffMedLoad_BC, x = sin(2*pi*DatesNums_POBR/366))
+plot(y = POBR_PredTN$DiffMedLoad_BC, x = cos(2*pi*DatesNums_POBR/366))
+
+
+#  BR3 - a little better than above----
+#plot of regression y vs. x
+plot(y = BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], x = BR3_PredTN$MedLoad[BR3_PredTN$True > 1])
+plot(y = BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], x = Flows_BR3[BR3_PredTN$True > 1]*12^3*2.54^3/100^3)
+plot(y = BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], x = sin(2*pi*DatesNums_BR3[BR3_PredTN$True > 1]/366))
+plot(y = BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], x = cos(2*pi*DatesNums_BR3[BR3_PredTN$True > 1]/366))
+
+#Regression w/o suspected outlier
+lm_BR3Load = lm(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1] ~ I(Flows_BR3[BR3_PredTN$True > 1]*12^3*2.54^3/100^3) + BR3_PredTN$MedLoad[BR3_PredTN$True > 1])
+lm_BR3Load_Interaction = lm(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1] ~ I(Flows_BR3[BR3_PredTN$True > 1]*12^3*2.54^3/100^3)*BR3_PredTN$MedLoad[BR3_PredTN$True > 1])
+lm_BR3Load_Dates = lm(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1] ~ I(Flows_BR3[BR3_PredTN$True > 1]*12^3*2.54^3/100^3) + BR3_PredTN$MedLoad[BR3_PredTN$True > 1] + sin(2*pi*DatesNums_BR3[BR3_PredTN$True > 1]/366) + cos(2*pi*DatesNums_BR3[BR3_PredTN$True > 1]/366))
+lm_BR3Load_Dates_Interaction = lm(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1] ~ I(Flows_BR3[BR3_PredTN$True > 1]*12^3*2.54^3/100^3)*BR3_PredTN$Med[BR3_PredTN$True > 1] + sin(2*pi*DatesNums_BR3[BR3_PredTN$True > 1]/366) + cos(2*pi*DatesNums_BR3[BR3_PredTN$True > 1]/366))
+lm_BR3Load_log = lm(log10(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1]) ~ BR3_PredTN$MedLoad[BR3_PredTN$True > 1] + sin(2*pi*DatesNums_BR3[BR3_PredTN$True > 1]/366) + cos(2*pi*DatesNums_BR3[BR3_PredTN$True > 1]/366))
+
+summary(lm_BR3Load)
+plot(lm_BR3Load)
+
+summary(lm_BR3Load_Interaction)
+plot(lm_BR3Load_Interaction)
+
+summary(lm_BR3Load_Dates)
+plot(lm_BR3Load_Dates)
+
+summary(lm_BR3Load_Dates_Interaction)
+plot(lm_BR3Load_Dates_Interaction)
+
+summary(lm_BR3Load_log)
+plot(lm_BR3Load_log)
+
+
+#From the BR3Load_Dates, use Box-Cox transform to attempt normality
+BoxCoxtest_BR3_True = boxcox(BR3_PredTN$TrueLoad ~ I(Flows_BR3*12^3*2.54^3/100^3) + BR3_PredTN$MedLoad, lambda = seq(0,1, length = 1000))
+lambda_BR3_True = BoxCoxtest_BR3_True$x[which(BoxCoxtest_BR3_True$y == max(BoxCoxtest_BR3_True$y))]
+
+BR3_PredTN$DiffMedLoad_BC_True = bcPower(U = BR3_PredTN$TrueLoad, gamma = 0, lambda = lambda_BR3_True, jacobian.adjusted = FALSE)
+lm_BR3Load_Dates_BC_True = lm(BR3_PredTN$DiffMedLoad_BC_True ~ I(Flows_BR3*12^3*2.54^3/100^3) + BR3_PredTN$MedLoad)
+
+summary(lm_BR3Load_Dates_BC_True)
+plot(lm_BR3Load_Dates_BC)
+
+#plot of regression y vs. x
+plot(y = BR3_PredTN$DiffMedLoad_BC, x = BR3_PredTN$MedLoad)
+plot(y = BR3_PredTN$DiffMedLoad_BC, x = I(Flows_BR3*12^3*2.54^3/100^3))
+plot(y = BR3_PredTN$DiffMedLoad_BC, x = sin(2*pi*DatesNums_BR3/366))
+plot(y = BR3_PredTN$DiffMedLoad_BC, x = cos(2*pi*DatesNums_BR3/366))
+
+#  BR5 - essentially same as above----
+#plot of regression y vs. x
+plot(y = BR5_PredTN$TrueLoad[BR5_PredTN$True > 1], x = BR5_PredTN$MedLoad[BR5_PredTN$True > 1])
+plot(y = BR5_PredTN$TrueLoad[BR5_PredTN$True > 1], x = Flows_BR5[BR5_PredTN$True > 1]*12^3*2.54^3/100^3)
+plot(y = BR5_PredTN$TrueLoad[BR5_PredTN$True > 1], x = sin(2*pi*DatesNums_BR5[BR5_PredTN$True > 1]/366))
+plot(y = BR5_PredTN$TrueLoad[BR5_PredTN$True > 1], x = cos(2*pi*DatesNums_BR5[BR5_PredTN$True > 1]/366))
+
+#Regression w/o suspected outlier
+lm_BR5Load = lm(BR5_PredTN$TrueLoad[BR5_PredTN$True > 1] ~ I(Flows_BR5[BR5_PredTN$True > 1]*12^3*2.54^3/100^3) + BR5_PredTN$MedLoad[BR5_PredTN$True > 1])
+lm_BR5Load_Interaction = lm(BR5_PredTN$TrueLoad[BR5_PredTN$True > 1] ~ I(Flows_BR5[BR5_PredTN$True > 1]*12^3*2.54^3/100^3)*BR5_PredTN$MedLoad[BR5_PredTN$True > 1])
+lm_BR5Load_Dates = lm(BR5_PredTN$TrueLoad[BR5_PredTN$True > 1] ~ I(Flows_BR5[BR5_PredTN$True > 1]*12^3*2.54^3/100^3) + BR5_PredTN$MedLoad[BR5_PredTN$True > 1] + sin(2*pi*DatesNums_BR5[BR5_PredTN$True > 1]/366) + cos(2*pi*DatesNums_BR5[BR5_PredTN$True > 1]/366))
+lm_BR5Load_Dates_Interaction = lm(BR5_PredTN$TrueLoad[BR5_PredTN$True > 1] ~ I(Flows_BR5[BR5_PredTN$True > 1]*12^3*2.54^3/100^3)*BR5_PredTN$Med[BR5_PredTN$True > 1] + sin(2*pi*DatesNums_BR5[BR5_PredTN$True > 1]/366) + cos(2*pi*DatesNums_BR5[BR5_PredTN$True > 1]/366))
+lm_BR5Load_log = lm(log10(BR5_PredTN$TrueLoad[BR5_PredTN$True > 1]) ~ BR5_PredTN$MedLoad[BR5_PredTN$True > 1] + sin(2*pi*DatesNums_BR5[BR5_PredTN$True > 1]/366) + cos(2*pi*DatesNums_BR5[BR5_PredTN$True > 1]/366))
+
+summary(lm_BR5Load)
+plot(lm_BR5Load)
+
+summary(lm_BR5Load_Interaction)
+plot(lm_BR5Load_Interaction)
+
+summary(lm_BR5Load_Dates)
+plot(lm_BR5Load_Dates)
+
+summary(lm_BR5Load_Dates_Interaction)
+plot(lm_BR5Load_Dates_Interaction)
+
+summary(lm_BR5Load_log)
+plot(lm_BR5Load_log)
+
+# WRTDS Interpolation Tables for Pond Branch----
+#Load the streamflow data into WRTDS format
+Daily_POBR = readUserDaily(filePath = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs", fileName = 'BaismanStreamflow_POBR_Cal.txt', hasHeader = TRUE, separator = '\t', qUnit = 1, verbose = FALSE)
+#Read the TN data
+Sample_POBR = readUserSample(filePath = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs", fileName = 'TN_POBR_Cal_WRTDS.txt', hasHeader = TRUE, separator = '\t', verbose = FALSE)
+#Set the required information
+INFO_POBR = readUserInfo(filePath = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs", fileName = 'WRTDS_INFO_POBR.csv', interactive = FALSE)
+eList_POBR = mergeReport(INFO = INFO_POBR, Daily = Daily_POBR, Sample = Sample_POBR)
+
+#Make edits to include left-censored data. Nore two different thresholds.
+Sample_POBR$ConcLow = ifelse((as.Date(Sample_POBR$Date) >= '2012-03-15') & (Sample_POBR$ConcLow == 0.05), NA, Sample_POBR$ConcLow)
+Sample_POBR$ConcLow = ifelse((as.Date(Sample_POBR$Date) < '2012-03-15') & (Sample_POBR$ConcLow == 0.01), NA, Sample_POBR$ConcLow)
+Sample_POBR$ConcHigh = ifelse((as.Date(Sample_POBR$Date) >= '2012-03-15') & (Sample_POBR$ConcHigh == 0.05), 0.05, Sample_POBR$ConcHigh)
+Sample_POBR$ConcHigh = ifelse((as.Date(Sample_POBR$Date) < '2012-03-15') & (Sample_POBR$ConcHigh == 0.01), 0.01, Sample_POBR$ConcHigh)
+
+#Fix the eList
+eList_POBR$Sample = Sample_POBR
+eList_POBR = fixSampleFrame(eList_POBR)
+
+saveResults(savePath = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs\\", eList = eList_POBR)
+
+#  Default WRTDS parameters----
+WRTDSmod_POBR = modelEstimation(eList = eList_POBR, windowY = 7, windowQ = 2, windowS = .5, minNumObs = 100, minNumUncen = 50, edgeAdjust = TRUE)
+
+setwd("C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs\\POBR\\")
+png('ConcFluxTime_POBR.png', res = 300, units ='in', width = 12, height = 6)
+layout(rbind(c(1,2)))
+plotConcTimeDaily(WRTDSmod_POBR)
+plotFluxTimeDaily(WRTDSmod_POBR)
+dev.off()
+
+png('ConcFluxTimeErrs_POBR.png', res = 300, units ='in', width = 12, height = 6)
+layout(rbind(c(1,2)))
+plotConcPred(WRTDSmod_POBR)
+plotFluxPred(WRTDSmod_POBR)
+dev.off()
+
+plotResidPred(WRTDSmod_POBR)
+plotResidQ(WRTDSmod_POBR)
+plotResidTime(WRTDSmod_POBR)
+boxResidMonth(WRTDSmod_POBR)
+boxConcThree(WRTDSmod_POBR)
+boxQTwice(WRTDSmod_POBR)
+plotFluxHist(WRTDSmod_POBR)
+plotConcHist(WRTDSmod_POBR)
+
+png('BiasPlot_POBR.png', res = 300, units ='in', width = 12, height = 12)
+fluxBiasMulti(WRTDSmod_POBR, cex.axis = 1.5, cex.main = 1.5, cex.lab=1.5)
+dev.off()
+
+png('ContourPlotMean_POBR.png', res = 300, units ='in', width = 6, height = 6)
+plotContours(WRTDSmod_POBR, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,4,0.2),qUnit=1, qBottom = 0.0001, qTop = 5, whatSurface = 1)
+dev.off()
+
+png('ContourPlotErr_POBR.png', res = 300, units ='in', width = 6, height = 6)
+plotContours(WRTDSmod_POBR, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,2,0.2),qUnit=1, qBottom = 0.0001, qTop = 5, whatSurface = 2)
+dev.off()
+
+#  Model#2-5 WRTDS----
+WRTDSmod2_POBR = modelEstimation(eList = eList_POBR, windowY = 7, windowQ = 2, windowS = .25, minNumObs = 50, minNumUncen = 50, edgeAdjust = TRUE)
+WRTDSmod3_POBR = modelEstimation(eList = eList_POBR, windowY = 4, windowQ = 3, windowS = .5, minNumObs = 50, minNumUncen = 50, edgeAdjust = TRUE)
+WRTDSmod4_POBR = modelEstimation(eList = eList_POBR, windowY = 2, windowQ = 3, windowS = .5, minNumObs = 50, minNumUncen = 50, edgeAdjust = TRUE)
+#Almost no trend with flow, so making weights not matter as much.
+WRTDSmod5_POBR = modelEstimation(eList = eList_POBR, windowY = 4, windowQ = 5, windowS = .5, minNumObs = 50, minNumUncen = 50, edgeAdjust = TRUE)
+WRTDSmod6_POBR = modelEstimation(eList = eList_POBR, windowY = 4, windowQ = 5, windowS = .25, minNumObs = 50, minNumUncen = 50, edgeAdjust = TRUE)
+
+png('ConcFluxTime_POBR_mod2.png', res = 300, units ='in', width = 12, height = 6)
+layout(rbind(c(1,2)))
+plotConcTimeDaily(WRTDSmod2_POBR)
+plotFluxTimeDaily(WRTDSmod2_POBR)
+dev.off()
+
+png('ConcFluxTimeErrs_POBR_mod2.png', res = 300, units ='in', width = 12, height = 6)
+layout(rbind(c(1,2)))
+plotConcPred(WRTDSmod2_POBR)
+plotFluxPred(WRTDSmod2_POBR)
+dev.off()
+
+plotResidPred(WRTDSmod2_POBR)
+plotResidQ(WRTDSmod2_POBR)
+plotResidTime(WRTDSmod2_POBR)
+boxResidMonth(WRTDSmod2_POBR)
+boxConcThree(WRTDSmod2_POBR)
+boxQTwice(WRTDSmod2_POBR)
+plotFluxHist(WRTDSmod2_POBR)
+plotConcHist(WRTDSmod2_POBR)
+
+png('BiasPlot_POBR_mod2.png', res = 300, units ='in', width = 12, height = 12)
+fluxBiasMulti(WRTDSmod2_POBR, cex.axis = 1.5, cex.main = 1.5, cex.lab=1.5)
+dev.off()
+
+png('ContourPlotMean_POBR_mod2.png', res = 300, units ='in', width = 6, height = 6)
+plotContours(WRTDSmod2_POBR, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,6,0.2),qUnit=1, qBottom = 0.0001, qTop = 5, whatSurface = 1)
+dev.off()
+
+png('ContourPlotErr_POBR_mod2.png', res = 300, units ='in', width = 6, height = 6)
+plotContours(WRTDSmod2_POBR, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,2.4,0.2),qUnit=1, qBottom = 0.0001, qTop = 5, whatSurface = 2)
+dev.off()
+
+png('ConcFluxTime_POBR_mod3.png', res = 300, units ='in', width = 12, height = 6)
+layout(rbind(c(1,2)))
+plotConcTimeDaily(WRTDSmod3_POBR)
+plotFluxTimeDaily(WRTDSmod3_POBR)
+dev.off()
+
+png('ConcFluxTimeErrs_POBR_mod3.png', res = 300, units ='in', width = 12, height = 6)
+layout(rbind(c(1,2)))
+plotConcPred(WRTDSmod3_POBR)
+plotFluxPred(WRTDSmod3_POBR)
+dev.off()
+
+plotResidPred(WRTDSmod3_POBR)
+plotResidQ(WRTDSmod3_POBR)
+plotResidTime(WRTDSmod3_POBR)
+boxResidMonth(WRTDSmod3_POBR)
+boxConcThree(WRTDSmod3_POBR)
+boxQTwice(WRTDSmod3_POBR)
+plotFluxHist(WRTDSmod3_POBR)
+plotConcHist(WRTDSmod3_POBR)
+
+png('BiasPlot_POBR_mod3.png', res = 300, units ='in', width = 12, height = 12)
+fluxBiasMulti(WRTDSmod3_POBR, cex.axis = 1.5, cex.main = 1.5, cex.lab=1.5)
+dev.off()
+
+png('ContourPlotMean_POBR_mod3.png', res = 300, units ='in', width = 6, height = 6)
+plotContours(WRTDSmod3_POBR, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,6,0.5),qUnit=1, qBottom = 0.0001, qTop = 5, whatSurface = 1)
+dev.off()
+
+png('ContourPlotErr_POBR_mod3.png', res = 300, units ='in', width = 6, height = 6)
+plotContours(WRTDSmod3_POBR, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,2.4,0.2),qUnit=1, qBottom = 0.0001, qTop = 5, whatSurface = 2)
+dev.off()
+
+png('ConcFluxTime_POBR_mod4.png', res = 300, units ='in', width = 12, height = 6)
+layout(rbind(c(1,2)))
+plotConcTimeDaily(WRTDSmod4_POBR)
+plotFluxTimeDaily(WRTDSmod4_POBR)
+dev.off()
+
+png('ConcFluxTimeErrs_POBR_mod4.png', res = 300, units ='in', width = 12, height = 6)
+layout(rbind(c(1,2)))
+plotConcPred(WRTDSmod4_POBR)
+plotFluxPred(WRTDSmod4_POBR)
+dev.off()
+
+plotResidPred(WRTDSmod4_POBR)
+plotResidQ(WRTDSmod4_POBR)
+plotResidTime(WRTDSmod4_POBR)
+boxResidMonth(WRTDSmod4_POBR)
+boxConcThree(WRTDSmod4_POBR)
+boxQTwice(WRTDSmod4_POBR)
+plotFluxHist(WRTDSmod4_POBR)
+plotConcHist(WRTDSmod4_POBR)
+
+png('BiasPlot_POBR_mod4.png', res = 300, units ='in', width = 12, height = 12)
+fluxBiasMulti(WRTDSmod4_POBR, cex.axis = 1.5, cex.main = 1.5, cex.lab=1.5)
+dev.off()
+
+png('ContourPlotMean_POBR_mod4.png', res = 300, units ='in', width = 6, height = 6)
+plotContours(WRTDSmod4_POBR, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,10,0.5),qUnit=1, qBottom = 0.0001, qTop = 5, whatSurface = 1)
+dev.off()
+
+png('ContourPlotErr_POBR_mod4.png', res = 300, units ='in', width = 6, height = 6)
+plotContours(WRTDSmod4_POBR, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,3,0.5),qUnit=1, qBottom = 0.0001, qTop = 5, whatSurface = 2)
+dev.off()
+
+png('ConcFluxTime_POBR_mod5.png', res = 300, units ='in', width = 12, height = 6)
+layout(rbind(c(1,2)))
+plotConcTimeDaily(WRTDSmod5_POBR)
+plotFluxTimeDaily(WRTDSmod5_POBR)
+dev.off()
+
+png('ConcFluxTimeErrs_POBR_mod5.png', res = 300, units ='in', width = 12, height = 6)
+layout(rbind(c(1,2)))
+plotConcPred(WRTDSmod5_POBR)
+plotFluxPred(WRTDSmod5_POBR)
+dev.off()
+
+plotResidPred(WRTDSmod5_POBR)
+plotResidQ(WRTDSmod5_POBR)
+plotResidTime(WRTDSmod5_POBR)
+boxResidMonth(WRTDSmod5_POBR)
+boxConcThree(WRTDSmod5_POBR)
+boxQTwice(WRTDSmod5_POBR)
+plotFluxHist(WRTDSmod5_POBR)
+plotConcHist(WRTDSmod5_POBR)
+
+png('BiasPlot_POBR_mod5.png', res = 300, units ='in', width = 12, height = 12)
+fluxBiasMulti(WRTDSmod5_POBR, cex.axis = 1.5, cex.main = 1.5, cex.lab=1.5)
+dev.off()
+
+png('ContourPlotMean_POBR_mod5.png', res = 300, units ='in', width = 6, height = 6)
+plotContours(WRTDSmod5_POBR, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,6,0.2),qUnit=1, qBottom = 0.0001, qTop = 5, whatSurface = 1)
+dev.off()
+
+png('ContourPlotErr_POBR_mod5.png', res = 300, units ='in', width = 6, height = 6)
+plotContours(WRTDSmod5_POBR, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,3,0.5),qUnit=1, qBottom = 0.0001, qTop = 5, whatSurface = 2)
+dev.off()
+
+png('ConcFluxTime_POBR_mod6.png', res = 300, units ='in', width = 12, height = 6)
+layout(rbind(c(1,2)))
+plotConcTimeDaily(WRTDSmod6_POBR)
+plotFluxTimeDaily(WRTDSmod6_POBR)
+dev.off()
+
+png('ConcFluxTimeErrs_POBR_mod6.png', res = 300, units ='in', width = 12, height = 6)
+layout(rbind(c(1,2)))
+plotConcPred(WRTDSmod6_POBR)
+plotFluxPred(WRTDSmod6_POBR)
+dev.off()
+
+plotResidPred(WRTDSmod6_POBR)
+plotResidQ(WRTDSmod6_POBR)
+plotResidTime(WRTDSmod6_POBR)
+boxResidMonth(WRTDSmod6_POBR)
+boxConcThree(WRTDSmod6_POBR)
+boxQTwice(WRTDSmod6_POBR)
+plotFluxHist(WRTDSmod6_POBR)
+plotConcHist(WRTDSmod6_POBR)
+
+png('BiasPlot_POBR_mod6.png', res = 300, units ='in', width = 12, height = 12)
+fluxBiasMulti(WRTDSmod6_POBR, cex.axis = 1.5, cex.main = 1.5, cex.lab=1.5)
+dev.off()
+
+png('ContourPlotMean_POBR_mod6.png', res = 300, units ='in', width = 6, height = 6)
+plotContours(WRTDSmod6_POBR, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,6,0.2),qUnit=1, qBottom = 0.0001, qTop = 5, whatSurface = 1)
+dev.off()
+
+png('ContourPlotErr_POBR_mod6.png', res = 300, units ='in', width = 6, height = 6)
+plotContours(WRTDSmod6_POBR, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,3,0.5),qUnit=1, qBottom = 0.0001, qTop = 5, whatSurface = 2)
+dev.off()
+
+
+#LOOCV SE for sample and discharge---
+sum(WRTDSmod_POBR$Sample$SE^2)
+sum(WRTDSmod2_POBR$Sample$SE^2)
+sum(WRTDSmod3_POBR$Sample$SE^2)
+sum(WRTDSmod4_POBR$Sample$SE^2)
+sum(WRTDSmod5_POBR$Sample$SE^2)
+sum(WRTDSmod6_POBR$Sample$SE^2)
+
+sum(WRTDSmod_POBR$Daily$SE^2)
+sum(WRTDSmod2_POBR$Daily$SE^2)
+sum(WRTDSmod3_POBR$Daily$SE^2)
+sum(WRTDSmod4_POBR$Daily$SE^2)
+sum(WRTDSmod5_POBR$Daily$SE^2)
+sum(WRTDSmod6_POBR$Daily$SE^2)
+
+#  MSE for sample----
+mean((WRTDSmod_POBR$Sample$ConcHat - WRTDSmod_POBR$Sample$ConcAve))^2 + sum((WRTDSmod_POBR$Sample$ConcHat - WRTDSmod_POBR$Sample$ConcAve)^2)/(nrow(Sample_POBR)-1)
+mean((WRTDSmod2_POBR$Sample$ConcHat - WRTDSmod2_POBR$Sample$ConcAve))^2 + sum((WRTDSmod2_POBR$Sample$ConcHat - WRTDSmod2_POBR$Sample$ConcAve)^2)/(nrow(Sample_POBR)-1)
+mean((WRTDSmod3_POBR$Sample$ConcHat - WRTDSmod3_POBR$Sample$ConcAve))^2 + sum((WRTDSmod3_POBR$Sample$ConcHat - WRTDSmod3_POBR$Sample$ConcAve)^2)/(nrow(Sample_POBR)-1)
+mean((WRTDSmod4_POBR$Sample$ConcHat - WRTDSmod4_POBR$Sample$ConcAve))^2 + sum((WRTDSmod4_POBR$Sample$ConcHat - WRTDSmod4_POBR$Sample$ConcAve)^2)/(nrow(Sample_POBR)-1)
+mean((WRTDSmod5_POBR$Sample$ConcHat - WRTDSmod5_POBR$Sample$ConcAve))^2 + sum((WRTDSmod5_POBR$Sample$ConcHat - WRTDSmod5_POBR$Sample$ConcAve)^2)/(nrow(Sample_POBR)-1)
+mean((WRTDSmod6_POBR$Sample$ConcHat - WRTDSmod6_POBR$Sample$ConcAve))^2 + sum((WRTDSmod6_POBR$Sample$ConcHat - WRTDSmod6_POBR$Sample$ConcAve)^2)/(nrow(Sample_POBR)-1)
+
+#  Make tables for selected model----
+setwd('C:\\Users\\js4yd\\OneDrive - University of Virginia\\RHESSys_ParameterSA')
+source('WRTDS_modifiedFunctions.R')
+WRTDSmod5m_POBR = modelEstimation(eList = eList_POBR, windowY = 4, windowQ = 5, windowS = .5, minNumObs = 50, minNumUncen = 50, edgeAdjust = TRUE, numTsteps = 50, numQsteps = 100)
+
+#Make interpolation tables from the surfaces information and save to files that can be loaded in
+#Error in location 2, then locations 4-8 are Intercept, DecYear, LogQ, SinDY, CosDY
+TabInt_POBR = WRTDSmod5m_POBR$surfaces[,,4]
+TabYear_POBR = WRTDSmod5m_POBR$surfaces[,,5]
+TabLogQ_POBR = WRTDSmod5m_POBR$surfaces[,,6]
+TabSinYear_POBR = WRTDSmod5m_POBR$surfaces[,,7]
+TabCosYear_POBR = WRTDSmod5m_POBR$surfaces[,,8]
+TabLogErr_POBR = WRTDSmod5m_POBR$surfaces[,,2]
+
+rownames(TabInt_POBR) = rownames(TabYear_POBR) = rownames(TabLogQ_POBR) = rownames(TabSinYear_POBR) = rownames(TabCosYear_POBR) = rownames(TabLogErr_POBR) = attr(WRTDSmod5m_POBR$surfaces, which = 'LogQ')
+colnames(TabInt_POBR) = colnames(TabYear_POBR) = colnames(TabLogQ_POBR) = colnames(TabSinYear_POBR) = colnames(TabCosYear_POBR) = colnames(TabLogErr_POBR) = attr(WRTDSmod5m_POBR$surfaces, which = 'Year')
+
+#Contour plots of the parameters
+png('TabInt_POBR.png', units = 'in', res = 300, height = 7, width = 7)
+plotContours(WRTDSmod5m_POBR, yearStart = 1999, yearEnd = 2011, contourLevels=seq(-1000,4000,100),qUnit=1, qBottom = 0.0001, qTop = 5, whatSurface = 4)
+dev.off()
+png('TabYear_POBR.png', units = 'in', res = 300, height = 7, width = 7)
+plotContours(WRTDSmod5m_POBR, yearStart = 1999, yearEnd = 2011, contourLevels=seq(-1,1,0.2),qUnit=1, qBottom = 0.0001, qTop = 5, whatSurface = 5)
+dev.off()
+png('TabLogFlow_POBR.png', units = 'in', res = 300, height = 7, width = 7)
+plotContours(WRTDSmod5m_POBR, yearStart = 1999, yearEnd = 2011, contourLevels=seq(-1,1,0.2),qUnit=1, qBottom = 0.0001, qTop = 5, whatSurface = 6)
+dev.off()
+png('TabSinYear_POBR.png', units = 'in', res = 300, height = 7, width = 7)
+plotContours(WRTDSmod5m_POBR, yearStart = 1999, yearEnd = 2011, contourLevels=seq(-2,2,0.2),qUnit=1, qBottom = 0.0001, qTop = 5, whatSurface = 7)
+dev.off()
+png('TabCosYear_POBR.png', units = 'in', res = 300, height = 7, width = 7)
+plotContours(WRTDSmod5m_POBR, yearStart = 1999, yearEnd = 2011, contourLevels=seq(-3,1,0.2),qUnit=1, qBottom = 0.0001, qTop = 5, whatSurface = 8)
+dev.off()
+png('TabLogErr_POBR.png', units = 'in', res = 300, height = 7, width = 7)
+plotContours(WRTDSmod5m_POBR, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,2.5,0.1),qUnit=1, qBottom = 0.0001, qTop = 5, whatSurface = 2)
+dev.off()
+
+#Write the tables
+setwd('C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\WRTDS')
+options(scipen = 999)
+write.table(round(TabInt_POBR,5), file = 'TabInt_POBRMod5_p5.txt', sep = '\t', row.names = attr(WRTDSmod5m_POBR$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod5m_POBR$surfaces, which = 'Year'))
+write.table(signif(TabYear_POBR,4), file = 'TabYear_POBRMod5_p4.txt', sep = '\t', row.names = attr(WRTDSmod5m_POBR$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod5m_POBR$surfaces, which = 'Year'))
+write.table(signif(TabLogQ_POBR,4), file = 'TabLogQ_POBRMod5_p4.txt', sep = '\t', row.names = attr(WRTDSmod5m_POBR$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod5m_POBR$surfaces, which = 'Year'))
+write.table(signif(TabSinYear_POBR,4), file = 'TabSinYear_POBRMod5_p4.txt', sep = '\t', row.names = attr(WRTDSmod5m_POBR$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod5m_POBR$surfaces, which = 'Year'))
+write.table(signif(TabCosYear_POBR,4), file = 'TabCosYear_POBRMod5_p4.txt', sep = '\t', row.names = attr(WRTDSmod5m_POBR$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod5m_POBR$surfaces, which = 'Year'))
+write.table(round(TabLogErr_POBR,5), file = 'TabLogErr_POBRMod5_p5.txt', sep = '\t', row.names = attr(WRTDSmod5m_POBR$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod5m_POBR$surfaces, which = 'Year'))
+options(scipen = 0)
+
+#Compare predictions of Pond Branch WRTDS and the other regression to true value----
+POBR_PredTN_POBRWRTDS = matrix(NA, ncol = 3, nrow = length(Flows_POBR))
+for(i in 1:length(Flows_POBR)){
+  POBR_PredTN_POBRWRTDS[i,] = predictWRTDS(Date = as.character(as.Date(Dates_POBR))[i], Flow = Flows_POBR[i], rowt = as.numeric(rownames(TabInt_POBR)), colt = as.numeric(colnames(TabInt_POBR)), TabInt = TabInt_POBR, TabYear = TabYear_POBR, TabLogQ = TabLogQ_POBR, TabSinYear = TabSinYear_POBR, TabCosYear = TabCosYear_POBR, TabLogErr = TabLogErr_POBR)
+}
+rm(i)
+colnames(POBR_PredTN_POBRWRTDS) = c('05', 'Med', '95')
+
+POBR_PredTN_POBRWRTDS = as.data.frame(POBR_PredTN_POBRWRTDS)
+POBR_PredTN_POBRWRTDS$True = BES_TN_d$POBR$TN..mg.N.L.[which((!is.na(BES_TN_d$POBR$TN..mg.N.L.)) & (as.Date(BES_TN_d$POBR$SortDate) < '2014-01-01'))]
+POBR_PredTN_POBRWRTDS$DiffMed = POBR_PredTN_POBRWRTDS$True - POBR_PredTN_POBRWRTDS$Med
+
+png('POBR_TrueTNvsPOBRWRTDS.png', res = 300, units = 'in', height = 5, width = 10)
+layout(rbind(c(1,2)))
+plot(POBR_PredTN$True, POBR_PredTN$Med, ylim = c(0,9), xlim = c(0,9), xlab = 'True Pond Branch TN (mg N/L)', ylab = 'WRTDS Predicted Pond Branch TN (mg N/L)', main = 'Basin WRTDS Model')
+arrows(POBR_PredTN$True, POBR_PredTN$Med - POBR_PredTN$`05`, POBR_PredTN$True, POBR_PredTN$Med + POBR_PredTN$`95`, length=0.05, angle=90, code=3)
+lines(c(-10,10), c(-10,10))
+
+plot(POBR_PredTN_POBRWRTDS$True, POBR_PredTN_POBRWRTDS$Med, ylim = c(0,9), xlim = c(0,9), xlab = 'True Pond Branch TN (mg N/L)', ylab = 'WRTDS Predicted Pond Branch TN (mg N/L)', main = 'Pond Branch WRTDS Model')
+arrows(POBR_PredTN_POBRWRTDS$True, POBR_PredTN_POBRWRTDS$Med - POBR_PredTN_POBRWRTDS$`05`, POBR_PredTN_POBRWRTDS$True, POBR_PredTN_POBRWRTDS$Med + POBR_PredTN_POBRWRTDS$`95`, length=0.05, angle=90, code=3)
+lines(c(-10,10), c(-10,10))
+dev.off()
+
+png('POBR_TrueTNvsPOBRWRTDS_noArrows.png', res = 300, units = 'in', height = 5, width = 10)
+layout(rbind(c(1,2)))
+plot(POBR_PredTN$True, POBR_PredTN$Med, ylim = c(0,9), xlim = c(0,9), xlab = 'True Pond Branch TN (mg N/L)', ylab = 'WRTDS Predicted Pond Branch TN (mg N/L)', main = 'Basin WRTDS Model')
+lines(c(-10,10), c(-10,10))
+
+plot(POBR_PredTN_POBRWRTDS$True, POBR_PredTN_POBRWRTDS$Med, ylim = c(0,9), xlim = c(0,9), xlab = 'True Pond Branch TN (mg N/L)', ylab = 'WRTDS Predicted Pond Branch TN (mg N/L)', main = 'Pond Branch WRTDS Model')
+lines(c(-10,10), c(-10,10))
+dev.off()
+
+#Load
+POBR_PredTN_POBRWRTDS$LowTNLim = NA
+POBR_PredTN_POBRWRTDS$LowTNLim[POBR_PredTN_POBRWRTDS$True == min(POBR_PredTN_POBRWRTDS$True[1:650])] = 1
+POBR_PredTN_POBRWRTDS$LowTNLim[POBR_PredTN_POBRWRTDS$True == min(POBR_PredTN_POBRWRTDS$True[651:length(POBR_PredTN_POBRWRTDS$True)])] = 2
+
+#Use WRTDS regression for predicted concentration and transform to loads. Compare predicted to true load.
+POBR_PredTN_POBRWRTDS$TrueLoad = POBR_PredTN_POBRWRTDS$True*Flows_POBR*12^3*2.54^3/100^3
+POBR_PredTN_POBRWRTDS$Load05 = POBR_PredTN_POBRWRTDS$`05`*Flows_POBR*12^3*2.54^3/100^3
+POBR_PredTN_POBRWRTDS$MedLoad = POBR_PredTN_POBRWRTDS$Med*Flows_POBR*12^3*2.54^3/100^3
+POBR_PredTN_POBRWRTDS$Load95 = POBR_PredTN_POBRWRTDS$`95`*Flows_POBR*12^3*2.54^3/100^3
+
+png('POBR_TrueTNLoadvsPOBRWRTDSLoad.png', res = 300, units = 'in', height = 5, width = 5)
+plot(POBR_PredTN_POBRWRTDS$TrueLoad, POBR_PredTN_POBRWRTDS$MedLoad, ylim=range(c(POBR_PredTN_POBRWRTDS$MedLoad-POBR_PredTN_POBRWRTDS$Load05, POBR_PredTN_POBRWRTDS$MedLoad+POBR_PredTN_POBRWRTDS$Load95)), xlim = c(0,.1), xlab = 'True Pond Branch TN Load (mg N/s)', ylab = 'WRTDS Predicted Load of Pond Branch TN (mg N/s)')
+arrows(POBR_PredTN_POBRWRTDS$TrueLoad, POBR_PredTN_POBRWRTDS$MedLoad-POBR_PredTN_POBRWRTDS$Load05, POBR_PredTN_POBRWRTDS$TrueLoad, POBR_PredTN_POBRWRTDS$MedLoad+POBR_PredTN_POBRWRTDS$Load95, length=0.05, angle=90, code=3)
+lines(c(-10,10), c(-10,10))
+dev.off()
+
+png('POBR_TrueTNLoadvsPOBRWRTDSLoad_log.png', res = 300, units = 'in', height = 5, width = 5)
+plot(POBR_PredTN_POBRWRTDS$TrueLoad, POBR_PredTN_POBRWRTDS$MedLoad, ylim=range(c(POBR_PredTN_POBRWRTDS$MedLoad-POBR_PredTN_POBRWRTDS$Load05, POBR_PredTN_POBRWRTDS$MedLoad+POBR_PredTN_POBRWRTDS$Load95)), xlab = 'True Pond Branch TN Load (mg N/s)', ylab = 'WRTDS Predicted Load of Pond Branch TN (mg N/s)', log = 'xy')
+arrows(POBR_PredTN_POBRWRTDS$TrueLoad, POBR_PredTN_POBRWRTDS$MedLoad-POBR_PredTN_POBRWRTDS$Load05, POBR_PredTN_POBRWRTDS$TrueLoad, POBR_PredTN_POBRWRTDS$MedLoad+POBR_PredTN_POBRWRTDS$Load95, length=0.05, angle=90, code=3)
+lines(c(1e-7,1e7), c(1e-7,1e7))
+dev.off()
+
+png('POBR_TrueTNLoadvsPOBRWRTDSLoad_log_colors.png', res = 300, units = 'in', height = 5, width = 5)
+plot(POBR_PredTN_POBRWRTDS$TrueLoad, POBR_PredTN_POBRWRTDS$MedLoad, ylim=range(c(POBR_PredTN_POBRWRTDS$MedLoad-POBR_PredTN_POBRWRTDS$Load05, POBR_PredTN_POBRWRTDS$MedLoad+POBR_PredTN_POBRWRTDS$Load95)),
+     xlim=range(POBR_PredTN_POBRWRTDS$TrueLoad),
+     xlab = 'True Pond Branch TN Load (mg N/s)', ylab = 'WRTDS Predicted Load of Pond Branch TN (mg N/s)', log = 'xy')
+par(new = TRUE)
+plot(POBR_PredTN_POBRWRTDS$TrueLoad[POBR_PredTN_POBRWRTDS$LowTNLim == 1], POBR_PredTN_POBRWRTDS$MedLoad[POBR_PredTN_POBRWRTDS$LowTNLim == 1], 
+     xlim=range(POBR_PredTN_POBRWRTDS$TrueLoad),
+     ylim=range(c(POBR_PredTN_POBRWRTDS$MedLoad-POBR_PredTN_POBRWRTDS$Load05, POBR_PredTN_POBRWRTDS$MedLoad+POBR_PredTN_POBRWRTDS$Load95)), xlab = '', ylab = '', 
+     log = 'xy', col = 'blue', axes = FALSE)
+par(new = TRUE)
+plot(POBR_PredTN_POBRWRTDS$TrueLoad[POBR_PredTN_POBRWRTDS$LowTNLim == 2], POBR_PredTN_POBRWRTDS$MedLoad[POBR_PredTN_POBRWRTDS$LowTNLim == 2], 
+     xlim=range(POBR_PredTN_POBRWRTDS$TrueLoad),
+     ylim=range(c(POBR_PredTN_POBRWRTDS$MedLoad-POBR_PredTN_POBRWRTDS$Load05, POBR_PredTN_POBRWRTDS$MedLoad+POBR_PredTN_POBRWRTDS$Load95)), xlab = '', ylab = '', 
+     log = 'xy', col = 'red', axes = FALSE)
+#arrows(POBR_PredTN_POBRWRTDS$TrueLoad, POBR_PredTN_POBRWRTDS$MedLoad-POBR_PredTN_POBRWRTDS$Load05, POBR_PredTN_POBRWRTDS$TrueLoad, POBR_PredTN_POBRWRTDS$MedLoad+POBR_PredTN_POBRWRTDS$Load95, length=0.05, angle=90, code=3)
+lines(c(1e-7,1e7), c(1e-7,1e7))
+legend('topleft', title = 'Detection Limits (mg N/L)', legend = c('0.01', '0.05'), pch = 1, col = c('blue', 'red'))
+dev.off()
+
+#Add colors for seasons to this dataset
+POBR_PredTN_POBRWRTDS$cols = BES_TN_d$POBR$cols[as.Date(BES_TN_d$POBR$SortDate) %in% as.Date(Dates_POBR)]
+
+png('POBR_TN_ScatterHist_POBRWRTDS.png', res = 300, units = 'in', width = 10, height = 10)
+scatterHist_mod(x = log10(POBR_PredTN_POBRWRTDS$TrueLoad), y = log10(POBR_PredTN_POBRWRTDS$MedLoad), density = FALSE, freq = FALSE, x.breaks = 100, y.breaks = 100, correl = FALSE, xlab = expression(paste('log'[10] ~ '(True TN Load [mg N/s])')), ylab = expression(paste('log'[10] ~ 'Predicted TN Load (mg N/s)')), cex.lab = 1.5, cex.axis = 1.5, title = '', pch = 16, ellipse = FALSE, smooth = FALSE, col = POBR_PredTN_POBRWRTDS$cols)
+dev.off()
+
+POBR_PredTN_POBRWRTDS$DiffMedLoad = POBR_PredTN_POBRWRTDS$TrueLoad - POBR_PredTN_POBRWRTDS$MedLoad
+
+#TN Load as modeled from regression
+POBR_PredTN$ModeledTNLoad = POBR_PredTN$MedLoad + lm_POBRLoad_Dates_Interaction$fitted.values
+
+png('POBR_TrueTNLoadvsWRTDSLoad+CorrModel_log_colors.png', res = 300, units = 'in', height = 5, width = 5)
+plot(POBR_PredTN$TrueLoad, POBR_PredTN$ModeledTNLoad, ylim = c(1e-5, 1e-1), xlim = c(1e-5, 1e-1),
+     xlab = 'True Pond Branch TN Load (mg N/s)', ylab = 'WRTDS Predicted Load of Pond Branch TN (mg N/s)', log = 'xy')
+par(new = TRUE)
+plot(POBR_PredTN$TrueLoad[POBR_PredTN$LowTNLim == 1], POBR_PredTN$ModeledTNLoad[POBR_PredTN$LowTNLim == 1], 
+     ylim = c(1e-5, 1e-1), xlim = c(1e-5, 1e-1), xlab = '', ylab = '', 
+     log = 'xy', col = 'blue', axes = FALSE)
+par(new = TRUE)
+plot(POBR_PredTN$TrueLoad[POBR_PredTN$LowTNLim == 2], POBR_PredTN$ModeledTNLoad[POBR_PredTN$LowTNLim == 2], 
+     ylim = c(1e-5, 1e-1), xlim = c(1e-5, 1e-1), xlab = '', ylab = '', 
+     log = 'xy', col = 'red', axes = FALSE)
+#arrows(POBR_PredTN_POBRWRTDS$TrueLoad, POBR_PredTN_POBRWRTDS$MedLoad-POBR_PredTN_POBRWRTDS$Load05, POBR_PredTN_POBRWRTDS$TrueLoad, POBR_PredTN_POBRWRTDS$MedLoad+POBR_PredTN_POBRWRTDS$Load95, length=0.05, angle=90, code=3)
+lines(c(1e-7,1e7), c(1e-7,1e7))
+legend('topleft', title = 'Detection Limits (mg N/L)', legend = c('0.01', '0.05'), pch = 1, col = c('blue', 'red'))
+dev.off()
 
 #Make a map of these water quality sampling locations----
 setwd(dir_WChem)
