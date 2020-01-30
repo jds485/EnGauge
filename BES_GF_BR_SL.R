@@ -3237,21 +3237,21 @@ summary(lm_BR3Load_log)
 plot(lm_BR3Load_log)
 
 
-#From the BR3Load_Dates, use Box-Cox transform to attempt normality
-BoxCoxtest_BR3_True = boxcox(BR3_PredTN$TrueLoad ~ I(Flows_BR3*12^3*2.54^3/100^3) + BR3_PredTN$MedLoad, lambda = seq(0,1, length = 1000))
+#From the BR3Load, use Box-Cox transform to attempt normality
+BoxCoxtest_BR3_True = boxcox(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1] ~ I(Flows_BR3[BR3_PredTN$True > 1]*12^3*2.54^3/100^3) + BR3_PredTN$MedLoad[BR3_PredTN$True > 1], lambda = seq(0,1, length = 1000))
 lambda_BR3_True = BoxCoxtest_BR3_True$x[which(BoxCoxtest_BR3_True$y == max(BoxCoxtest_BR3_True$y))]
 
-BR3_PredTN$DiffMedLoad_BC_True = bcPower(U = BR3_PredTN$TrueLoad, gamma = 0, lambda = lambda_BR3_True, jacobian.adjusted = FALSE)
-lm_BR3Load_Dates_BC_True = lm(BR3_PredTN$DiffMedLoad_BC_True ~ I(Flows_BR3*12^3*2.54^3/100^3) + BR3_PredTN$MedLoad)
+BR3_PredTN$DiffMedLoad_BC_True[BR3_PredTN$True > 1] = bcPower(U = BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], gamma = 0, lambda = lambda_BR3_True, jacobian.adjusted = FALSE)
+lm_BR3Load_Dates_BC_True = lm(BR3_PredTN$DiffMedLoad_BC_True[BR3_PredTN$True > 1] ~ I(Flows_BR3[BR3_PredTN$True > 1]*12^3*2.54^3/100^3) + BR3_PredTN$MedLoad[BR3_PredTN$True > 1])
 
 summary(lm_BR3Load_Dates_BC_True)
 plot(lm_BR3Load_Dates_BC)
 
 #plot of regression y vs. x
-plot(y = BR3_PredTN$DiffMedLoad_BC, x = BR3_PredTN$MedLoad)
-plot(y = BR3_PredTN$DiffMedLoad_BC, x = I(Flows_BR3*12^3*2.54^3/100^3))
-plot(y = BR3_PredTN$DiffMedLoad_BC, x = sin(2*pi*DatesNums_BR3/366))
-plot(y = BR3_PredTN$DiffMedLoad_BC, x = cos(2*pi*DatesNums_BR3/366))
+plot(y = BR3_PredTN$DiffMedLoad_BC_True, x = BR3_PredTN$MedLoad)
+plot(y = BR3_PredTN$DiffMedLoad_BC_True, x = I(Flows_BR3*12^3*2.54^3/100^3))
+plot(y = BR3_PredTN$DiffMedLoad_BC_True, x = sin(2*pi*DatesNums_BR3/366))
+plot(y = BR3_PredTN$DiffMedLoad_BC_True, x = cos(2*pi*DatesNums_BR3/366))
 
 #  BR5 - essentially same as above----
 #plot of regression y vs. x
@@ -3281,6 +3281,25 @@ plot(lm_BR5Load_Dates_Interaction)
 
 summary(lm_BR5Load_log)
 plot(lm_BR5Load_log)
+
+#From the BR5Load, use Box-Cox transform to attempt normality
+BoxCoxtest_BR5_True = boxcox(BR5_PredTN$TrueLoad[BR5_PredTN$True > 1] ~ I(Flows_BR5[BR5_PredTN$True > 1]*12^3*2.54^3/100^3)*BR5_PredTN$MedLoad[BR5_PredTN$True > 1], lambda = seq(0,2, length = 1000))
+lambda_BR5_True = BoxCoxtest_BR5_True$x[which(BoxCoxtest_BR5_True$y == max(BoxCoxtest_BR5_True$y))]
+
+BR5_PredTN$DiffMedLoad_BC_True[BR5_PredTN$True > 1] = bcPower(U = BR5_PredTN$TrueLoad[BR5_PredTN$True > 1], gamma = 0, lambda = lambda_BR5_True, jacobian.adjusted = FALSE)
+lm_BR5Load_Dates_BC_True = lm(BR5_PredTN$DiffMedLoad_BC_True[BR5_PredTN$True > 1] ~ I(Flows_BR5[BR5_PredTN$True > 1]*12^3*2.54^3/100^3)*BR5_PredTN$MedLoad[BR5_PredTN$True > 1])
+
+summary(lm_BR5Load_Dates_BC_True)
+plot(lm_BR5Load_Dates_BC_True)
+
+#plot of regression y vs. x
+plot(y = BR5_PredTN$DiffMedLoad_BC_True, x = BR5_PredTN$MedLoad)
+plot(y = BR5_PredTN$DiffMedLoad_BC_True, x = I(Flows_BR5*12^3*2.54^3/100^3))
+plot(y = BR5_PredTN$DiffMedLoad_BC_True, x = sin(2*pi*DatesNums_BR5/366))
+plot(y = BR5_PredTN$DiffMedLoad_BC_True, x = cos(2*pi*DatesNums_BR5/366))
+
+plot(y = BR5_PredTN$MedLoad, x = I(Flows_BR5*12^3*2.54^3/100^3))
+cor(y = BR5_PredTN$MedLoad, x = I(Flows_BR5*12^3*2.54^3/100^3))
 
 # WRTDS Interpolation Tables for Pond Branch----
 #Load the streamflow data into WRTDS format
