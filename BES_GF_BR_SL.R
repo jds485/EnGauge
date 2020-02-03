@@ -3166,6 +3166,7 @@ ProportionBR5[c(2,3,4,5)] + ProportionBR3[c(2,3,4,5)] + ProportionSumPond
 
 
 # Regressions to predict load directly instead of predict the correction----
+#Fixme: ensure that regression loads are non-negative for all positive flows
 #  Pond Branch----
 #plot of regression y vs. x
 plot(y = POBR_PredTN$TrueLoad, x = POBR_PredTN$MedLoad)
@@ -3604,7 +3605,7 @@ write.table(signif(TabCosYear_POBR,4), file = 'TabCosYear_POBRMod5_p4.txt', sep 
 write.table(round(TabLogErr_POBR,5), file = 'TabLogErr_POBRMod5_p5.txt', sep = '\t', row.names = attr(WRTDSmod5m_POBR$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod5m_POBR$surfaces, which = 'Year'))
 options(scipen = 0)
 
-#Compare predictions of Pond Branch WRTDS and the other regression to true value----
+#  Compare predictions of Pond Branch WRTDS and the other regression to true value----
 POBR_PredTN_POBRWRTDS = matrix(NA, ncol = 3, nrow = length(Flows_POBR))
 for(i in 1:length(Flows_POBR)){
   POBR_PredTN_POBRWRTDS[i,] = predictWRTDS(Date = as.character(as.Date(Dates_POBR))[i], Flow = Flows_POBR[i], rowt = as.numeric(rownames(TabInt_POBR)), colt = as.numeric(colnames(TabInt_POBR)), TabInt = TabInt_POBR, TabYear = TabYear_POBR, TabLogQ = TabLogQ_POBR, TabSinYear = TabSinYear_POBR, TabCosYear = TabCosYear_POBR, TabLogErr = TabLogErr_POBR)
@@ -3753,3 +3754,163 @@ dev.off()
 # degAxis(side = 4, at = seq(39.45, 40,.01), labels = FALSE)
 # north.arrow(xb = -76.712, yb = 39.469, len = .0005, lab = 'N', tcol = 'black', col='black')
 # text(x = -76.712, y = 39.467, 'WGS84')
+
+#Make a map of the land ID in the world file----
+#Check that the number of unique patches equals the number of unique land uses
+if (length(unique(world$patchID)) != length(unique(world$patchID[world$patchLandID == 2])) + length(unique(world$patchID[world$patchLandID == 1])) + length(unique(world$patchID[world$patchLandID == 3])) + length(unique(world$patchID[world$patchLandID == 4]))){
+  print('Number of unique patches by land use ID is not equal to the number of unique patches.')
+}
+  
+png('Baisman_LandIDs.png', res = 300, units = 'in', width = 6, height = 6)
+par(mar= c(2.5,2.5,1,1))
+plot(world, col = 'white')
+for (h in 1:length(uhills)){
+  plot(world[world$hillID == uhills[h],], pch = 22, add = TRUE, lwd=8, col = 'gray')
+  #plot the 4 land use types
+  plot(world[which((world$hillID == uhills[h]) & (world$patchLandID == 1)),], col = 'yellow', pch = 15, add = TRUE, cex = 0.65)
+  plot(world[which((world$hillID == uhills[h]) & (world$patchLandID == 2)),], col = 'yellow', pch = 15, add = TRUE, cex = 0.65)
+  plot(world[which((world$hillID == uhills[h]) & (world$patchLandID == 3)),], col = 'purple', pch = 15, add = TRUE, cex = 0.65)
+  plot(world[which((world$hillID == uhills[h]) & (world$patchLandID == 4)),], col = 'purple', pch = 15, add = TRUE, cex = 0.65)
+}
+rm(h)
+plot(MDstreams, col = 'blue', add = T, lwd = 4)
+plot(S_Sites, add = T, col = 'green', cex = 2)
+plot(K_Sites, add = T, col = 'red', cex = 2)
+legend('topright', legend = c('Kenworth: 2001-2', 'Smith: 2006-7'), col = c('red', 'green'), pch = 3)
+legend('bottomright', legend = c('Undeveloped', 'Developed'), col = c('yellow', 'purple'), pch = 15)
+box(which = 'figure', lwd = 2)
+dev.off()
+
+png('Baisman_LandIDs_grid.png', res = 300, units = 'in', width = 6, height = 6)
+par(mar= c(2.5,2.5,1,1))
+plot(world, col = 'white')
+for (h in 1:length(uhills)){
+  plot(world[world$hillID == uhills[h],], pch = 22, add = TRUE, lwd=8, col = 'gray')
+  #plot the 4 land use types
+  plot(world[which((world$hillID == uhills[h]) & (world$patchLandID == 1)),], col = 'yellow', pch = 15, add = TRUE, cex = 0.5)
+  plot(world[which((world$hillID == uhills[h]) & (world$patchLandID == 2)),], col = 'yellow', pch = 15, add = TRUE, cex = 0.5)
+  plot(world[which((world$hillID == uhills[h]) & (world$patchLandID == 3)),], col = 'purple', pch = 15, add = TRUE, cex = 0.5)
+  plot(world[which((world$hillID == uhills[h]) & (world$patchLandID == 4)),], col = 'purple', pch = 15, add = TRUE, cex = 0.5)
+}
+rm(h)
+plot(MDstreams, col = 'blue', add = T, lwd = 4)
+plot(S_Sites, add = T, col = 'green', cex = 2)
+plot(K_Sites, add = T, col = 'red', cex = 2)
+legend('topright', legend = c('Kenworth: 2001-2', 'Smith: 2006-7'), col = c('red', 'green'), pch = 3)
+legend('bottomright', legend = c('Undeveloped', 'Developed'), col = c('yellow', 'purple'), pch = 15)
+box(which = 'figure', lwd = 2)
+dev.off()
+
+png('Baisman_LandIDs_grid_UrbanOnly.png', res = 300, units = 'in', width = 6, height = 6)
+par(mar= c(2.5,2.5,1,1))
+plot(world, col = 'white')
+for (h in 1:length(uhills)){
+  plot(world[world$hillID == uhills[h],], pch = 22, add = TRUE, lwd=8, col = 'gray')
+  #plot the 4 land use types
+  #plot(world[which((world$hillID == uhills[h]) & (world$patchLandID == 1)),], col = 'yellow', pch = 15, add = TRUE, cex = 0.5)
+  #plot(world[which((world$hillID == uhills[h]) & (world$patchLandID == 2)),], col = 'yellow', pch = 15, add = TRUE, cex = 0.5)
+  plot(world[which((world$hillID == uhills[h]) & (world$patchLandID == 3)),], col = 'purple', pch = 15, add = TRUE, cex = 0.5)
+  #plot(world[which((world$hillID == uhills[h]) & (world$patchLandID == 4)),], col = 'purple', pch = 15, add = TRUE, cex = 0.5)
+}
+rm(h)
+plot(MDstreams, col = 'blue', add = T, lwd = 4)
+plot(S_Sites, add = T, col = 'green', cex = 2)
+plot(K_Sites, add = T, col = 'red', cex = 2)
+legend('topright', legend = c('Kenworth: 2001-2', 'Smith: 2006-7'), col = c('red', 'green'), pch = 3)
+legend('bottomright', legend = c('Undeveloped', 'Developed'), col = c('yellow', 'purple'), pch = 15)
+box(which = 'figure', lwd = 2)
+dev.off()
+
+png('Baisman_LandIDs_grid_UrbanWithSeptic.png', res = 300, units = 'in', width = 6, height = 6)
+par(mar= c(2.5,2.5,1,1))
+plot(world, col = 'white')
+for (h in 1:length(uhills)){
+  plot(world[world$hillID == uhills[h],], pch = 22, add = TRUE, lwd=8, col = 'gray')
+  #plot the 4 land use types
+  #plot(world[which((world$hillID == uhills[h]) & (world$patchLandID == 1)),], col = 'yellow', pch = 15, add = TRUE, cex = 0.5)
+  #plot(world[which((world$hillID == uhills[h]) & (world$patchLandID == 2)),], col = 'yellow', pch = 15, add = TRUE, cex = 0.5)
+  plot(world[which((world$hillID == uhills[h]) & (world$patchLandID == 3)),], col = 'purple', pch = 15, add = TRUE, cex = 0.5)
+  plot(world[which((world$hillID == uhills[h]) & (world$patchLandID == 4)),], col = 'purple', pch = 15, add = TRUE, cex = 0.5)
+}
+rm(h)
+plot(MDstreams, col = 'blue', add = T, lwd = 4)
+plot(S_Sites, add = T, col = 'green', cex = 2)
+plot(K_Sites, add = T, col = 'red', cex = 2)
+legend('topright', legend = c('Kenworth: 2001-2', 'Smith: 2006-7'), col = c('red', 'green'), pch = 3)
+legend('bottomright', legend = c('Undeveloped', 'Developed'), col = c('yellow', 'purple'), pch = 15)
+box(which = 'figure', lwd = 2)
+dev.off()
+
+# Make a forest model (Pond Branch WRTDS) and a developed model (based on Baisman outlet WRTDS) for TN----
+#Obtain the fraction of developed land in each of the hillslopes, and for the basin----
+FracDev = vector('numeric', length = length(unique(world$hillID)))
+for (i in 1:length(FracDev)){
+  FracDev[i] = length(which((world$hillID == uhills[i]) & ((world$patchLandID == 3) | (world$patchLandID == 4))))/length(which((world$hillID == uhills[i])))
+}
+#Because this is a 2-component mixture model, assume that the remainder is undeveloped land
+FracUnDev = 1 - FracDev
+
+#Use export coefficient/source-sontribution model----
+#This is a signal + background model at BARN because BARN = POBR + all other catchments
+Flows_BARN = BES_TN_d$BARN$Flow[which((as.Date(BES_TN_d$BARN$SortDate) <= '2014-01-01'))]
+Dates_BARN = BES_TN_d$BARN$SortDate[which((as.Date(BES_TN_d$BARN$SortDate) <= '2014-01-01'))]
+BARN_PredTN = matrix(NA, ncol = 3, nrow = length(Flows_BARN))
+for(i in 1:length(Flows_BARN)){
+  BARN_PredTN[i,] = predictWRTDS(Date = as.character(as.Date(Dates_BARN))[i], Flow = Flows_BARN[i], rowt = as.numeric(rownames(TabInt)), colt = as.numeric(colnames(TabInt)), TabInt = TabInt, TabYear = TabYear, TabLogQ = TabLogQ, TabSinYear = TabSinYear, TabCosYear = TabCosYear, TabLogErr = TabLogErr)
+}
+rm(i)
+colnames(BARN_PredTN) = c('05', 'Med', '95')
+
+BARN_PredTN = as.data.frame(BARN_PredTN)
+BARN_PredTN$True = BES_TN_d$BARN$TN..mg.N.L.[which((as.Date(BES_TN_d$BARN$SortDate) <= '2014-01-01'))]
+
+#Load
+BARN_PredTN$LowTNLim = NA
+
+#concentration to loads
+BARN_PredTN$TrueLoad = BARN_PredTN$True*Flows_BARN*12^3*2.54^3/100^3
+BARN_PredTN$Load05 = BARN_PredTN$`05`*Flows_BARN*12^3*2.54^3/100^3
+BARN_PredTN$MedLoad = BARN_PredTN$Med*Flows_BARN*12^3*2.54^3/100^3
+BARN_PredTN$Load95 = BARN_PredTN$`95`*Flows_BARN*12^3*2.54^3/100^3
+
+#All dates for Pond Branch
+Flows_POBR_AllDates = BES_TN_d$POBR$Flow[which((as.Date(BES_TN_d$POBR$SortDate) <= '2014-01-01') & (as.Date(BES_TN_d$POBR$SortDate) >= '1999-11-15'))]
+Dates_POBR_AllDates = BES_TN_d$POBR$SortDate[which((as.Date(BES_TN_d$POBR$SortDate) <= '2014-01-01') & (as.Date(BES_TN_d$POBR$SortDate) >= '1999-11-15'))]
+POBR_AllDates_PredTN = matrix(NA, ncol = 3, nrow = length(Flows_POBR_AllDates))
+for(i in 1:length(Flows_POBR_AllDates)){
+  POBR_AllDates_PredTN[i,] = predictWRTDS(Date = as.character(as.Date(Dates_POBR_AllDates))[i], Flow = Flows_POBR_AllDates[i], rowt = as.numeric(rownames(TabInt_POBR)), colt = as.numeric(colnames(TabInt_POBR)), TabInt = TabInt_POBR, TabYear = TabYear_POBR, TabLogQ = TabLogQ_POBR, TabSinYear = TabSinYear_POBR, TabCosYear = TabCosYear_POBR, TabLogErr = TabLogErr_POBR)
+}
+rm(i)
+colnames(POBR_AllDates_PredTN) = c('05', 'Med', '95')
+
+POBR_AllDates_PredTN = as.data.frame(POBR_AllDates_PredTN)
+POBR_AllDates_PredTN$True = BES_TN_d$POBR$TN..mg.N.L.[which((as.Date(BES_TN_d$POBR$SortDate) <= '2014-01-01') & (as.Date(BES_TN_d$POBR$SortDate) >= '1999-11-15'))]
+
+#Load
+POBR_AllDates_PredTN$LowTNLim = NA
+POBR_AllDates_PredTN$LowTNLim[POBR_AllDates_PredTN$True == min(POBR_AllDates_PredTN$True[1:4865])] = 1
+POBR_AllDates_PredTN$LowTNLim[POBR_AllDates_PredTN$True == min(POBR_AllDates_PredTN$True[4866:length(POBR_AllDates_PredTN$True)])] = 2
+
+#concentration to loads
+POBR_AllDates_PredTN$TrueLoad = POBR_AllDates_PredTN$True*Flows_POBR_AllDates*12^3*2.54^3/100^3
+POBR_AllDates_PredTN$Load05 = POBR_AllDates_PredTN$`05`*Flows_POBR_AllDates*12^3*2.54^3/100^3
+POBR_AllDates_PredTN$MedLoad = POBR_AllDates_PredTN$Med*Flows_POBR_AllDates*12^3*2.54^3/100^3
+POBR_AllDates_PredTN$Load95 = POBR_AllDates_PredTN$`95`*Flows_POBR_AllDates*12^3*2.54^3/100^3
+
+#Export coefficient for Pond Branch = undeveloped export coefficient
+EC_Undev = POBR_AllDates_PredTN$MedLoad/sum(Area.Hills[c(3,4),2])
+#Export coefficient for developed = (Baisman load - undeveloped load)/(developed land area)
+EC_Dev = (BARN_PredTN$MedLoad - EC_Undev*sum(Area.Hills[,2]*FracUnDev))/sum(Area.Hills[,2]*FracDev)
+
+#There are some negative values, so maybe this can be attributed to the in-stream losses. Plot dates that these happen
+plot(y = EC_Dev, x = Dates_POBR_AllDates, ylim = c(0, 1.5e-6), xlim = c(10500, 16500))
+par(new = TRUE)
+plot(y = EC_Dev[EC_Dev < 0], x = Dates_POBR_AllDates[EC_Dev < 0], ylim = c(0, 1.5e-6), xlim = c(10500, 16500), col = 'red')
+
+#They are all during a drought! So that's almost surely in-stream losses.
+
+
+# Compare models to where there are hillslopes.
+
+#Evaluate adding flow information to the model
+# Convert back to concentration by subtracting flow that resulted from covered catchments. Then make a model for urban and a model for forest at basin outlet and make sure that forest is same as POBR and that devekoped matches the sampling site data well.
