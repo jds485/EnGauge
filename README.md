@@ -3,6 +3,8 @@ This is a repository for gathering Environmental Gauge data, processing that dat
 
 The repository depends on several packages and functions developed by the USGS and NOAA to retreive data from government host servers. Significant processing is required to use some of these datasets for environmental modeling. This repository provides several functions to process datasets for this purpose.
 
+A blog post describing the main functionality of this repository is available [here](https://waterprogramming.wordpress.com/2020/02/03/engauge-r-code-repository-for-environmental-gauge-data-acquisition-processing-and-visualization/)
+
 It is likely that others have made similar functions to process these and other environmental gauge data. If you have scripts to process these datasets that provide additional functionality, please write to the authors of this repository and ask to contribute or link code repositories!
 
 ---
