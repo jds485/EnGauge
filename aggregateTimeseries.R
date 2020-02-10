@@ -1,5 +1,7 @@
 #Function to aggregate timeseries into daily, monthly, or annual values.
 
+#Fixme: add methods to handle detection limits in aggregated timeseries.
+
 aggregateTimesteps = function(StationList, #named list of station timeseries
                               aggVal, #character vector containing: d, m, and/or a. These stand for Daily, Monthly, and Annual
                               aggVar, #column name in StationList to aggregate by
@@ -8,7 +10,7 @@ aggregateTimesteps = function(StationList, #named list of station timeseries
                               fun #function to use for aggregation (character)
 ){
   ld = list()
-  lm = list()
+  lmo = list()
   la = list()
   
   for (i in 1:length(StationList)){
@@ -29,7 +31,7 @@ aggregateTimesteps = function(StationList, #named list of station timeseries
       colnames(mthyr)[colnames(mthyr) == 'StationList[[i]][, aggVar]'] = aggVar
       mthyr$YrMthDy = as.Date(paste0(mthyr$year, '-', mthyr$month, '-01'))
       mthyr[,site] = rep(StationList[[i]][1,site], nrow(mthyr))
-      lm = c(lm, list(mthyr))
+      lmo = c(lmo, list(mthyr))
     }
     if ('a' %in% aggVal){
       #Year averaging:
@@ -46,11 +48,11 @@ aggregateTimesteps = function(StationList, #named list of station timeseries
     names(ld) = names(StationList)
   }
   if ('m' %in% aggVal){
-    names(lm) = names(StationList)
+    names(lmo) = names(StationList)
   }
   if ('a' %in% aggVal){
     names(la) = names(StationList)
   }
   
-  return(list(daily = ld, mthyr = lm, ann = la))
+  return(list(daily = ld, mthyr = lmo, ann = la))
 }
