@@ -43,7 +43,7 @@ addNegsToSpatialDataset = function(StationList,
   SpatialDataset$Neg = NA
   for (i in 1:length(StationList)){
     if(length(which(!is.na(StationList[[i]]$Neg))) > 0){
-      print(paste('Number of negatives =', length(which(!is.na(StationList[[i]]$Neg)))))
+      print(paste('Number of negatives for station', StationList[[i]][1, site_SL], '=', length(which(!is.na(StationList[[i]]$Neg)))))
       SpatialDataset$Neg[SpatialDataset[, site_D]@data == StationList[[i]][1, site_SL]] = length(which(!is.na(StationList[[i]]$Neg)))
     }
   }
@@ -58,7 +58,7 @@ addZerosToSpatialDataset = function(StationList,
   SpatialDataset$Zero = NA
   for (i in 1:length(StationList)){
     if(length(which(!is.na(StationList[[i]]$Zero))) > 0){
-      print(paste('Number of zeros =', length(which(!is.na(StationList[[i]]$Zero)))))
+      print(paste('Number of zeros for station', StationList[[i]][1, site_SL], '=', length(which(!is.na(StationList[[i]]$Zero)))))
       SpatialDataset$Zero[SpatialDataset[, site_D]@data == StationList[[i]][1, site_SL]] = length(which(!is.na(StationList[[i]]$Zero)))
     }
   }
