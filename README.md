@@ -46,7 +46,7 @@ It is likely that others have made similar functions to process these and other 
 
   Because of the wide variety of needs for different projects, this main script serves as examples of how downloading and processing data could be completed; you may want to modify for your project (e.g., if you do not want to use DEM processing, or have no water quality data needs).
   
-  Input data for running this script are provided in the DataForExamples folder. Note that DEM data are too large to host on GitHub, but you can download the 2 DEM tiles used for the examples using [The National Map](https://viewer.nationalmap.gov/advanced-viewer/) and select the NED tiles corresponding to "1 arc-second n40w078 1 x 1 degree ArcGrid" and "1 arc-second n40w077 1 x 1 degree ArcGrid". You can also run the script without running the DEM sections, which all have "DEM" in their section header.
+  Input data for running this script are provided in the DataForExamples folder. Note that DEM data are in zipped folders and you will have to unzip them after downloading. The 2 DEM tiles used for the examples were from [The National Map](https://viewer.nationalmap.gov/advanced-viewer/) and correspond to "1 arc-second n40w078 1 x 1 degree ArcGrid" and "1 arc-second n40w077 1 x 1 degree ArcGrid". You can also run the script without running the DEM sections, which all have "DEM" in their section header.
 
 All examples in this script run independently of one another after specifying directory and file information, and code options.
    - Run the lines of code through the section entitled "Make Region of Interest (ROI) buffer"

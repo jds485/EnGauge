@@ -15,8 +15,8 @@ dir_wq = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge\
 
 #DEM - specify as a vector of directories if there are multiple tiles to be mosaicked together.
 # The directory order has to match the file name order for f_DEM below.
-dir_DEM = c("C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\DEM\\USGS_NED_1_n40w077_ArcGrid\\grdn40w077_1",
-            'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\DEM\\USGS_NED_1_n40w078_ArcGrid\\grdn40w078_1')
+dir_DEM = c("C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge\\DataForExamples\\grdn40w077_1",
+            "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge\\DataForExamples\\grdn40w078_1")
 #Output directory for processed DEM. This directory must already exist.
 dir_DEM_out = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge\\DataForExamples"
 
