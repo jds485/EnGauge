@@ -219,11 +219,10 @@ Hypsometric curves for DEMs
 11. scatterHistCols.R - modified scatterHist() function from the psych package to accept colors, and provide density smoothing by color.
 
 ---
-### Other Example Files - In development, data not all available here:
+### Other Example Files:
 
-Example 1 is less in development than example 2. Both of these are based on earlier versions of the main script.
-1. Method1Example_GFBR.R - example employing only the Method 1 downloads to the Baltimore Ecosystem Study Long Term Ecological Research Site in Gwynns Falls and Baisman Run (GFBR)
-2. BES_GF_BR_SL.R - example of loading the processed data for further analysis, using site water quality data (as opposed to Water Quality Portal Data), downloading weather station data, among other tasks.
+1. Method1Example_GFBR.R - example employing only the Method 1 streamflow and water chemistry (TN and TP) approaches to the Baltimore Ecosystem Study Long Term Ecological Research Site in Gwynns Falls and Baisman Run (GFBR)
+2. BES_GF_BR_SL.R - In development, data are not all available here. This is based on an earlier version of the main script. Example of loading the processed data for further analysis, using site water quality data (as opposed to Water Quality Portal Data), downloading weather station data, among other tasks.
 
 ---
 ## Citation and Contact Information
