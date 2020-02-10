@@ -3,37 +3,52 @@
 
 #Set directory names----
 #Region of interest shapefile
-dir_ROI = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\BES-Watersheds-Land-Cover-Analysis"  
-#Color functions - from JDS github repo: Geothermal_ESDA
+dir_ROI = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge\\DataForExamples"  
+#ColorFunctions.R script directory - from JDS github repo: Geothermal_ESDA
 dir_ColFuns = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges"
-#EnGauge repository
+#EnGauge code repository directory
 dir_EnGauge = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge"
-#USGS streamflow gauges
-dir_sfgauges = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges"
+#Directory where USGS streamflow gauge data will be downloaded. This directory must already exist.
+dir_sfgauges = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge\\DataForExamples"
+#Directory where water quality gauge data will be downloaded. This directory must already exist.
+dir_wq = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge\\DataForExamples"
+
 #DEM - specify as a vector of directories if there are multiple tiles to be mosaicked together.
 # The directory order has to match the file name order for f_DEM below.
-# Fixme: can DEMs be downloaded from a server instead of downloading manually before using this script?
 dir_DEM = c("C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\DEM\\USGS_NED_1_n40w077_ArcGrid\\grdn40w077_1",
             'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\DEM\\USGS_NED_1_n40w078_ArcGrid\\grdn40w078_1')
-#Output for processed DEM
-dir_DEM_out = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\DEM\\'
-#Water quality gauges
-dir_wq = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges'
+#Output directory for processed DEM. This directory must already exist.
+dir_DEM_out = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge\\DataForExamples"
 
 #Set input filenames----
 #Region of interest shapefile name
 f_ROI = "BaismanGFMerge2"
+
 #DEM - all separate DEM tiles may be added to this as a vector (e.g. c("w001001.adf", "w001002.adf") )
 f_DEM = c("w001001.adf", "w001001.adf")
 
 #Set output filenames----
-#DEM - geotiff format is the default. You can change in the script below
-f_DEM_mosiac = "DEM_mosaic"
 #NWIS streamflow gauges in ROI
 f_NWIS_ROI_out = 'NWIS_ROI'
 #Streamflow gauge data processing name appendage
 # e.g. 0159384_p
 f_sf_processKey = '_p'
+#Name for the list of all streamflow gauge timeseries. YAML list type is used below.
+f_StreamStationList = 'SF.yaml'
+
+#Name for the list of all TN water quality site timeseries. YAML list type is used below.
+f_TNSiteList = 'TN.yaml'
+f_TNSiteList_daily = 'TN_d.yaml'
+f_TNSiteList_monthly = 'TN_m.yaml'
+f_TNSiteList_annual = 'TN_a.yaml'
+#Name for the list of all TP water quality site timeseries. YAML list type is used below.
+f_TPSiteList = 'TP.yaml'
+f_TPSiteList_daily = 'TP_d.yaml'
+f_TPSiteList_monthly = 'TP_m.yaml'
+f_TPSiteList_annual = 'TP_a.yaml'
+
+#DEM - GeoTiff format is the default. You can change in the script.
+f_DEM_mosiac = "DEM_mosaic"
 
 #Set project coordinate system----
 #This is the coordinate system that all data will be plotted and written in
@@ -41,7 +56,20 @@ f_sf_processKey = '_p'
 # EPSG codes from: https://spatialreference.org/ref/?page=2
 pCRS = '+init=epsg:26918'
 
-#Define a small buffer to use for the ROI, in map units
+#Set plot limits - set to NULL to ignore use----
+#Streamflow dates
+xlim_dates = c(as.Date("1950-01-01"), as.Date("2020-01-01"))
+#Water quality dates
+xlim_WQdates = c(as.Date("1980-01-01"), as.Date("2010-01-01"))
+#Streamflow y axis limits
+ylim_SF = c(0, 7000)
+#TN y-axis limits
+ylim_TN = c(0, 10)
+#TP y-axis limits
+ylim_TP = c(0, 0.5)
+
+#Define a small buffer to use for the ROI, in pCRS map units----
+#For streamflow and water quality
 ROIbuff = 50
 
 #Load libraries and functions----
@@ -81,7 +109,12 @@ source('formatMonthlyMatrix.R')
 source('matplotDates.R')
 source('aggregateTimeseries.R')
 
-#Fixme: Add streams to figures
+#Make Region of Interest (ROI) buffer----
+ROI = readOGR(dsn = dir_ROI, layer = f_ROI, stringsAsFactors = FALSE)
+ROI = spTransform(ROI, CRS(pCRS))
+
+#buffer
+ROI_buff = buffer(ROI, ROIbuff)
 
 #Streamflow----
 setwd(dir_sfgauges)
@@ -92,20 +125,23 @@ dir.create(path = wd_sf, showWarnings = FALSE)
 # Method 1: Get gauges using whatNWISsites()----
 AllStations_fn = whatNWISsites(statecode = "MD", parameterCd = '00060')
 AllStations_fn = readNWISsite(AllStations_fn$site_no)
-#Convert to spatial dataframe
+#  Make a spatial dataframe: Method 1----
 # NOTE: Your data may be all one coordinate system, and therefore not need to split into 2 datasets
 #       before joining into 1 dataset.
 # NOTE: your coordinate system may be different (epsg code)
 # Some of the data are NAD27 projection and others are NAD83 projection. Split the dataset to handle each
-#Fixme: function for splitting coordinate systems and returning one same-coordinate system file
-#       Would require being able to look up epsg codes.
+
+#vector of unique coordinate systems in station data
+StreamUniqueCoords = unique(AllStations_fn$coord_datum_cd)
+
+#Process to the pCRS coordinate system
 GaugesLocs_NAD27 = AllStations_fn[which(AllStations_fn$coord_datum_cd == 'NAD27'), ]
 coordinates(GaugesLocs_NAD27) = c('dec_long_va', 'dec_lat_va')
 proj4string(GaugesLocs_NAD27) = CRS('+init=epsg:4267')
 GaugesLocs_NAD83 = AllStations_fn[which(AllStations_fn$coord_datum_cd == 'NAD83'), ]
 coordinates(GaugesLocs_NAD83) = c('dec_long_va', 'dec_lat_va')
 proj4string(GaugesLocs_NAD83) = CRS('+init=epsg:4269')
-#Transform to NAD83 UTM Zone 18N
+#Transform to pCRS
 GaugeLocs_NAD27 = spTransform(GaugesLocs_NAD27, CRS(pCRS))
 GaugeLocs_NAD83 = spTransform(GaugesLocs_NAD83, CRS(pCRS))
 #Join to one dataset again
@@ -127,22 +163,7 @@ plot(GaugeLocs_fn$alt_va[which((is.na(GaugeLocs_fn$alt_va) == FALSE) & (is.na(Ga
 lines(c(-100,1100), c(-100,1100), col = 'red')
 dev.off()
 
-#Fixme: Correct the elevations for those gauges that are very different than the DEM
-# and have collection codes that suggest lower data quality
-# Some of the gauges were likely reported in m instead of in ft in the USGS database
-#Identify spatially those gauges that are more than X feet different
-#plot(GaugeLocs_fn)
-#plot(GaugeLocs_fn[which(abs(GaugeLocs_fn$ElevDEM/.3048 - GaugeLocs_fn$alt_va) >= 50),], col = 'red', add =T)
-#plot(GaugeLocs_fn[which(abs(GaugeLocs_fn$ElevDEM/.3048 - GaugeLocs_fn$alt_va) >= 100),], col = 'blue', add =T)
-#plot(GaugeLocs_fn[which(abs(GaugeLocs_fn$ElevDEM/.3048 - GaugeLocs_fn$alt_va) >= 200),], col = 'green', add =T)
-
 # Clip to ROI----
-ROI = readOGR(dsn = dir_ROI, layer = f_ROI, stringsAsFactors = FALSE)
-ROI = spTransform(ROI, CRS(pCRS))
-
-#buffer
-ROI_buff = buffer(ROI, ROIbuff)
-
 NWIS_ROI_fn = GaugeLocs_fn[ROI_buff,]
 
 # Plot locations of gauges----
@@ -158,7 +179,7 @@ plot(NWIS_ROI_fn, pch = 16, col = 'red', add = TRUE)
 axis(side = 1)
 axis(side = 2)
 box()
-north.arrow(xb = 360000, yb = 4349000, len = 700, col = 'black', lab = 'N')
+north.arrow(xb = 370000, yb = 4347000, len = 700, col = 'black', lab = 'N')
 legend('bottomleft', title = 'Streamflow Stations', legend = c('In ROI', 'Not in ROI'), pch = 16, col = c('red', 'black'))
 dev.off()
 
@@ -170,9 +191,6 @@ plot(NWIS_ROI_fn$alt_va, NWIS_ROI_fn$ElevDEM/.3048,
 lines(c(-100,1100), c(-100,1100), col = 'red')
 dev.off()
 
-#One of these gauge elevations is a lot lower than DEM. Likely that the gauge was reported in m in USGS database
-#identify(NWIS_ROI_fn$alt_va, NWIS_ROI_fn$ElevDEM/.3048)
-
 # Hypsometric plot for DEM in the ROI----
 #Clip DEM to the ROI and make a spatial grid dataframe
 DEM_ROI = as(mask(DEM, ROI), 'SpatialGridDataFrame')
@@ -180,17 +198,11 @@ DEM_ROI = as(mask(DEM, ROI), 'SpatialGridDataFrame')
 setwd(dir_DEM_out)
 png('HypsometricCurve.png', res = 300, units = 'in', width = 5, height = 5)
 par(mar =c(4,4,1,1))
-hypsometric(DEM_ROI, col = 'black', main = 'Gwynns Falls Hypsometric Curve')
+hypsometric(DEM_ROI, col = 'black', main = 'Gwynns Falls and Baisman Hypsometric Curve')
 dev.off()
-
-#Fixme: add gauges to this plot - requires modifying the function.
-# Can shade in the areas above each gauge or select outlet points as horizontal steps
-# Show with a map of where the elevation thresholds are located in the DEM
-#  This would require plotting the line as points that are colored by their elevation values.
 
 # Statistics to download for each streamflow gauge, if available----
 # All codes defined here: https://help.waterdata.usgs.gov/code/stat_cd_nm_query?stat_nm_cd=%25&fmt=html
-#Fixme: lookup codes from the website
 Stat.minFlow = "00002"
 Stat.avgFlow = "00003"
 Stat.maxFlow = "00001"
@@ -206,18 +218,15 @@ Stat.P95 = "01950"
 Stat.P99 = "01990"
 
 #Collect all of the Stat variables into a vector
-#Fixme: is there a way to collect all variables that begin Stat. and collect them into a new vector?
 Stats = c(Stat.minFlow, Stat.P1, Stat.P5, Stat.P25, Stat.P50, Stat.P75, Stat.P95, Stat.P99, Stat.maxFlow, Stat.avgFlow, Stat.varFlow, Stat.skewFlow)
 
 # Parameters to download for each gauge, if available----
 # All codes defined here: https://help.waterdata.usgs.gov/code/parameter_cd_query?fmt=rdb&inline=true&group_cd=%
-#Fixme: lookup codes from the website
 Par.cfsFlow = "00060"
 Par.Nflow = "00600"
 Par.Lat = "91110"
 Par.Long = "91111"
 
-#Fixme: is there a way to collect all variables that begin Par. and collect them into a new vector?
 Pars = c(Par.cfsFlow, Par.Nflow, Par.Long, Par.Lat)
 
 # Download the within-ROI stream gauge data in parallel----
@@ -229,8 +238,6 @@ cl = makeCluster(detectCores() - 1)
 registerDoParallel(cl)
 a = foreach(i = uniqueNums, .packages = 'dataRetrieval') %dopar% {
   # Read all of the Pars data for the provided station number
-  #Fixme: unable to test the use of Stats instead of only specifying statistic codes one by one.
-  # Need a site that has more than one of these statistic codes reported to test.
   stationData <- readNWISdv(siteNumbers = i, parameterCd = Pars, statCd = Stats)
   write.table(stationData, 
               paste0(getwd(), '/StreamStat_', i, ".txt"), 
@@ -303,14 +310,12 @@ dev.off()
 # Identify missing dates and fill them into the timeseries----
 # This also places the timeseries in chronological order
 Fills = FillMissingDates_par(Dataset = NWIS_ROI_fn, StationList = StreamStationList, Var = 'X_00060_00003', 
-                         Date = 'Date', gapType = 'd', site_no_D = 'site_no', site_no_SL = 'site_no', NoNAcols = 'agency_cd')
+                         Date = 'Date', gapType = 'd', site_no_D = 'site_no', site_no_SL = 'site_no', NoNAcols = 'agency_cd', NumCores = detectCores()-1)
 NWIS_ROI_fn = Fills$Dataset
 StreamStationList = Fills$StationList
 rm(Fills)
 
 # Plot the time series for each gauge, and the eCDF, colored by error code----
-#Fixme: add confidence intervals for flow duration curves (fdcu package)
-#Fixme: make axes have the same y-limits on the seasonal plots
 for (i in 1:length(StreamStationList)){
   #Timeseries:----
   #Assign colors to the error codes
@@ -322,13 +327,13 @@ for (i in 1:length(StreamStationList)){
   png(paste0('StreamflowTimeseries_', StreamStationList[[i]]$site_no[1],'.png'), res = 300, units = 'in', width = 6, height = 6)
   plot(x = StreamStationList[[i]]$Date, y = StreamStationList[[i]]$X_00060_00003, type = 'o', pch = 16, cex = 0.3,
        xlab = 'Year', ylab = 'Daily Mean Streamflow (cfs)', main = paste0('Station #', StreamStationList[[i]]$site_no[1]),
-       ylim = c(0, 7000), xlim = c(as.Date("1950-01-01"), as.Date("2020-01-01")))
+       ylim = ylim_SF, xlim = xlim_dates)
   #Add colors
   for (cc in 1:length(colCodes)){
     par(new = TRUE)
     plot(x = StreamStationList[[i]]$Date[which(StreamStationList[[i]]$X_00060_00003_cd == ErrCodes[cc])], y = StreamStationList[[i]]$X_00060_00003[which(StreamStationList[[i]]$X_00060_00003_cd == ErrCodes[cc])], pch = 16, cex = 0.3,
          col = colCodes[cc],
-         ylim = c(0, 7000), xlim = c(as.Date("1950-01-01"), as.Date("2020-01-01")), axes = FALSE, xlab = '', ylab = '')
+         ylim = c(0, 7000), xlim = xlim_dates, axes = FALSE, xlab = '', ylab = '')
   }
   legend('topleft', legend = ErrCodes[codes], col = colCodes[codes], pch = 16)
   dev.off()
@@ -375,13 +380,13 @@ for (i in 1:length(StreamStationList)){
   #Timeseries
   plot(x = StreamStationList[[i]]$Date, y = StreamStationList[[i]]$X_00060_00003, type = 'o', pch = 16, cex = 0.3,
        xlab = 'Year', ylab = 'Daily Mean Streamflow (cfs)', main = paste0('Station #', StreamStationList[[i]]$site_no[1]),
-       ylim = c(min(StreamStationList[[i]]$X_00060_00003, na.rm = TRUE), max(StreamStationList[[i]]$X_00060_00003, na.rm = TRUE)), xlim = c(as.Date("1950-01-01"), as.Date("2020-01-01")))
+       ylim = c(min(StreamStationList[[i]]$X_00060_00003, na.rm = TRUE), max(StreamStationList[[i]]$X_00060_00003, na.rm = TRUE)), xlim = xlim_dates)
   #Add colors
   for (cc in 1:length(colCodes)){
     par(new = TRUE)
     plot(x = StreamStationList[[i]]$Date[which(StreamStationList[[i]]$X_00060_00003_cd == ErrCodes[cc])], y = StreamStationList[[i]]$X_00060_00003[which(StreamStationList[[i]]$X_00060_00003_cd == ErrCodes[cc])], pch = 16, cex = 0.3,
          col = colCodes[cc], axes = FALSE, xlab = '', ylab = '',
-         ylim = c(min(StreamStationList[[i]]$X_00060_00003, na.rm = TRUE), max(StreamStationList[[i]]$X_00060_00003, na.rm = TRUE)), xlim = c(as.Date("1950-01-01"), as.Date("2020-01-01")))
+         ylim = c(min(StreamStationList[[i]]$X_00060_00003, na.rm = TRUE), max(StreamStationList[[i]]$X_00060_00003, na.rm = TRUE)), xlim = xlim_dates)
   }
   legend('topleft', legend = ErrCodes[codes], col = colCodes[codes], pch = 16)
   dev.off()
@@ -414,23 +419,16 @@ for (i in 1:length(StreamStationList)){
   dev.off()
   
   #Seasonal flows
-  png(paste0('StreamflowEDA_Seasonal_', StreamStationList[[i]]$site_no[1],'.png'), res = 300, units = 'in', width = 10, height = 10)
-  hydroplot(dts, FUN = mean, col = 'black', var.unit = 'mean cfs', pfreq = 'seasonal', ylab = 'Mean Streamflow (cfs)')
-  dev.off()
-  
-  #Fixme: annual timeseries trace plots (overlay of annual hydrographs / shading of 10-25-75-90, plot median sf for water year)
-  
-  #Fixme: quantitative summary tables like: seasonalfunction(dts, FUN = mean)
-  # hydropairs for correlation plot
-  
+  if ((as.numeric((as.Date(max(StreamStationList[[i]]$Date)) - as.Date(min(StreamStationList[[i]]$Date)))) >= 366) 
+      & (length(StreamStationList[[i]]$X_00060_00003) >= 366)){
+    png(paste0('StreamflowEDA_Seasonal_', StreamStationList[[i]]$site_no[1],'.png'), res = 300, units = 'in', width = 10, height = 10)
+    hydroplot(dts, FUN = mean, col = 'black', var.unit = 'mean cfs', pfreq = 'seasonal', ylab = 'Mean Streamflow (cfs)')
+    dev.off()
+  }
 }
 rm(i, cc, colCodes, codes, mts, dts, M, at.y, lab.y)
 
 # Outlier detection----
-#Fixme: check for high and low flow outliers in each record, and compare spatially to other gauges on those dates
-#Fixme: add temporal outlier detection methods to account for correlation at many lag distances (spectral methods?)
-#Fixme: add spatiotemporal outlier detection methods
-
 for (i in 1:length(StreamStationList)){
   #Hacky spatiotemporal outlier detection method
   #select all values in the 99th percentile or above
@@ -679,10 +677,6 @@ for (i in 1:length(StreamStationList)){
 }
 rm(i, j, Inds, IndStart, highs, highsj, qhighs, pstations, ahighs, bhighs, aInds, bInds, cols, aqhighs, bqhighs)
 
-#Fixme: add high and low flow outlier analysis
-
-#Fixme: Missing data fill in with numerical value estimates using prediction in ungauged basins methods for large gaps
-
 # Make a map of gauge locations colored by their record lengths, corrected for the total amount of missing data----
 NWIS_ROI_fn$RecordLength = NWIS_ROI_fn$RecordLengthMinusGaps = NA
 for (i in 1:length(StreamStationList)){
@@ -722,12 +716,10 @@ for (i in names(StreamStationList)){
               sep = "\t", row.names = FALSE)
 }
 rm(i)
-list.save(x = StreamStationList, file = 'SF.yaml', type = "YAML")
+list.save(x = StreamStationList, file = f_StreamStationList, type = "YAML")
 
 #Water Quality----
 setwd(dir_wq)
-#Fixme: Should have an option to save timeseries as dataframes that have variables as columns and time as rows.
-#  This is challenging because the column names would have to be changed automatically in script to something meaningful.
 # Method 1: Read water quality station data using the USGS function----
 #  Find sites that have any N and P water quality data in a state within the ROI
 #Phosphorus
@@ -787,6 +779,10 @@ rm(GaugeLocs_NAD27, GaugeLocs_NAD83, GaugesLocs_NAD27, GaugesLocs_NAD83, GaugeLo
 #Clip to ROI + some small buffer in m
 WQstations_ROI_N = GaugeLocs_WQN[ROI_buff,]
 WQstations_ROI_P = GaugeLocs_WQP[ROI_buff,]
+
+#Fix the dataframe from tibble
+WQstations_ROI_N@data = as.data.frame(WQstations_ROI_N@data)
+WQstations_ROI_P@data = as.data.frame(WQstations_ROI_P@data)
 
 # Plot TN and TP sampling locations on a map----
 png('TNTPsites.png', res = 300, units = 'in', width = 6, height = 6)
@@ -865,9 +861,6 @@ NitroStationList = makeWQStationList(pattern = 'Nitrogen_', wd = wd_N, Sites = W
 # and write separate text files for each variable
 extractWQdata(NitroStationList, fName = "Nitrogen")
 
-#Fixme: should have a function for users to specify for which of the extracted variables they want to have detailed plots.
-# Template is processing of nitrogen and phosphorus data. Phosphorus has detection limits components.
-
 #   Process Total Nitrogen Data----
 #List of all Total Nitrogen gauge datasets
 TN = selectWQDataType(wd = wd_N, charName = '_cnNitrogen', resName = 'Total')
@@ -900,7 +893,7 @@ plot(WQstations_ROI_N[which(!is.na(WQstations_ROI_N$Neg) & !is.na(WQstations_ROI
 axis(side = 1)
 axis(side = 2)
 box()
-north.arrow(xb = 365000, yb = 4349000, len = 700, col = 'black', lab = 'N')
+north.arrow(xb = 367000, yb = 4347000, len = 700, col = 'black', lab = 'N')
 legend('topright', title = 'Streamflow Stations', legend = c('Zeros in Record', 'Negatives in Record', 'Both', 'Neither'), pch = 16, col = c('red', 'blue', 'purple', 'black'), bty = 'n')
 dev.off()
 
@@ -934,14 +927,13 @@ TN_a = TN_a2$StationList
 rm(TN_a2)
 
 #   Plot TN timeseries----
-#Fixme: allow for plotting instantaneous time using POSIX format for date and time. Currently plots all by date, instead of an average by day.
 for (i in 1:length(TN)){
   png(paste0('TN_Timeseries_', TN[[i]]$MonitoringLocationIdentifier[1],'.png'), res = 300, units = 'in', width = 6, height = 6)
   plot(y = TN[[i]]$ResultMeasureValue, x = as.Date(TN[[i]]$SortDate), type = 'o', pch = 16, cex = 0.3,
        xlab = 'Year', 
        ylab = paste0(TN[[i]]$ResultSampleFractionText[1], " ", TN[[i]]$CharacteristicName[1], " (", TN[[i]]$ResultMeasure.MeasureUnitCode[1], ")"), 
        main = paste0('Station #', TN[[i]]$MonitoringLocationIdentifier[1]),
-       ylim = c(0, 10), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")))
+       ylim = ylim_TN, xlim = xlim_WQdates)
   
   #Check for and add detection limits
   dl = unique(TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue)
@@ -954,14 +946,14 @@ for (i in 1:length(TN)){
     plot(y = TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Low", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TN[[i]]$SortDate[grep(pattern = "Low", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = ylim_TP, xlim = xlim_WQdates, axes = FALSE,
          col = 'blue')
     #Upper detection limit
     par(new = TRUE)
     plot(y = TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Up", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TN[[i]]$SortDate[grep(pattern = "Up", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = ylim_TP, xlim = xlim_WQdates, axes = FALSE,
          col = 'red')
     
     legend('topright', title = 'Detection Limits', legend = c('Upper', 'Lower'), col = c('red', 'blue'), pch = 16)
@@ -972,7 +964,7 @@ for (i in 1:length(TN)){
     plot(y = rep(0, length(as.Date(TN[[i]]$SortDate[which(is.na(TN[[i]]$ResultMeasureValue) & is.na(TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]))), x = as.Date(TN[[i]]$SortDate[which(is.na(TN[[i]]$ResultMeasureValue) & is.na(TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]), pch = 4, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = ylim_TP, xlim = xlim_WQdates, axes = FALSE,
          col = 'grey')
     legend('right', legend = 'NA values', col = 'grey', pch = 4)
   }
@@ -986,7 +978,7 @@ for (i in 1:length(TN)){
        xlab = 'Year', 
        ylab = paste0(TN[[i]]$ResultSampleFractionText[1], " ", TN[[i]]$CharacteristicName[1], " (", TN[[i]]$ResultMeasure.MeasureUnitCode[1], ")"), 
        main = paste0('Station #', TN[[i]]$MonitoringLocationIdentifier[1]),
-       ylim = c(0, 10), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")))
+       ylim = ylim_TN, xlim = xlim_WQdates)
   if(length(dl) != 0){
     #Add detection limits
     #Lower detection limit
@@ -994,14 +986,14 @@ for (i in 1:length(TN)){
     plot(y = TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Low", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TN[[i]]$SortDate[grep(pattern = "Low", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = ylim_TP, xlim = xlim_WQdates, axes = FALSE,
          col = 'blue')
     #Upper detection limit
     par(new = TRUE)
     plot(y = TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Up", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TN[[i]]$SortDate[grep(pattern = "Up", x = TN[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = ylim_TP, xlim = xlim_WQdates, axes = FALSE,
          col = 'red')
     
     legend('topright', title = 'Detection Limits', legend = c('Upper', 'Lower'), col = c('red', 'blue'), pch = 16)
@@ -1012,7 +1004,7 @@ for (i in 1:length(TN)){
     plot(y = rep(0, length(as.Date(TN[[i]]$SortDate[which(is.na(TN[[i]]$ResultMeasureValue) & is.na(TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]))), x = as.Date(TN[[i]]$SortDate[which(is.na(TN[[i]]$ResultMeasureValue) & is.na(TN[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]), pch = 4, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = ylim_TP, xlim = xlim_WQdates, axes = FALSE,
          col = 'grey')
     legend('right', legend = 'NA values', col = 'grey', pch = 4)
   }
@@ -1053,15 +1045,12 @@ for (i in 1:length(TN)){
     dev.off()
     
     #Seasonal flows
-    #Fixme: check that every season is represented before using this.
     png(paste0('TN_EDA_Seasonal_', TN[[i]]$MonitoringLocationIdentifier[1],'.png'), res = 300, units = 'in', width = 10, height = 10)
     hydroplot(dts, FUN = mean, col = 'black', var.unit = 'mean mg/L as N', pfreq = 'seasonal', ylab = 'Mean Nitrogen (mg/L)')
     dev.off()
   }
 }
 rm(i, dts, mts, M, dl)
-
-#Fixme: Search for flow-normalized outliers
 
 #   Plot histograms of data with detection limits----
 for (i in 1:length(TN)){
@@ -1071,8 +1060,6 @@ for (i in 1:length(TN)){
   dev.off()
 }
 rm(i)
-
-#Fixme: note any changes in rounding that occur from measurement device precision (USGS recommended)
 
 # Process Phosphorus Data----
 setwd(wd_P)
@@ -1156,7 +1143,7 @@ for (i in 1:length(TP)){
        xlab = 'Year', 
        ylab = paste0(TP[[i]]$ResultSampleFractionText[1], " ", TP[[i]]$CharacteristicName[1], " (", TP[[i]]$ResultMeasure.MeasureUnitCode[1], ")"), 
        main = paste0('Station #', TP[[i]]$MonitoringLocationIdentifier[1]),
-       ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")))
+       ylim = ylim_TP, xlim = xlim_WQdates)
   
   #Check for and add detection limits
   dl = unique(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue)
@@ -1169,14 +1156,14 @@ for (i in 1:length(TP)){
     plot(y = TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Low", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TP[[i]]$SortDate[grep(pattern = "Low", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = ylim_TP, xlim = xlim_WQdates, axes = FALSE,
          col = 'blue')
     #Upper detection limit
     par(new = TRUE)
     plot(y = TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Up", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TP[[i]]$SortDate[grep(pattern = "Up", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = ylim_TP, xlim = xlim_WQdates, axes = FALSE,
          col = 'red')
     
     legend('topright', title = 'Detection Limits', legend = c('Upper', 'Lower'), col = c('red', 'blue'), pch = 16)
@@ -1187,7 +1174,7 @@ for (i in 1:length(TP)){
     plot(y = rep(0, length(as.Date(TP[[i]]$SortDate[which(is.na(TP[[i]]$ResultMeasureValue) & is.na(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]))), x = as.Date(TP[[i]]$SortDate[which(is.na(TP[[i]]$ResultMeasureValue) & is.na(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]), pch = 4, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = ylim_TP, xlim = xlim_WQdates, axes = FALSE,
          col = 'grey')
     legend('right', legend = 'NA values', col = 'grey', pch = 4)
   }
@@ -1201,7 +1188,7 @@ for (i in 1:length(TP)){
        xlab = 'Year', 
        ylab = paste0(TP[[i]]$ResultSampleFractionText[1], " ", TP[[i]]$CharacteristicName[1], " (", TP[[i]]$ResultMeasure.MeasureUnitCode[1], ")"), 
        main = paste0('Station #', TP[[i]]$MonitoringLocationIdentifier[1]),
-       ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")))
+       ylim = ylim_TP, xlim = xlim_WQdates)
   
   #Check for and add detection limits
   dl = unique(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue)
@@ -1214,14 +1201,14 @@ for (i in 1:length(TP)){
     plot(y = TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Low", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TP[[i]]$SortDate[grep(pattern = "Low", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = ylim_TP, xlim = xlim_WQdates, axes = FALSE,
          col = 'blue')
     #Upper detection limit
     par(new = TRUE)
     plot(y = TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue[grep(pattern = "Up", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)], x = as.Date(TP[[i]]$SortDate[grep(pattern = "Up", x = TP[[i]]$DetectionQuantitationLimitTypeName, ignore.case = TRUE)]), pch = 16, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = ylim_TP, xlim = xlim_WQdates, axes = FALSE,
          col = 'red')
     
     legend('topright', title = 'Detection Limits', legend = c('Upper', 'Lower'), col = c('red', 'blue'), pch = 16)
@@ -1232,7 +1219,7 @@ for (i in 1:length(TP)){
     plot(y = rep(0, length(as.Date(TP[[i]]$SortDate[which(is.na(TP[[i]]$ResultMeasureValue) & is.na(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]))), x = as.Date(TP[[i]]$SortDate[which(is.na(TP[[i]]$ResultMeasureValue) & is.na(TP[[i]]$DetectionQuantitationLimitMeasure.MeasureValue))]), pch = 4, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1980-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = ylim_TP, xlim = xlim_WQdates, axes = FALSE,
          col = 'grey')
     legend('right', legend = 'NA values', col = 'grey', pch = 4)
   }
@@ -1272,15 +1259,12 @@ for (i in 1:length(TP)){
     dev.off()
     
     #Seasonal flows
-    #Fixme: check that every season is represented before using this.
     png(paste0('TP_EDA_Seasonal_', TP[[i]]$MonitoringLocationIdentifier[1],'.png'), res = 300, units = 'in', width = 10, height = 10)
     hydroplot(dts, FUN = mean, col = 'black', var.unit = 'mean ug/L as P', pfreq = 'seasonal', ylab = 'Mean Phosphorus (ug/L)')
     dev.off()
   }
 }
 rm(i, dts, mts, M, dl)
-
-#Fixme: Search for flow-normalized outliers
 
 #   Plot histograms of data with detection limits----
 for (i in 1:length(TP)){
@@ -1294,13 +1278,13 @@ rm(i)
 # Write water quality data to files----
 setwd(dir = wd_N)
 writeOGR(WQstations_ROI_N, dsn = getwd(), layer = 'NitrogenSites', driver = "ESRI Shapefile")
-list.save(x = TN, file = 'TN.yaml', type = "YAML")
-list.save(x = TN_d, file = 'TN_d.yaml', type = "YAML")
-list.save(x = TN_m, file = 'TN_m.yaml', type = "YAML")
-list.save(x = TN_a, file = 'TN_a.yaml', type = "YAML")
+list.save(x = TN, file = f_TNSiteList, type = "YAML")
+list.save(x = TN_d, file = f_TNSiteList_daily, type = "YAML")
+list.save(x = TN_m, file = f_TNSiteList_monthly, type = "YAML")
+list.save(x = TN_a, file = f_TNSiteList_annual, type = "YAML")
 setwd(dir = wd_P)
 writeOGR(WQstations_ROI_P, dsn = getwd(), layer = 'PhosphorusSites', driver = "ESRI Shapefile")
-list.save(x = TP, file = 'TP.yaml', type = "YAML")
-list.save(x = TP_d, file = 'TP_d.yaml', type = "YAML")
-list.save(x = TP_m, file = 'TP_m.yaml', type = "YAML")
-list.save(x = TP_a, file = 'TP_a.yaml', type = "YAML")
+list.save(x = TP, file = f_TPSiteList, type = "YAML")
+list.save(x = TP_d, file = f_TPSiteList_daily, type = "YAML")
+list.save(x = TP_m, file = f_TPSiteList_monthly, type = "YAML")
+list.save(x = TP_a, file = f_TPSiteList_annual, type = "YAML")
