@@ -7,31 +7,41 @@
 dir_EnGauge = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge"
 #Color functions - from JDS github repo: Geothermal_ESDA
 dir_ColFuns = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges"
+
+#Repositories that should match those used for or created by EnGauge 
 #Region of interest shapefile
-dir_ROI = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\BES-Watersheds-Land-Cover-Analysis"  
+dir_ROI = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge\\DataForExamples\\"
+#dir_ROI = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\BES-Watersheds-Land-Cover-Analysis"  
 #Watersheds shapefiles
-dir_Sheds = "C:\\Users\\js4yd\\Documents\\DEMtest"
-#Color functions - from JDS github repo: Geothermal_ESDA
-dir_ColFuns = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges"
+dir_Sheds = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge\\DataForExamples\\BES_GF_BR_SL_Data"
+#dir_Sheds = "C:\\Users\\js4yd\\Documents\\DEMtest"
 #DEM
-dir_DEM_out = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\DEM\\'
+dir_DEM_out = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge\\DataForExamples"
+#dir_DEM_out = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\DEM\\'
 #Streamflow gauges
-wd_sf = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges\\Streamflow"
+wd_sf = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge\\DataForExamples\\Streamflow"
+#wd_sf = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges\\Streamflow"
 #Nitrogen
-wd_N = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges\\Nitrogen'
+wd_N = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge\\DataForExamples\\Nitrogen"
+#wd_N = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges\\Nitrogen'
 #Phosphorus
-wd_P = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges\\Phosphorus'
-#Water Chemistry datasets
+wd_P = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge\\DataForExamples\\Phosphorus"
+#wd_P = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges\\Phosphorus'
+
+#Water Chemistry from non-EnGauge Datasets
 dir_WChem = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\WaterChemistry"
 #Synoptic Water Chemistry
 dir_SynWChem_Kenworth = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\WaterChemistry\\BARN_Synoptic\\WaterChemical_Kenworth_01-02"
 dir_SynWChem_Smith = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\WaterChemistry\\BARN_Synoptic\\WaterChemical_Smith_06-07"
-#WRTDS Output
+
+#WRTDS Output Directory
 wd_WRTDS_PondBranch = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs\\POBR\\"
+
 #Precipitation
 dir_precip = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\Precipitation"
 dir_Nexrad = paste0(dir_precip, '/', "BES_Nexrad")
-#Streams
+
+#Streams Shapefile
 dir_streams = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\NHD_H_Maryland_State_Shape\\Shape"
 
 #Set input filenames----
@@ -112,6 +122,9 @@ f_NexradDataList = 'NexradYearList.yaml'
 
 # Temperature
 
+#Fixme: provide names of WRTDS datasets
+
+
 #Set project coordinate system----
 #This is the coordinate system that all data will be plotted and written in
 # It is not the coordinate system of your data (although it could be)
@@ -156,6 +169,7 @@ source('scatterHistCols.R')
 setwd(dir_ColFuns)
 source('ColorFunctions.R')
 #Load modified WRTDS functions and the interpolation tables for regression parameters
+#Fixme: move this file to the EnGauge repository. It belongs there or in the original EGRET repository.
 setwd('C:\\Users\\js4yd\\OneDrive - University of Virginia\\RHESSys_ParameterSA')
 source('WRTDS_modifiedFunctions.R')
 
@@ -297,6 +311,7 @@ BES_WQ_Sites_TP = checkZerosNegs(StationList = BES_WQ_Sites, Var = 'TP..ugP.L.',
 #Real detection limits must be discovered for each site by plotting the data
 #Check for detection limits in nitrate, phosphorus, TN, TP. Detection limits in NO3 and PO4 would result in the TN and TP values being censored.
 
+#   TN----
 #Looking that the timeseries and histograms for each gauge, it is possible to see likely detection limits.
 #Only interested in correcting sites that have a large proportion of the data as possibly censored. 
 #Not able to tell if there are limits for small amounts of possibly censored data.
@@ -306,7 +321,7 @@ hist(log10(BES_WQ_Sites_TN[[i]]$NO3..mg.N.L.), breaks = 10000)
 plot(BES_WQ_Sites_TN[[i]]$SortDateTime, BES_WQ_Sites_TN[[i]]$NO3..mg.N.L., log = 'y')
 hist(log10(BES_WQ_Sites_TN[[i]]$TN..mg.N.L.), breaks = 10000)
 plot(BES_WQ_Sites_TN[[i]]$SortDateTime, BES_WQ_Sites_TN[[i]]$TN..mg.N.L., log = 'y', ylim = c(0.01,5), xlim = c(as.POSIXct('2000-01-01'), as.POSIXct('2020-01-01')))
-
+rm(i)
 #NoTNDL = c(1, 2, 3, 4, 6, 7, 8)
 #TNDL = c(5)
 
@@ -321,7 +336,9 @@ i = 5
 plot(BES_WQ_Sites_TN[[i]]$SortDateTime, BES_WQ_Sites_TN[[i]]$TN..mg.N.L., log = 'y', ylim = c(0.01,5), xlim = c(as.POSIXct('2000-01-01'), as.POSIXct('2020-01-01')))
 par(new = T)
 plot(BES_WQ_Sites_TN[[i]]$SortDateTime[is.na(BES_WQ_Sites_TN[[i]]$DetectionLimit) == FALSE], BES_WQ_Sites_TN[[i]]$TN..mg.N.L.[is.na(BES_WQ_Sites_TN[[i]]$DetectionLimit) == FALSE], log = 'y', ylim = c(0.01,5), xlim = c(as.POSIXct('2000-01-01'), as.POSIXct('2020-01-01')), col = 'red')
+rm(i)
 
+#   TP - quite variable over time----
 # i = 7
 # hist(log10(BES_WQ_Sites_TP[[i]]$PO4..ug.P.L.), breaks = 10000)
 # plot(BES_WQ_Sites_TP[[i]]$SortDateTime, BES_WQ_Sites_TP[[i]]$PO4..ug.P.L., log = 'y')
@@ -331,7 +348,6 @@ plot(BES_WQ_Sites_TN[[i]]$SortDateTime[is.na(BES_WQ_Sites_TN[[i]]$DetectionLimit
 #Looks like detection limits changed to significantly higher values in the late 00's, early 10's
 #Then, after 2015 all values are notably higher than previous set - calibration issues??
 #DL = c(1, 2, 3, 4, 5, 6, 7, 8)
-
 
 #  Coordinates of BES sites----
 for (i in 1:length(BES_WQ_Sites)){
@@ -359,6 +375,7 @@ BES_WQ_Sites_locs_TP = addZerosToSpatialDataset(StationList = BES_WQ_Sites_TP, S
 BES_WQ_Sites_locs_TP = addNegsToSpatialDataset(StationList = BES_WQ_Sites_TP, SpatialDataset = BES_WQ_Sites_locs_TP, site_D = 'Site', site_SL = 'Site')
 
 #   Map the station locations and plot them on a map showing BES data and WQP data----
+setwd(dir_WChem)
 png('TNTP_BES+WQPsites.png', res = 300, units = 'in', width = 6, height = 6)
 plot(ROI, lwd = 2)
 plot(MDstreams, add = TRUE, col = 'skyblue')
@@ -376,13 +393,13 @@ plot(BES_WQ_Sites_locs, add = TRUE, pch = 4, col = 'purple')
 axis(side = 1)
 axis(side = 2)
 box()
-north.arrow(xb = 365000, yb = 4348000, len = 700, col = 'black', lab = 'N')
+north.arrow(xb = 364000, yb = 4348000, len = 700, col = 'black', lab = 'N')
 legend('bottomleft', title = 'Water Quality Types', legend = c('T Nitrogen Only', 'T Phosphorus Only', 'Both'), col = c('red', 'blue', 'purple'), pch = c(16,16,16))
 legend(x = 334000, y = 4358000, title = 'Water Quality Sites', legend = c('At Stream Gauge', 'Other Location'), col = 'black', pch = c(4, 16))
 dev.off()
 
 #  Plot time series for each of the sites----
-wd_BESN = paste0(dir_WChem, '/Nitrogen')
+wd_BESN = paste0(dir_WChem, '/Nitrogen_BES')
 dir.create(path = wd_BESN, showWarnings = FALSE)
 setwd(wd_BESN)
 #Nitrogen
@@ -401,7 +418,7 @@ for (i in 1:length(BES_WQ_Sites_TN)){
 rm(i)
 
 #Phosphorus
-wd_BESP = paste0(dir_WChem, '/Phosphorus')
+wd_BESP = paste0(dir_WChem, '/Phosphorus_BES')
 dir.create(path = wd_BESP, showWarnings = FALSE)
 setwd(wd_BESP)
 for (i in 1:length(BES_WQ_Sites_TP)){
@@ -423,8 +440,8 @@ setwd(dir_WChem)
 #  Fill in missing dates----
 BES_WQ_Sites_TN_Gauged = BES_WQ_Sites_TN[!is.na(BES_WQ_GaugeNums)]
 BES_WQ_Sites_TP_Gauged = BES_WQ_Sites_TP[!is.na(BES_WQ_GaugeNums)]
-BES_TN = FillMissingDates_par(Dataset = BES_WQ_Sites_locs_TN, StationList = BES_WQ_Sites_TN_Gauged, Var = 'TN..mg.N.L.', Date = 'SortDate', gapType = 'd', site_no_D = 'Site', site_no_SL = 'Site', NoNAcols = c('USGSgauge', 'site_no'))
-BES_TP = FillMissingDates_par(Dataset = BES_WQ_Sites_locs_TP, StationList = BES_WQ_Sites_TP_Gauged, Var = 'TP..ugP.L.', Date = 'SortDate', gapType = 'd', site_no_D = 'Site', site_no_SL = 'Site', NoNAcols = c('USGSgauge', 'site_no'))
+BES_TN = FillMissingDates_par(Dataset = BES_WQ_Sites_locs_TN, StationList = BES_WQ_Sites_TN_Gauged, Var = 'TN..mg.N.L.', Date = 'SortDate', gapType = 'd', site_no_D = 'Site', site_no_SL = 'Site', NoNAcols = c('USGSgauge', 'site_no'), NumCores = detectCores()-1)
+BES_TP = FillMissingDates_par(Dataset = BES_WQ_Sites_locs_TP, StationList = BES_WQ_Sites_TP_Gauged, Var = 'TP..ugP.L.', Date = 'SortDate', gapType = 'd', site_no_D = 'Site', site_no_SL = 'Site', NoNAcols = c('USGSgauge', 'site_no'), NumCores = detectCores()-1)
 #Extract data from the function return
 BES_WQ_Sites_locs_TN = BES_TN$Dataset
 BES_WQ_Sites_locs_TP = BES_TP$Dataset
@@ -508,6 +525,9 @@ north.arrow(xb = 370000, yb = 4346000, len = 700, col = 'black', lab = 'N')
 legend('right', title = 'Phosphorus Station \n Record Lengths \n (years)', legend = seq(scaleRange[1], scaleRange[2]-scaleBy, scaleBy), pch = 16, col = colFun(seq(scaleRange[1], scaleRange[2]-scaleBy, scaleBy)), bty = 'n')
 dev.off()
 
+rm(scaleRange, scaleBy, Pal)
+
+#colorbar information
 scaleRange = c(0,10)
 scaleBy = 1
 Pal = rev(rainbow((scaleRange[2] - scaleRange[1])/scaleBy))
@@ -540,6 +560,8 @@ north.arrow(xb = 370000, yb = 4346000, len = 700, col = 'black', lab = 'N')
 legend('right', title = 'Phosphorus Station \n Record Lengths \n (years)', legend = seq(scaleRange[1], scaleRange[2]-scaleBy, scaleBy), pch = 16, col = colFun(seq(scaleRange[1], scaleRange[2]-scaleBy, scaleBy)), bty = 'n')
 dev.off()
 
+rm(scaleRange, scaleBy, Pal)
+
 # Aggregate into average concentrations, if desired---- 
 setwd(dir_WChem)
 BES_TN_agg = aggregateTimesteps(StationList = BES_TN, aggVal = c('d', 'm', 'a'), aggVar = 'TN..mg.N.L.', date = 'SortDate', site = 'Site', fun = 'mean')
@@ -555,14 +577,14 @@ rm(BES_TN_agg, BES_TP_agg)
 #  Handle missing data in the daily, monthly, and annual aggregated timeseries----
 BES_TN_d2 = FillMissingDates_par(Dataset = BES_WQ_Sites_locs_TN, StationList = BES_TN_d, Var = 'TN..mg.N.L.', 
                          Date = 'SortDate', gapType = 'd', site_no_D = 'Site', 
-                         site_no_SL = 'Site', NoNAcols = c('USGSgauge', 'site_no'))
+                         site_no_SL = 'Site', NoNAcols = c('USGSgauge', 'site_no'), NumCores = detectCores()-1)
 BES_WQ_Sites_locs_TN = BES_TN_d2$Dataset
 BES_TN_d = BES_TN_d2$StationList
 rm(BES_TN_d2)
 
 BES_TN_m2 = FillMissingDates_par(Dataset = BES_WQ_Sites_locs_TN, StationList = BES_TN_m, Var = 'TN..mg.N.L.', 
                              Date = 'YrMthDy', gapType = 'm', site_no_D = 'Site', 
-                             site_no_SL = 'Site', NoNAcols = c('USGSgauge', 'site_no'))
+                             site_no_SL = 'Site', NoNAcols = c('USGSgauge', 'site_no'), NumCores = detectCores()-1)
 BES_WQ_Sites_locs_TN = BES_TN_m2$Dataset
 BES_TN_m = BES_TN_m2$StationList
 rm(BES_TN_m2)
@@ -577,14 +599,14 @@ rm(BES_TN_a2)
 #Phosphorus
 BES_TP_d2 = FillMissingDates_par(Dataset = BES_WQ_Sites_locs_TP, StationList = BES_TP_d, Var = 'TP..ugP.L.', 
                              Date = 'SortDate', gapType = 'd', site_no_D = 'Site', 
-                             site_no_SL = 'Site', NoNAcols = c('USGSgauge', 'site_no'))
+                             site_no_SL = 'Site', NoNAcols = c('USGSgauge', 'site_no'), NumCores = detectCores()-1)
 BES_WQ_Sites_locs_TP = BES_TP_d2$Dataset
 BES_TP_d = BES_TP_d2$StationList
 rm(BES_TP_d2)
 
 BES_TP_m2 = FillMissingDates_par(Dataset = BES_WQ_Sites_locs_TP, StationList = BES_TP_m, Var = 'TP..ugP.L.', 
                              Date = 'YrMthDy', gapType = 'm', site_no_D = 'Site', 
-                             site_no_SL = 'Site', NoNAcols = c('USGSgauge', 'site_no'))
+                             site_no_SL = 'Site', NoNAcols = c('USGSgauge', 'site_no'), NumCores = detectCores()-1)
 BES_WQ_Sites_locs_TP = BES_TP_m2$Dataset
 BES_TP_m = BES_TP_m2$StationList
 rm(BES_TP_m2)
@@ -1008,26 +1030,7 @@ for (i in 1:length(BES_TP)){
 }
 rm(i)
 
-#Fixme: Search for flow-normalized outliers----
-# #Select only the non-NA values
-# t = BES_TN_d[[i]][which((is.na(BES_TN_d[[i]]$Flow) == FALSE) & (is.na(BES_TN_d[[i]]$TN..mg.N.L.) == FALSE)),c('Flow', 'TN..mg.N.L.')]
-# mu = apply(X = t, MARGIN = 2, FUN = mean)
-# #Compute the covariance matrix for only the non-NA values
-# s = cov(t)
-# mahalanobis(x = t, center = FALSE, cov = s)
-
-#Fixme: Check correlation between N, P at all sites to see if it's worthwhile to use both for calibration of model----
-# FOR NOW, NOT NEEDED BECAUSE RHESSYS DOESN'T PROVIDE P OUTPUT!
-# Color by time of year
-# for (i in 1:length(BES_TN_d)){
-#   #Gather all of the dates that match in both timeseries
-#   
-# }
-# plot(BES_TN_d$POBR$TN..mg.N.L.[362:nrow(BES_TN_d$POBR)][which((is.na(BES_TN_d$POBR$TN..mg.N.L.[362:nrow(BES_TN_d$POBR)]) == FALSE) & (is.na(BES_TP_d$POBR$TP..ugP.L.) == FALSE))], BES_TP_d$POBR$TP..ugP.L.[which((is.na(BES_TN_d$POBR$TN..mg.N.L.[362:nrow(BES_TN_d$POBR)]) == FALSE) & (is.na(BES_TP_d$POBR$TP..ugP.L.) == FALSE))], log = 'xy')
-# plot(BES_TN_d$BARN$TN..mg.N.L.[which((is.na(BES_TN_d$BARN$TN..mg.N.L.) == FALSE) & (is.na(BES_TP_d$BARN$TP..ugP.L.) == FALSE))], BES_TP_d$BARN$TP..ugP.L.[which((is.na(BES_TN_d$BARN$TN..mg.N.L.) == FALSE) & (is.na(BES_TP_d$BARN$TP..ugP.L.) == FALSE))], log = 'xy')
-
-#Fixme: Check for gaps in the TN/NO3 series that can be filled in with TP correlation with TN
-# Hypsometric plot for DEM in the ROI----
+# Hypsometric plot for DEM in the subwatersheds----
 #Fixme: Can shade in the areas above each gauge or select outlet points as horizontal steps
 # Allocation of BMPs could be in certain elevation zones
 # Couple with map next to it of the elevations above certain thresholds
@@ -1051,6 +1054,29 @@ par(mar =c(4,4,1,1))
 hypsometric(DEM_SL, col = 'black', main = "Scott's Level Hypsometric Curve")
 dev.off()
 
+# Fixme: Search for flow-normalized water chemistry outliers----
+# #Select only the non-NA values
+# t = BES_TN_d[[i]][which((is.na(BES_TN_d[[i]]$Flow) == FALSE) & (is.na(BES_TN_d[[i]]$TN..mg.N.L.) == FALSE)),c('Flow', 'TN..mg.N.L.')]
+# mu = apply(X = t, MARGIN = 2, FUN = mean)
+# #Compute the covariance matrix for only the non-NA values
+# s = cov(t)
+# mahalanobis(x = t, center = FALSE, cov = s)
+
+# Fixme: Check correlation between N, P at all sites to see if it's worthwhile to use both for calibration of model----
+# FOR NOW, NOT NEEDED BECAUSE RHESSYS DOESN'T PROVIDE P OUTPUT
+# Color by time of year
+# for (i in 1:length(BES_TN_d)){
+#   #Gather all of the dates that match in both timeseries
+#   
+# }
+# plot(BES_TN_d$POBR$TN..mg.N.L.[362:nrow(BES_TN_d$POBR)][which((is.na(BES_TN_d$POBR$TN..mg.N.L.[362:nrow(BES_TN_d$POBR)]) == FALSE) & (is.na(BES_TP_d$POBR$TP..ugP.L.) == FALSE))], BES_TP_d$POBR$TP..ugP.L.[which((is.na(BES_TN_d$POBR$TN..mg.N.L.[362:nrow(BES_TN_d$POBR)]) == FALSE) & (is.na(BES_TP_d$POBR$TP..ugP.L.) == FALSE))], log = 'xy')
+# plot(BES_TN_d$BARN$TN..mg.N.L.[which((is.na(BES_TN_d$BARN$TN..mg.N.L.) == FALSE) & (is.na(BES_TP_d$BARN$TP..ugP.L.) == FALSE))], BES_TP_d$BARN$TP..ugP.L.[which((is.na(BES_TN_d$BARN$TN..mg.N.L.) == FALSE) & (is.na(BES_TP_d$BARN$TP..ugP.L.) == FALSE))], log = 'xy')
+
+#Fixme: Check for gaps in the TN/NO3 series that can be filled in with TP correlation with TN
+
+# Fixme: correlation plots of streamflow and N across watershed for different sites----
+#       need to have matching timeseries to do this. Hydropairs function may work.
+#       can help the spatial prediction
 # Write water quality data to files----
 setwd(dir = dir_WChem)
 list.save(x = BES_WQ_Sites, file = f_BESallchem, type = "YAML")
@@ -1159,8 +1185,8 @@ BES_PrecipList = checkZerosNegs(StationList = BES_PrecipList, Var = 'Precipitati
 BES_Precip_locs = addZerosToSpatialDataset(StationList = BES_PrecipList, SpatialDataset = BES_Precip_locs, site_D = 'Gauge', site_SL = 'Rain_Gauge_ID')
 BES_Precip_locs = addNegsToSpatialDataset(StationList = BES_PrecipList, SpatialDataset = BES_Precip_locs, site_D = 'Gauge', site_SL = 'Rain_Gauge_ID')
 
-#  Compute rainfall rates----
-# Fixme: compute rates and compare for each gauge. Use for error identification
+#  Fixme: Compute rainfall rates----
+#  compute rates and compare for each gauge. Use for error identification
 
 #  Aggregate into total precip per day, month, year---- 
 BES_Precip_agg = aggregateTimesteps(StationList = BES_PrecipList, aggVal = c('d', 'm', 'a'), aggVar = 'Precipitation_.mm.', date = 'SortDate', site = 'Rain_Gauge_ID', fun = 'sum')
@@ -1172,7 +1198,7 @@ rm(BES_Precip_agg)
 #  Handle missing data in the daily, monthly, and annual aggregated timeseries----
 BES_Precip_d2 = FillMissingDates_par(Dataset = BES_Precip_locs, StationList = BES_Precip_d, Var = 'Precipitation_.mm.', 
                              Date = 'SortDate', gapType = 'd', site_no_D = 'Gauge', 
-                             site_no_SL = 'Rain_Gauge_ID', NoNAcols = c('Site','Rain_Gauge_ID'))
+                             site_no_SL = 'Rain_Gauge_ID', NoNAcols = c('Site','Rain_Gauge_ID'), NumCores = detectCores()-1)
 BES_Precip_locs = BES_Precip_d2$Dataset
 BES_Precip_d = BES_Precip_d2$StationList
 rm(BES_Precip_d2)
@@ -1329,12 +1355,12 @@ for (i in seq(1,(length(BES_PrecipList)-1),2)){
   dev.off()
 }
 
-# Fixme: Do some diagnostics on the sites to come up with a single timeseries for each site----
-# Fixme: check if the high bias days are also biased on the previous and following day----
+#  Fixme: Do some diagnostics on the sites to come up with a single timeseries for each site----
+#  Fixme: check if the high bias days are also biased on the previous and following day----
 # Fixme: color the bias by the rainfall rate (> 1.5"/hr is prone to errors)
 # NOAA weather station data----
 #Get the FIPS code for Maryland
-MDfips = rnoaa::fipscodes[which(rnoaa::fipscodes$state == 'Maryland'),]
+#MDfips = rnoaa::fipscodes[which(rnoaa::fipscodes$state == 'Maryland'),]
 #Download GHCND data - requires access code requested from: https://www.ncdc.noaa.gov/cdo-web/token
 # This code takes a while to be emailed to you. AND one can only download a year at a time - not recommended
 #NOAAstations = ncdc(datasetid='GHCND', locationid = paste0('FIPS:', MDfips$fips_state), startdate = '1998-01-01', enddate = '2018-12-31')
@@ -1375,7 +1401,7 @@ names(MetStations) = unique(NOAAstations_locs$id)
 rm(m)
 
 #Move files from the cache to a permanent directory
-wd_NOAA = paste0(dir_precip, '\\NOAA2')
+wd_NOAA = paste0(dir_precip, '\\NOAA')
 dir.create(path = wd_NOAA)
 file.copy(from = user_cache_dir(appname = 'rnoaa', version = NULL, opinion = TRUE, expand = TRUE), to = wd_NOAA, recursive = TRUE)
 setwd(wd_NOAA)
@@ -1417,17 +1443,17 @@ dev.off()
 
 #  Fill in missing dates----
 NOAAstations_5km_locs@data = as.data.frame(NOAAstations_5km_locs@data)
-MetStations_5km_Precip = FillMissingDates_par(Dataset = NOAAstations_5km_locs[NOAAstations_5km_locs$element == 'PRCP',], StationList = MetStations_5km[names(MetStations_5km) %in% NOAAstations_5km_locs[NOAAstations_5km_locs$element == 'PRCP',]$id], Var = 'prcp', Date = 'date', gapType = 'd', site_no_D = 'id', site_no_SL = 'id', NoNAcols = 'id')
+MetStations_5km_Precip = FillMissingDates_par(Dataset = NOAAstations_5km_locs[NOAAstations_5km_locs$element == 'PRCP',], StationList = MetStations_5km[names(MetStations_5km) %in% NOAAstations_5km_locs[NOAAstations_5km_locs$element == 'PRCP',]$id], Var = 'prcp', Date = 'date', gapType = 'd', site_no_D = 'id', site_no_SL = 'id', NoNAcols = 'id', NumCores = detectCores()-1)
 #Extract data from the function return
 NOAAstations_5km_locs_Precip = MetStations_5km_Precip$Dataset
 MetStations_5km_Precip = MetStations_5km_Precip$StationList
 
-MetStations_5km_TMAX = FillMissingDates_par(Dataset = NOAAstations_5km_locs[NOAAstations_5km_locs$element == 'TMAX',], StationList = MetStations_5km[names(MetStations_5km) %in% NOAAstations_5km_locs[NOAAstations_5km_locs$element == 'TMAX',]$id], Var = 'tmax', Date = 'date', gapType = 'd', site_no_D = 'id', site_no_SL = 'id', NoNAcols = 'id')
+MetStations_5km_TMAX = FillMissingDates_par(Dataset = NOAAstations_5km_locs[NOAAstations_5km_locs$element == 'TMAX',], StationList = MetStations_5km[names(MetStations_5km) %in% NOAAstations_5km_locs[NOAAstations_5km_locs$element == 'TMAX',]$id], Var = 'tmax', Date = 'date', gapType = 'd', site_no_D = 'id', site_no_SL = 'id', NoNAcols = 'id', NumCores = detectCores()-1)
 #Extract data from the function return
 NOAAstations_5km_locs_TMAX = MetStations_5km_TMAX$Dataset
 MetStations_5km_TMAX = MetStations_5km_TMAX$StationList
 
-MetStations_5km_TMIN = FillMissingDates_par(Dataset = NOAAstations_5km_locs[NOAAstations_5km_locs$element == 'TMIN',], StationList = MetStations_5km[names(MetStations_5km) %in% NOAAstations_5km_locs[NOAAstations_5km_locs$element == 'TMIN',]$id], Var = 'tmin', Date = 'date', gapType = 'd', site_no_D = 'id', site_no_SL = 'id', NoNAcols = 'id')
+MetStations_5km_TMIN = FillMissingDates_par(Dataset = NOAAstations_5km_locs[NOAAstations_5km_locs$element == 'TMIN',], StationList = MetStations_5km[names(MetStations_5km) %in% NOAAstations_5km_locs[NOAAstations_5km_locs$element == 'TMIN',]$id], Var = 'tmin', Date = 'date', gapType = 'd', site_no_D = 'id', site_no_SL = 'id', NoNAcols = 'id', NumCores = detectCores()-1)
 #Extract data from the function return
 NOAAstations_5km_locs_TMIN = MetStations_5km_TMIN$Dataset
 MetStations_5km_TMIN = MetStations_5km_TMIN$StationList
@@ -1544,6 +1570,8 @@ north.arrow(xb = 370000, yb = 4346000, len = 700, col = 'black', lab = 'N')
 legend('right', title = 'Precipitation Station \n Record Lengths \n (years)', legend = seq(scaleRange[1], scaleRange[2]-scaleBy, scaleBy), pch = 16, col = colFun(seq(scaleRange[1], scaleRange[2]-scaleBy, scaleBy)), bty = 'n')
 dev.off()
 
+rm(scaleRange, scaleBy, Pal)
+
 scaleRange = c(0,10)
 scaleBy = 1
 Pal = rev(rainbow((scaleRange[2] - scaleRange[1])/scaleBy))
@@ -1560,9 +1588,12 @@ north.arrow(xb = 370000, yb = 4346000, len = 700, col = 'black', lab = 'N')
 legend('right', title = 'Precipitation Station \n Record Lengths \n (years)', legend = seq(scaleRange[1], scaleRange[2]-scaleBy, scaleBy), pch = 16, col = colFun(seq(scaleRange[1], scaleRange[2]-scaleBy, scaleBy)), bty = 'n')
 dev.off()
 
-#Fixme: ACF for precip and temp datasets----
-#Fixme: evaluate outliers for precip and temp (possible multivariate outliers) - make scatterplots of precip and temp----
-#Write met station data to files----
+rm(scaleRange, scaleBy, Pal)
+
+# Fixme: ACF for precip and temp datasets----
+# Fixme: Spatial predicton of precip and temperature----
+# Fixme: evaluate outliers for precip and temp (possible multivariate outliers) - make scatterplots of precip and temp----
+# Write met station data to files----
 #BES data
 setwd(dir = dir_precip)
 #Fixme: writing the whole list throws an error.
@@ -1581,10 +1612,6 @@ setwd(dir = wd_NOAA)
 writeOGR(NOAAstations_locs, dsn = getwd(), layer = f_NOAAstationsROI, driver = "ESRI Shapefile")
 list.save(x = MetStations, file = f_NOAAstationsDataList, type = "YAML")
 
-#Fixme: Spatial predicton of precip and temperature----
-#Fixme: correlation plots of streamflow and N across watershed for different sites----
-#       need to have matching timeseries to do this. Hydropairs function may work.
-#       can help the spatial prediction
 #Process hydro nexrad radar info----
 #Initial test with year 2000
 setwd(paste0(dir_Nexrad, "/Balto2000"))
@@ -1600,7 +1627,9 @@ proj4string(Nexrad2) = CRS('+init=epsg:4326')
 Nexrad2 = spTransform(Nexrad2, CRSobj = pCRS)
 
 #Check if the samples are in the same locations
-any((Nexrad@coords == Nexrad2@coords) == FALSE)
+if (any((Nexrad@coords == Nexrad2@coords) == FALSE)){
+  print('Some Nexrad coordinates are not the same from one time step to the next.')
+}
 
 #Plot the raster point (cell center) locations
 plot(ROI)
@@ -1610,14 +1639,27 @@ BaispCRS = spTransform(BaisRun_Outlet, CRSobj = pCRS)
 plot(BaispCRS)
 plot(Nexrad, col = 'red', pch = 15, cex = 0.5, add = T)
 
-#Extract the Baisman Run pixels
-BaisPix = Nexrad[BaispCRS,]
-BaisPix$Pix = c(1,2,3,4)
+#Extract the Baisman Run pixels within specified buffer
+BaispCRS_buff = buffer(BaispCRS, width = 800)
+BaisPix = Nexrad[BaispCRS_buff,]
+BaisPix$Pix = seq(1, nrow(BaisPix@data), 1)
+
+scaleRange = c(1,nrow(BaisPix@data))
+scaleBy = 1
+Pal = colorRampPalette('red', 'orange', 'yellow', 'green', 'blue')
 
 # Map of which pixel is which----
-plot(BaispCRS)
+setwd(dir_Nexrad)
+png('BaismanNexradPixelsMap.png', res = 300, width = 5, height = 5, units = 'in')
+plot(BaispCRS_buff, col = 'white', border = 'white')
+plot(BaispCRS, add = TRUE)
 plot(Nexrad, pch = 15, add = TRUE)
-plot(BaisPix, col = c('red', 'orange', 'green', 'blue'), pch = 15, add = TRUE)
+plot(BaisPix, col = colFun(BaisPix$Pix), pch = 15, add = TRUE)
+#add labels
+text(x = BaisPix@coords[,1]+100, y = BaisPix@coords[,2], BaisPix$Pix)
+dev.off()
+
+rm(scaleRange, scaleBy, Pal)
 
 # Loop over the available NEXRAD txt files and extract these 4 pixels for Baisman Run----
 #  Use 2007 as a test year----
@@ -1710,7 +1752,7 @@ for (j in 1:length(folsNexrad)){
     f = spTransform(f, CRSobj = pCRS)
     
     #Extract the Baisman Run pixels
-    f_BaisPix = f[BaispCRS,]
+    f_BaisPix = f[BaispCRS_buff,]
     rm(f)
     
     #Extract the date and time information
@@ -1724,46 +1766,41 @@ for (j in 1:length(folsNexrad)){
   }
   
   rownames(BaisNexMat) = NULL
-  colnames(BaisNexMat) = c('Date', 'Pix1', 'Pix2', 'Pix3', 'Pix4')
+  colnames(BaisNexMat) = c('Date', paste0('Pix', seq(1,length(BaisPix$Pix),1)))
   
   #Save to list
   NexradList = c(NexradList, list(BaisNexMat))
   names(NexradList) = c(names(NexradList)[1:(j-1)], folsNexrad[j])
 }
 stopCluster(cl)
+rm(fs, j, cl)
 
 #Save the Nexrad product list
 list.save(x = NexradList, file = f_NexradDataList, type = 'YAML')
 
-#Go from a list to a matrix / data.frame
+#Go from a list of years to a matrix / data.frame to make a continuous timeseries
 NexradMat = as.data.frame(NexradList[[1]])
 NexradMat$Date = as.character(NexradMat$Date)
-NexradMat[,2] = as.numeric(matrix(NexradMat[,2]))
-NexradMat[,3] = as.numeric(matrix(NexradMat[,3]))
-NexradMat[,4] = as.numeric(matrix(NexradMat[,4]))
-NexradMat[,5] = as.numeric(matrix(NexradMat[,5]))
-
+for(i in 2:length(NexradList)){
+  NexradMat[,i] = as.numeric(matrix(NexradMat[,i]))
+}
+rm(i)
+#bind list elements
 for(i in 2:length(NexradList)){
   NexradMat = rbind(NexradMat, NexradList[[i]])
 }
-NexradMat[,2] = as.numeric(matrix(NexradMat[,2]))
-NexradMat[,3] = as.numeric(matrix(NexradMat[,3]))
-NexradMat[,4] = as.numeric(matrix(NexradMat[,4]))
-NexradMat[,5] = as.numeric(matrix(NexradMat[,5]))
+rm(i)
+for(i in 2:length(NexradList)){
+  NexradMat[,i] = as.numeric(matrix(NexradMat[,i]))
+}
+rm(i)
 
+#Convert all factor and character to numeric values
+for(i in 2:length(NexradList)){
+  NexradMat[,i] = as.numeric(as.character(NexradMat[,i]))
+}
+rm(i)
 rm(NexradList)
-
-#Reassigned dates using this method
-# NexradMat$Date[1:26600] = as.character(test[[1]][1:26600])
-# NexradMat$Date[26601:(26600+25732)] = as.character(test[[2]][1:25732])
-# NexradMat$Date[(26600+25732+1):(26600+25732+27020)] = as.character(test[[3]][1:27020])
-# NexradMat$Date[(26600+25732+27020+1):(26600+25732+27020+30621)] = as.character(test[[4]][1:30621])
-# NexradMat$Date[(26600+25732+27020+30621+1):(26600+25732+27020+30621+30648)] = as.character(test[[5]][1:30648])
-# NexradMat$Date[(26600+25732+27020+30621+30648+1):(26600+25732+27020+30621+30648+30717)] = as.character(test[[6]][1:30717])
-# NexradMat$Date[(26600+25732+27020+30621+30648+30717+1):(26600+25732+27020+30621+30648+30717+32732)] = as.character(test[[7]][1:32732])
-# NexradMat$Date[(26600+25732+27020+30621+30648+30717+32732+1):(26600+25732+27020+30621+30648+30717+32732+33077)] = as.character(test[[8]][1:33077])
-# NexradMat$Date[(26600+25732+27020+30621+30648+30717+32732+33077+1):(26600+25732+27020+30621+30648+30717+32732+33077+33727)] = as.character(test[[9]][1:33727])
-# NexradMat$Date[(26600+25732+27020+30621+30648+30717+32732+33077+33727+1):(26600+25732+27020+30621+30648+30717+32732+33077+33727+34166)] = as.character(test[[10]][1:34166])
 
 #   Check for duplicate records----
 NexradDuplicates = which(duplicated(NexradMat))
@@ -1771,19 +1808,26 @@ NexradDuplicates = which(duplicated(NexradMat))
 #I'm not sure why only a few dates have this problem. It does not affect further analysis, so leaving as is.
 
 #   Check for negative values----
-NexradMat$Pix1NegRm = NexradMat$Pix1
-NexradMat$Pix2NegRm = NexradMat$Pix2
-NexradMat$Pix3NegRm = NexradMat$Pix3
-NexradMat$Pix4NegRm = NexradMat$Pix4
+#Add new columns to store negative-removed information
+for (i in 2:ncol(NexradMat)){
+  NexradMat = cbind(NexradMat, NexradMat[,i])
+}
+rm(i)
+colnames(NexradMat) = c(colnames(NexradMat)[1:((ncol(NexradMat)-1)/2+1)], paste0(colnames(NexradMat)[2:((ncol(NexradMat)-1)/2+1)], 'NegRm'))
 
-NexradMat$Pix1NegRm[NexradMat$Pix1NegRm < 0] = NA
-NexradMat$Pix2NegRm[NexradMat$Pix2NegRm < 0] = NA
-NexradMat$Pix3NegRm[NexradMat$Pix3NegRm < 0] = NA
-NexradMat$Pix4NegRm[NexradMat$Pix4NegRm < 0] = NA
+#make all the negative values NAs
+for (i in ((ncol(NexradMat)-1)/2 + 2):ncol(NexradMat)){
+  NexradMat[NexradMat[,i] < 0, i] = NA
+}
+rm(i)
 
 #   Aggregate to daily timeseries----
 #Make a list of the pixels to use the aggregate Timeseries function
-BaisPixList = list(NexradMat[,c(1,6)], NexradMat[,c(1,7)], NexradMat[,c(1,8)], NexradMat[,c(1,9)])
+BaisPixList = list()
+for (i in ((ncol(NexradMat)-1)/2+2):ncol(NexradMat)){
+  BaisPixList = c(BaisPixList, list(NexradMat[,c(1,i)]))
+}
+#Add columns for the pixel number, date, and date with time
 for(i in 1:length(BaisPixList)){
   BaisPixList[[i]]$Pix = i
   BaisPixList[[i]]$DateTime = BaisPixList[[i]]$Date
@@ -1797,7 +1841,7 @@ rm(BaisNex_Precip_agg)
 #   Fill in missing dates in the aggregated timeseries----
 BaisNex_Precip_d2 = FillMissingDates_par(Dataset = BaisPix, StationList = BaisNex_Precip_d, Var = 'Precip', 
                                      Date = 'Date', gapType = 'd', site_no_D = 'Pix', 
-                                     site_no_SL = 'Pix', NoNAcols = c('Pix'))
+                                     site_no_SL = 'Pix', NoNAcols = c('Pix'), NumCores = detectCores()-1)
 BaisPix_Processed = BaisNex_Precip_d2$Dataset
 BaisNex_Precip_d = BaisNex_Precip_d2$StationList
 rm(BaisNex_Precip_d2)
@@ -1805,29 +1849,33 @@ rm(BaisNex_Precip_d2)
 #   Convert units to mm/km^2 from mm/ha----
 #1 ha = .01 km^2
 for(i in 1:length(BaisNex_Precip_d)){
-  BaisNex_Precip_d[[i]]$Precip/.01
+  BaisNex_Precip_d[[i]]$Precip = BaisNex_Precip_d[[i]]$Precip/.01
 }
 rm(i)
 
 # Compare the pixels with each other----
 #make a matrix of the data to get a scatterplot matrix
-BaisNexPrecipMat = matrix(NA, nrow = nrow(BaisNex_Precip_d[[1]]), ncol = 5)
+BaisNexPrecipMat = matrix(NA, nrow = nrow(BaisNex_Precip_d[[1]]), ncol = 1+length(BaisPix))
 BaisNexPrecipMat[,1] = BaisNex_Precip_d[[1]]$Date
-BaisNexPrecipMat[,2] = BaisNex_Precip_d[[1]]$Precip
-BaisNexPrecipMat[,3] = BaisNex_Precip_d[[2]]$Precip
-BaisNexPrecipMat[,4] = BaisNex_Precip_d[[3]]$Precip
-BaisNexPrecipMat[,5] = BaisNex_Precip_d[[4]]$Precip
+for (i in 1:length(BaisPix)){
+  BaisNexPrecipMat[,1+i] = BaisNex_Precip_d[[i]]$Precip
+}
 BaisNexPrecipMat = as.data.frame(BaisNexPrecipMat)
-colnames(BaisNexPrecipMat) = c('Date', paste0('Pix', seq(1,4,1)))
+colnames(BaisNexPrecipMat) = c('Date', paste0('Pix', seq(1,length(BaisPix),1)))
 
 png('BaismanNexradPixPrecipTimeseries.png', res = 300, height = 5, width = 5, units = 'in')
 par(mar = c(5,5,2,2))
-matplotDates(as.Date(BaisNexPrecipMat[,1]), BaisNexPrecipMat[,-1], type = 'l', col = c('red', 'orange', 'green', 'blue'), 
+matplotDates(as.Date(BaisNexPrecipMat[,1]), BaisNexPrecipMat[,c(5,6,7,10)], type = 'l', col = c('red', 'orange', 'green', 'blue'), 
              xlab = 'Time', ylab = expression(paste('Precipitation (mm/km'^2,')')))
 dev.off()
 
 png('BaismanNexradPixPrecipScatterPlotMatrix.png', res = 300, height = 8, width = 8, units = 'in')
-pairs.panels(x = log10(BaisNexPrecipMat[,-1]+.01), scale = FALSE, density = FALSE, ellipses = FALSE, smooth = FALSE, 
+pairs.panels(x = log10(BaisNexPrecipMat[,c(5,6,7,10)]+.1), scale = FALSE, density = FALSE, ellipses = FALSE, smooth = FALSE, 
+             digits = 3, lm = TRUE, jiggle = FALSE, rug = FALSE, cex.cor = .7, method = 'spearman')
+dev.off()
+
+png('BaismanNexradPixPrecipScatterPlotMatrix_BufferPix.png', res = 300, height = 16, width = 16, units = 'in')
+pairs.panels(x = log10(BaisNexPrecipMat[,-1]+.1), scale = FALSE, density = FALSE, ellipses = FALSE, smooth = FALSE, 
              digits = 3, lm = TRUE, jiggle = FALSE, rug = FALSE, cex.cor = .7, method = 'spearman')
 dev.off()
 
