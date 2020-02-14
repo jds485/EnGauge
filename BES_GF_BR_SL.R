@@ -877,7 +877,11 @@ for (i in 1:length(BES_TN)){
   dev.off()
   
   png(paste0('TN_ScatterHist', BES_TN[[i]]$USGSgauge[1], ' ', BES_TN[[i]]$Site[1], '.png'), res = 300, units = 'in', width = 10, height = 10)
-  scatterHist_mod(x = log10(BES_TN_d[[i]]$Flow[BES_TN_d[[i]]$Flow > 0]), y = BES_TN_d[[i]]$TN..mg.N.L.[BES_TN_d[[i]]$Flow > 0], density = FALSE, freq = FALSE, x.breaks = 100, y.breaks = 100, correl = FALSE, xlab = expression(paste('log'[10] ~ '(Flow [cfs])')), ylab = 'Total Nitrogen (mg/L as N)', cex.lab = 1.5, cex.axis = 1.5, title = '', pch = 16, ellipse = FALSE, smooth = FALSE, col = BES_TN_d[[i]]$cols[BES_TN_d[[i]]$Flow > 0])
+  scatterHist_mod(x = log10(BES_TN_d[[i]]$Flow[BES_TN_d[[i]]$Flow > 0]), y = BES_TN_d[[i]]$TN..mg.N.L.[BES_TN_d[[i]]$Flow > 0], 
+                  density = FALSE, freq = FALSE, x.breaks = 100, y.breaks = 100, correl = FALSE, 
+                  xlab = expression(paste('log'[10] ~ '(Flow [cfs])')), ylab = 'Total Nitrogen (mg/L as N)', 
+                  cex.lab = 1.5, cex.axis = 1.5, title = '', pch = 16, ellipse = FALSE, smooth = FALSE, 
+                  col = BES_TN_d[[i]]$cols[BES_TN_d[[i]]$Flow > 0])
   dev.off()
 }
 rm(i, dts, mts, M, at.x, lab.x)
@@ -1052,7 +1056,11 @@ for (i in 1:length(BES_TP)){
   dev.off()
   
   png(paste0('TP_ScatterHist', BES_TP[[i]]$USGSgauge[1], ' ', BES_TP[[i]]$Site[1], '.png'), res = 300, units = 'in', width = 10, height = 10)
-  scatterHist_mod(x = log10(BES_TP_d[[i]]$Flow[BES_TP_d[[i]]$Flow > 0]), y = BES_TP_d[[i]]$TP..ugP.L.[BES_TP_d[[i]]$Flow > 0], density = FALSE, freq = FALSE, x.breaks = 100, y.breaks = 100, correl = FALSE, xlab = expression(paste('log'[10] ~ '(Flow [cfs])')), ylab = expression(paste('Total Phosphorus ( ', mu, 'g/L as P)')), cex.lab = 1.5, cex.axis = 1.5, title = '', pch = 16, ellipse = FALSE, smooth = FALSE, col = BES_TP_d[[i]]$cols[BES_TP_d[[i]]$Flow > 0])
+  scatterHist_mod(x = log10(BES_TP_d[[i]]$Flow[BES_TP_d[[i]]$Flow > 0]), y = BES_TP_d[[i]]$TP..ugP.L.[BES_TP_d[[i]]$Flow > 0], 
+                  density = FALSE, freq = FALSE, x.breaks = 100, y.breaks = 100, correl = FALSE, 
+                  xlab = expression(paste('log'[10] ~ '(Flow [cfs])')), ylab = expression(paste('Total Phosphorus ( ', mu, 'g/L as P)')), 
+                  cex.lab = 1.5, cex.axis = 1.5, title = '', pch = 16, ellipse = FALSE, smooth = FALSE, 
+                  col = BES_TP_d[[i]]$cols[BES_TP_d[[i]]$Flow > 0])
   dev.off()
 }
 rm(i, dts, mts, M, at.x, lab.x)
@@ -1114,8 +1122,10 @@ dev.off()
 #   #Gather all of the dates that match in both timeseries
 #   
 # }
-# plot(BES_TN_d$POBR$TN..mg.N.L.[362:nrow(BES_TN_d$POBR)][which((is.na(BES_TN_d$POBR$TN..mg.N.L.[362:nrow(BES_TN_d$POBR)]) == FALSE) & (is.na(BES_TP_d$POBR$TP..ugP.L.) == FALSE))], BES_TP_d$POBR$TP..ugP.L.[which((is.na(BES_TN_d$POBR$TN..mg.N.L.[362:nrow(BES_TN_d$POBR)]) == FALSE) & (is.na(BES_TP_d$POBR$TP..ugP.L.) == FALSE))], log = 'xy')
-# plot(BES_TN_d$BARN$TN..mg.N.L.[which((is.na(BES_TN_d$BARN$TN..mg.N.L.) == FALSE) & (is.na(BES_TP_d$BARN$TP..ugP.L.) == FALSE))], BES_TP_d$BARN$TP..ugP.L.[which((is.na(BES_TN_d$BARN$TN..mg.N.L.) == FALSE) & (is.na(BES_TP_d$BARN$TP..ugP.L.) == FALSE))], log = 'xy')
+#plot(BES_TN_d$POBR$TN..mg.N.L.[362:nrow(BES_TN_d$POBR)][which((is.na(BES_TN_d$POBR$TN..mg.N.L.[362:nrow(BES_TN_d$POBR)]) == FALSE) & (is.na(BES_TP_d$POBR$TP..ugP.L.) == FALSE))], 
+#     BES_TP_d$POBR$TP..ugP.L.[which((is.na(BES_TN_d$POBR$TN..mg.N.L.[362:nrow(BES_TN_d$POBR)]) == FALSE) & (is.na(BES_TP_d$POBR$TP..ugP.L.) == FALSE))], log = 'xy')
+#plot(BES_TN_d$BARN$TN..mg.N.L.[which((is.na(BES_TN_d$BARN$TN..mg.N.L.) == FALSE) & (is.na(BES_TP_d$BARN$TP..ugP.L.) == FALSE))], 
+#     BES_TP_d$BARN$TP..ugP.L.[which((is.na(BES_TN_d$BARN$TN..mg.N.L.) == FALSE) & (is.na(BES_TP_d$BARN$TP..ugP.L.) == FALSE))], log = 'xy')
 
 #Fixme: Check for gaps in the TN/NO3 series that can be filled in with TP correlation with TN
 
@@ -1162,7 +1172,9 @@ for(i in 1:length(unique(BES_Precip$Rain_Gauge_ID))){
     if(length(which(f$DateTime == 'NA')) > 0){
       tvec = NA
       for (t in 1:length(which(f$DateTime == 'NA'))){
-        tvec[t] = paste(as.POSIXct(paste(strsplit(f$Date_Time_.EST.[which(f$DateTime == 'NA')][t], split = ' ', fixed = TRUE)[[1]][1], strsplit(as.character(as.POSIXct(strsplit(f$Date_Time_.EST.[which(f$DateTime == 'NA')][t], split = ' ', fixed = TRUE)[[1]][2], format = '%H:%M') + 1*3600), split = ' ', fixed = TRUE)[[1]][2]), format = '%m/%d/%y %H:%M'))
+        tvec[t] = paste(as.POSIXct(paste(strsplit(f$Date_Time_.EST.[which(f$DateTime == 'NA')][t], split = ' ', fixed = TRUE)[[1]][1], 
+                                         strsplit(as.character(as.POSIXct(strsplit(f$Date_Time_.EST.[which(f$DateTime == 'NA')][t], split = ' ', fixed = TRUE)[[1]][2], format = '%H:%M') + 1*3600), 
+                                                  split = ' ', fixed = TRUE)[[1]][2]), format = '%m/%d/%y %H:%M'))
       }
       f$DateTime[which(f$DateTime == 'NA')] = tvec
     }
@@ -1175,7 +1187,9 @@ for(i in 1:length(unique(BES_Precip$Rain_Gauge_ID))){
     if(length(which(f$DateTime == 'NA')) > 0){
       tvec = NA
       for (t in 1:length(which(f$DateTime == 'NA'))){
-        tvec[t] = paste(as.POSIXct(paste(strsplit(f$Date_Time_.EST.[which(f$DateTime == 'NA')][t], split = ' ', fixed = TRUE)[[1]][1], strsplit(as.character(as.POSIXct(strsplit(f$Date_Time_.EST.[which(f$DateTime == 'NA')][t], split = ' ', fixed = TRUE)[[1]][2], format = '%H:%M') + 1*3600), split = ' ', fixed = TRUE)[[1]][2]), format = '%m/%d/%Y %H:%M'))
+        tvec[t] = paste(as.POSIXct(paste(strsplit(f$Date_Time_.EST.[which(f$DateTime == 'NA')][t], split = ' ', fixed = TRUE)[[1]][1], 
+                                         strsplit(as.character(as.POSIXct(strsplit(f$Date_Time_.EST.[which(f$DateTime == 'NA')][t], split = ' ', fixed = TRUE)[[1]][2], format = '%H:%M') + 1*3600), 
+                                                  split = ' ', fixed = TRUE)[[1]][2]), format = '%m/%d/%Y %H:%M'))
       }
       f$DateTime[which(f$DateTime == 'NA')] = tvec
     }
@@ -1488,17 +1502,23 @@ dev.off()
 
 #  Fill in missing dates----
 NOAAstations_5km_locs@data = as.data.frame(NOAAstations_5km_locs@data)
-MetStations_5km_Precip = FillMissingDates_par(Dataset = NOAAstations_5km_locs[NOAAstations_5km_locs$element == 'PRCP',], StationList = MetStations_5km[names(MetStations_5km) %in% NOAAstations_5km_locs[NOAAstations_5km_locs$element == 'PRCP',]$id], Var = 'prcp', Date = 'date', gapType = 'd', site_no_D = 'id', site_no_SL = 'id', NoNAcols = 'id', NumCores = detectCores()-1)
+MetStations_5km_Precip = FillMissingDates_par(Dataset = NOAAstations_5km_locs[NOAAstations_5km_locs$element == 'PRCP',], 
+                                              StationList = MetStations_5km[names(MetStations_5km) %in% NOAAstations_5km_locs[NOAAstations_5km_locs$element == 'PRCP',]$id], 
+                                              Var = 'prcp', Date = 'date', gapType = 'd', site_no_D = 'id', site_no_SL = 'id', NoNAcols = 'id', NumCores = detectCores()-1)
 #Extract data from the function return
 NOAAstations_5km_locs_Precip = MetStations_5km_Precip$Dataset
 MetStations_5km_Precip = MetStations_5km_Precip$StationList
 
-MetStations_5km_TMAX = FillMissingDates_par(Dataset = NOAAstations_5km_locs[NOAAstations_5km_locs$element == 'TMAX',], StationList = MetStations_5km[names(MetStations_5km) %in% NOAAstations_5km_locs[NOAAstations_5km_locs$element == 'TMAX',]$id], Var = 'tmax', Date = 'date', gapType = 'd', site_no_D = 'id', site_no_SL = 'id', NoNAcols = 'id', NumCores = detectCores()-1)
+MetStations_5km_TMAX = FillMissingDates_par(Dataset = NOAAstations_5km_locs[NOAAstations_5km_locs$element == 'TMAX',], 
+                                            StationList = MetStations_5km[names(MetStations_5km) %in% NOAAstations_5km_locs[NOAAstations_5km_locs$element == 'TMAX',]$id], 
+                                            Var = 'tmax', Date = 'date', gapType = 'd', site_no_D = 'id', site_no_SL = 'id', NoNAcols = 'id', NumCores = detectCores()-1)
 #Extract data from the function return
 NOAAstations_5km_locs_TMAX = MetStations_5km_TMAX$Dataset
 MetStations_5km_TMAX = MetStations_5km_TMAX$StationList
 
-MetStations_5km_TMIN = FillMissingDates_par(Dataset = NOAAstations_5km_locs[NOAAstations_5km_locs$element == 'TMIN',], StationList = MetStations_5km[names(MetStations_5km) %in% NOAAstations_5km_locs[NOAAstations_5km_locs$element == 'TMIN',]$id], Var = 'tmin', Date = 'date', gapType = 'd', site_no_D = 'id', site_no_SL = 'id', NoNAcols = 'id', NumCores = detectCores()-1)
+MetStations_5km_TMIN = FillMissingDates_par(Dataset = NOAAstations_5km_locs[NOAAstations_5km_locs$element == 'TMIN',], 
+                                            StationList = MetStations_5km[names(MetStations_5km) %in% NOAAstations_5km_locs[NOAAstations_5km_locs$element == 'TMIN',]$id], 
+                                            Var = 'tmin', Date = 'date', gapType = 'd', site_no_D = 'id', site_no_SL = 'id', NoNAcols = 'id', NumCores = detectCores()-1)
 #Extract data from the function return
 NOAAstations_5km_locs_TMIN = MetStations_5km_TMIN$Dataset
 MetStations_5km_TMIN = MetStations_5km_TMIN$StationList
@@ -1944,7 +1964,8 @@ pairs.panels(x = log10(BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),c(6,7,8,
 dev.off()
 
 png('BaismanNexradPixPrecipScatterPlotMatrix_BufferPix_WithRainGauge.png', res = 300, height = 8, width = 8, units = 'in')
-pairs.panels(x = log10(BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),-1][which((BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),6] > 0) & (BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),3] > 0) & !is.nan(BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),14])),]), scale = FALSE, density = FALSE, ellipses = FALSE, smooth = FALSE, 
+pairs.panels(x = log10(BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),-1][which((BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),6] > 0) & (BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),3] > 0) & !is.nan(BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),14])),]), 
+             scale = FALSE, density = FALSE, ellipses = FALSE, smooth = FALSE, 
              digits = 3, lm = TRUE, jiggle = FALSE, rug = FALSE, cex.cor = .7, method = 'spearman', xlim = c(-2.5,2.5), ylim = c(-2.5, 2.5))
 dev.off()
 
@@ -2150,7 +2171,8 @@ lines(y = c(.0254*1000,.0254*1000), x = c(0,150))
 #There are two instances of very high precip at one gauge and no precip at the other. 
 # Several others differ by more than 20 mm. Use a buffer of "If greater than 20 mm different, take the larger instead of the mean"
 BES_Precip_Avg_d$`Oregon Ridge Park`$Selected = BES_Precip_Avg_d$`Oregon Ridge Park`$mean
-BES_Precip_Avg_d$`Oregon Ridge Park`$Selected[which(abs(BES_Precip_Avg_d$`Oregon Ridge Park`$GaugeDiff) > 20)] = apply(X = rbind(BES_Precip_Avg_d$`Oregon Ridge Park`$P_WXORDG_RG1[which(abs(BES_Precip_Avg_d$`Oregon Ridge Park`$GaugeDiff) > 20)], BES_Precip_Avg_d$`Oregon Ridge Park`$P_WXORDG_RG2[which(abs(BES_Precip_Avg_d$`Oregon Ridge Park`$GaugeDiff) > 20)]), MARGIN = 2, FUN = max)
+BES_Precip_Avg_d$`Oregon Ridge Park`$Selected[which(abs(BES_Precip_Avg_d$`Oregon Ridge Park`$GaugeDiff) > 20)] = apply(X = rbind(BES_Precip_Avg_d$`Oregon Ridge Park`$P_WXORDG_RG1[which(abs(BES_Precip_Avg_d$`Oregon Ridge Park`$GaugeDiff) > 20)], 
+                                                                                                                                 BES_Precip_Avg_d$`Oregon Ridge Park`$P_WXORDG_RG2[which(abs(BES_Precip_Avg_d$`Oregon Ridge Park`$GaugeDiff) > 20)]), MARGIN = 2, FUN = max)
 
 #Check the NA rain dates with the MD Science Center precip. It's possible that some of these NA dates were days that the gauges did not record.
 ORGauge_NADates = BES_Precip_Avg_d$`Oregon Ridge Park`$SortDate[which(is.na(BES_Precip_Avg_d$`Oregon Ridge Park`$Selected))]
@@ -3118,7 +3140,9 @@ dev.off()
 POBR_PredTN$cols = BES_TN_d$POBR$cols[as.Date(BES_TN_d$POBR$SortDate) %in% as.Date(Dates_POBR)]
 
 png('POBR_TN_ScatterHist.png', res = 300, units = 'in', width = 10, height = 10)
-scatterHist_mod(x = log10(POBR_PredTN$TrueLoad), y = log10(POBR_PredTN$MedLoad), density = FALSE, freq = FALSE, x.breaks = 100, y.breaks = 100, correl = FALSE, xlab = expression(paste('log'[10] ~ '(True TN Load [mg N/s])')), ylab = expression(paste('log'[10] ~ 'Predicted TN Load (mg N/s)')), cex.lab = 1.5, cex.axis = 1.5, title = '', pch = 16, ellipse = FALSE, smooth = FALSE, col = POBR_PredTN$cols)
+scatterHist_mod(x = log10(POBR_PredTN$TrueLoad), y = log10(POBR_PredTN$MedLoad), density = FALSE, freq = FALSE, x.breaks = 100, y.breaks = 100, correl = FALSE, 
+                xlab = expression(paste('log'[10] ~ '(True TN Load [mg N/s])')), ylab = expression(paste('log'[10] ~ 'Predicted TN Load (mg N/s)')), 
+                cex.lab = 1.5, cex.axis = 1.5, title = '', pch = 16, ellipse = FALSE, smooth = FALSE, col = POBR_PredTN$cols)
 dev.off()
 
 POBR_PredTN$DiffMedLoad = POBR_PredTN$TrueLoad - POBR_PredTN$MedLoad
@@ -3178,14 +3202,22 @@ BR3_PredTN$MedLoad = BR3_PredTN$Med*1000*Flows_BR3*12^3*2.54^3/100^3
 BR3_PredTN$Load95 = BR3_PredTN$`95`*1000*Flows_BR3*12^3*2.54^3/100^3
 
 png('BR3_TrueTNLoadvsWRTDSLoad.png', res = 300, units = 'in', height = 5, width = 5)
-plot(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1], ylim=range(c(BR3_PredTN$MedLoad[BR3_PredTN$True > 1]-BR3_PredTN$Load05[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1]+BR3_PredTN$Load95[BR3_PredTN$True > 1])), xlab = 'True BR3 TN Load (mg N/s)', ylab = 'WRTDS Predicted Load of BR3 TN (mg N/s)')
-arrows(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1]-BR3_PredTN$Load05[BR3_PredTN$True > 1], BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1]+BR3_PredTN$Load95[BR3_PredTN$True > 1], length=0.05, angle=90, code=3)
+plot(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1], 
+     ylim=range(c(BR3_PredTN$MedLoad[BR3_PredTN$True > 1]-BR3_PredTN$Load05[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1]+BR3_PredTN$Load95[BR3_PredTN$True > 1])), 
+     xlab = 'True BR3 TN Load (mg N/s)', ylab = 'WRTDS Predicted Load of BR3 TN (mg N/s)')
+arrows(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1]-BR3_PredTN$Load05[BR3_PredTN$True > 1], 
+       BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1]+BR3_PredTN$Load95[BR3_PredTN$True > 1], 
+       length=0.05, angle=90, code=3)
 lines(c(-10,10), c(-10,10))
 dev.off()
 
 png('BR3_TrueTNLoadvsWRTDSLoad_log.png', res = 300, units = 'in', height = 5, width = 5)
-plot(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1], ylim=range(c(BR3_PredTN$MedLoad[BR3_PredTN$True > 1]-BR3_PredTN$Load05[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1]+BR3_PredTN$Load95[BR3_PredTN$True > 1])), xlab = expression(paste('log'[10] ~ 'True BR3 TN Load (mg N/s)')), ylab = expression(paste('log'[10] ~ 'WRTDS Predicted Load of BR3 TN (mg N/s)')), log='xy')
-arrows(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1]-BR3_PredTN$Load05[BR3_PredTN$True > 1], BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1]+BR3_PredTN$Load95[BR3_PredTN$True > 1], length=0.05, angle=90, code=3)
+plot(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1], 
+     ylim=range(c(BR3_PredTN$MedLoad[BR3_PredTN$True > 1]-BR3_PredTN$Load05[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1]+BR3_PredTN$Load95[BR3_PredTN$True > 1])), 
+     xlab = expression(paste('log'[10] ~ 'True BR3 TN Load (mg N/s)')), ylab = expression(paste('log'[10] ~ 'WRTDS Predicted Load of BR3 TN (mg N/s)')), log='xy')
+arrows(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1]-BR3_PredTN$Load05[BR3_PredTN$True > 1], 
+       BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1]+BR3_PredTN$Load95[BR3_PredTN$True > 1], 
+       length=0.05, angle=90, code=3)
 lines(c(1e-7,10), c(1e-7,10))
 dev.off()
 
@@ -3253,8 +3285,12 @@ lines(c(-10,10), c(-10,10))
 dev.off()
 
 png('BR5_TrueTNLoadvsWRTDSLoad_log.png', res = 300, units = 'in', height = 5, width = 5)
-plot(BR5_PredTN$TrueLoad[BR5_PredTN$True > 1], BR5_PredTN$MedLoad[BR5_PredTN$True > 1], ylim=range(c(BR5_PredTN$MedLoad[BR5_PredTN$True > 1]-BR5_PredTN$Load05[BR5_PredTN$True > 1], BR5_PredTN$MedLoad[BR5_PredTN$True > 1]+BR5_PredTN$Load95[BR5_PredTN$True > 1])), xlab = expression(paste('log'[10] ~ 'True BR5 TN Load (mg N/s)')), ylab = expression(paste('log'[10] ~ 'WRTDS Predicted Load of BR5 TN (mg N/s)')), log='xy')
-arrows(BR5_PredTN$TrueLoad[BR5_PredTN$True > 1], BR5_PredTN$MedLoad[BR5_PredTN$True > 1]-BR5_PredTN$Load05[BR5_PredTN$True > 1], BR5_PredTN$TrueLoad[BR5_PredTN$True > 1], BR5_PredTN$MedLoad[BR5_PredTN$True > 1]+BR5_PredTN$Load95[BR5_PredTN$True > 1], length=0.05, angle=90, code=3)
+plot(BR5_PredTN$TrueLoad[BR5_PredTN$True > 1], BR5_PredTN$MedLoad[BR5_PredTN$True > 1], 
+     ylim=range(c(BR5_PredTN$MedLoad[BR5_PredTN$True > 1]-BR5_PredTN$Load05[BR5_PredTN$True > 1], BR5_PredTN$MedLoad[BR5_PredTN$True > 1]+BR5_PredTN$Load95[BR5_PredTN$True > 1])), 
+     xlab = expression(paste('log'[10] ~ 'True BR5 TN Load (mg N/s)')), ylab = expression(paste('log'[10] ~ 'WRTDS Predicted Load of BR5 TN (mg N/s)')), log='xy')
+arrows(BR5_PredTN$TrueLoad[BR5_PredTN$True > 1], BR5_PredTN$MedLoad[BR5_PredTN$True > 1]-BR5_PredTN$Load05[BR5_PredTN$True > 1], 
+       BR5_PredTN$TrueLoad[BR5_PredTN$True > 1], BR5_PredTN$MedLoad[BR5_PredTN$True > 1]+BR5_PredTN$Load95[BR5_PredTN$True > 1], 
+       length=0.05, angle=90, code=3)
 lines(c(1e-7,10), c(1e-7,10))
 dev.off()
 
@@ -3740,7 +3776,10 @@ TabLogErr_POBR = as.matrix(read.table(file = 'TabLogErr_POBRMod5_p5.txt', sep = 
 #  Compare predictions of Pond Branch WRTDS and the other regression to true value----
 POBR_PredTN_POBRWRTDS = matrix(NA, ncol = 3, nrow = length(Flows_POBR))
 for(i in 1:length(Flows_POBR)){
-  POBR_PredTN_POBRWRTDS[i,] = predictWRTDS(Date = as.character(as.Date(Dates_POBR))[i], Flow = Flows_POBR[i], rowt = as.numeric(rownames(TabInt_POBR)), colt = as.numeric(colnames(TabInt_POBR)), TabInt = TabInt_POBR, TabYear = TabYear_POBR, TabLogQ = TabLogQ_POBR, TabSinYear = TabSinYear_POBR, TabCosYear = TabCosYear_POBR, TabLogErr = TabLogErr_POBR)
+  POBR_PredTN_POBRWRTDS[i,] = predictWRTDS(Date = as.character(as.Date(Dates_POBR))[i], Flow = Flows_POBR[i], 
+                                           rowt = as.numeric(rownames(TabInt_POBR)), colt = as.numeric(colnames(TabInt_POBR)), 
+                                           TabInt = TabInt_POBR, TabYear = TabYear_POBR, TabLogQ = TabLogQ_POBR, 
+                                           TabSinYear = TabSinYear_POBR, TabCosYear = TabCosYear_POBR, TabLogErr = TabLogErr_POBR)
 }
 rm(i)
 colnames(POBR_PredTN_POBRWRTDS) = c('05', 'Med', '95')
@@ -3815,7 +3854,10 @@ dev.off()
 POBR_PredTN_POBRWRTDS$cols = BES_TN_d$POBR$cols[as.Date(BES_TN_d$POBR$SortDate) %in% as.Date(Dates_POBR)]
 
 png('POBR_TN_ScatterHist_POBRWRTDS.png', res = 300, units = 'in', width = 10, height = 10)
-scatterHist_mod(x = log10(POBR_PredTN_POBRWRTDS$TrueLoad), y = log10(POBR_PredTN_POBRWRTDS$MedLoad), density = FALSE, freq = FALSE, x.breaks = 100, y.breaks = 100, correl = FALSE, xlab = expression(paste('log'[10] ~ '(True TN Load [mg N/s])')), ylab = expression(paste('log'[10] ~ 'Predicted TN Load (mg N/s)')), cex.lab = 1.5, cex.axis = 1.5, title = '', pch = 16, ellipse = FALSE, smooth = FALSE, col = POBR_PredTN_POBRWRTDS$cols)
+scatterHist_mod(x = log10(POBR_PredTN_POBRWRTDS$TrueLoad), y = log10(POBR_PredTN_POBRWRTDS$MedLoad), 
+                density = FALSE, freq = FALSE, x.breaks = 100, y.breaks = 100, correl = FALSE, 
+                xlab = expression(paste('log'[10] ~ '(True TN Load [mg N/s])')), ylab = expression(paste('log'[10] ~ 'Predicted TN Load (mg N/s)')), 
+                cex.lab = 1.5, cex.axis = 1.5, title = '', pch = 16, ellipse = FALSE, smooth = FALSE, col = POBR_PredTN_POBRWRTDS$cols)
 dev.off()
 
 POBR_PredTN_POBRWRTDS$DiffMedLoad = POBR_PredTN_POBRWRTDS$TrueLoad - POBR_PredTN_POBRWRTDS$MedLoad
@@ -4011,7 +4053,10 @@ Flows_POBR_AllDates = BES_TN_d$POBR$Flow[which((as.Date(BES_TN_d$POBR$SortDate) 
 Dates_POBR_AllDates = BES_TN_d$POBR$SortDate[which((as.Date(BES_TN_d$POBR$SortDate) <= '2014-01-01') & (as.Date(BES_TN_d$POBR$SortDate) >= '1999-11-15'))]
 POBR_AllDates_PredTN = matrix(NA, ncol = 3, nrow = length(Flows_POBR_AllDates))
 for(i in 1:length(Flows_POBR_AllDates)){
-  POBR_AllDates_PredTN[i,] = predictWRTDS(Date = as.character(as.Date(Dates_POBR_AllDates))[i], Flow = Flows_POBR_AllDates[i], rowt = as.numeric(rownames(TabInt_POBR)), colt = as.numeric(colnames(TabInt_POBR)), TabInt = TabInt_POBR, TabYear = TabYear_POBR, TabLogQ = TabLogQ_POBR, TabSinYear = TabSinYear_POBR, TabCosYear = TabCosYear_POBR, TabLogErr = TabLogErr_POBR)
+  POBR_AllDates_PredTN[i,] = predictWRTDS(Date = as.character(as.Date(Dates_POBR_AllDates))[i], Flow = Flows_POBR_AllDates[i], 
+                                          rowt = as.numeric(rownames(TabInt_POBR)), colt = as.numeric(colnames(TabInt_POBR)), 
+                                          TabInt = TabInt_POBR, TabYear = TabYear_POBR, TabLogQ = TabLogQ_POBR, 
+                                          TabSinYear = TabSinYear_POBR, TabCosYear = TabCosYear_POBR, TabLogErr = TabLogErr_POBR)
 }
 rm(i)
 colnames(POBR_AllDates_PredTN) = c('05', 'Med', '95')
