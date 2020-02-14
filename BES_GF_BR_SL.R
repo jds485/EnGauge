@@ -34,8 +34,13 @@ dir_WChem = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_
 dir_SynWChem_Kenworth = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\WaterChemistry\\BARN_Synoptic\\WaterChemical_Kenworth_01-02"
 dir_SynWChem_Smith = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\WaterChemistry\\BARN_Synoptic\\WaterChemical_Smith_06-07"
 
-#WRTDS Output Directory
-wd_WRTDS_PondBranch = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs\\POBR\\"
+#WRTDS Interpolation Table Directory
+wd_WRTDS_BARN = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\WRTDS'
+wd_WRTDS_POBR = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\WRTDS\\POBR'
+
+#RHESSys Observation File Directory
+wd_RHESSysObs_BARN = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs"
+wd_RHESSysObs_POBR = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs\\POBR\\"
 
 #Precipitation
 dir_precip = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\Precipitation"
@@ -43,6 +48,14 @@ dir_Nexrad = paste0(dir_precip, '/', "BES_Nexrad")
 
 #Streams Shapefile
 dir_streams = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\NHD_H_Maryland_State_Shape\\Shape"
+
+#RHESSys Climate Files
+wd_clim = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\clim"
+#Laurence Lin's climate files
+wd_LinData = "C:\\Users\\jsmif\\OneDrive - University of Virginia\\JDS_DesktopFiles_13Feb2020\\rhessys30m_Pond\\clim"
+
+#Baisman Run and Pond Branch Main Directory
+wd_BRPOBR = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR"
 
 #Set input filenames----
 #Region of interest shapefile name
@@ -73,6 +86,20 @@ f_Pdlist = 'TP_d.yaml'
 f_WQPsites = 'PhosphorusSites'
 #Water Chemistry from BES stations
 f_WChem = 'BES-stream-chemistry-data-for-WWW-feb-2018---core-sites-only_JDSprocessed.csv'
+#Kenworth Synoptic Water Quality
+#Locations
+f_KenworthSites = "Kenworth_Chem_Sites"
+#Flow
+f_KenworthWQ_Q = "Kenworth_Q.csv"
+#TN
+f_KenworthWQ_TN = "Kenworth_TN.csv"
+#Smith Synoptic Water Quality
+#Locations
+f_SmithSites = "Smith_Chem_Sites"
+#Flow
+f_SmithWQ_Q = "Smith_discharge.csv"
+#TN
+f_SmithWQ_TN = "Smith_TN.csv"
 #USGS stream gauge matches
 f_USGS_GaugeMatch = 'Abbreviations_SampleRecordLengths.csv'
 #Precipitation Measurements
@@ -80,6 +107,12 @@ f_Precip = 'BES_precipitation.csv'
 f_Precip_locs = 'BES_GaugeLocs.csv'
 #Stream shapefile
 f_streams = 'NHDFlowline'
+#Baisman Impervious Fraction
+f_BaismanImperviousFrac = "ImperviousFraction.tiff"
+#Laurence Lin Datasets
+f_LinRain = "Oregon.rain"
+f_LinTmax = "Oregon.tmax"
+f_LinTmin = "Oregon.tmin"
 
 #Set output filenames----
 #all chemical data as lists by site
@@ -116,6 +149,9 @@ f_NOAAstationsROI = 'NOAA_StationLocs_20km'
 f_NOAAstationsDataList = 'NOAA_MetStations.yaml'
 #Nexrad Data
 f_NexradDataList = 'NexradYearList.yaml'
+f_BaismanNexradPixels_d = 'BaismanNexradPixels.csv'
+f_BaismanNexradPixels_15min = 'BaismanNexradPixels_15minPrecip.csv'
+f_BaismanNexradPixelsMap = 'BaismanNexradPixels'
 
 #Fixme: provide output filenames for these weather station gauge datasets
 # Precipitation
@@ -133,6 +169,14 @@ pCRS = '+init=epsg:26918'
 
 #Define a buffer to use for the ROI to download weather gauges, in map units
 ROIbuffPrecip = 20000
+
+#Set plot limits - set to NULL to ignore use----
+#BES TN Dates
+xlim_BESTN = c(as.POSIXct('2000-01-01'), as.POSIXct('2020-01-01'))
+xlim_BESTN_Full = c(as.Date("1995-01-01"), as.Date("2010-01-01"))
+
+#Streamflow y axis limits
+ylim_SF = c(0, 7000)
 
 #Load libraries----
 library(dataRetrieval)
@@ -156,7 +200,8 @@ library(survival)
 library(pracma)
 library(psych)
 library(car)
-#Functions from repository
+
+#Load functions from repositories----
 setwd(dir_EnGauge)
 source('missingDates.R')
 source('checkDuplicates.R')
@@ -168,7 +213,7 @@ source('scatterHistCols.R')
 #Color functions for plots (R script from Jared Smith's Geothermal_ESDA Github Repo)
 setwd(dir_ColFuns)
 source('ColorFunctions.R')
-#Load modified WRTDS functions and the interpolation tables for regression parameters
+#Load modified WRTDS functions
 #Fixme: move this file to the EnGauge repository. It belongs there or in the original EGRET repository.
 setwd('C:\\Users\\js4yd\\OneDrive - University of Virginia\\RHESSys_ParameterSA')
 source('WRTDS_modifiedFunctions.R')
@@ -320,7 +365,7 @@ i = 5
 hist(log10(BES_WQ_Sites_TN[[i]]$NO3..mg.N.L.), breaks = 10000)
 plot(BES_WQ_Sites_TN[[i]]$SortDateTime, BES_WQ_Sites_TN[[i]]$NO3..mg.N.L., log = 'y')
 hist(log10(BES_WQ_Sites_TN[[i]]$TN..mg.N.L.), breaks = 10000)
-plot(BES_WQ_Sites_TN[[i]]$SortDateTime, BES_WQ_Sites_TN[[i]]$TN..mg.N.L., log = 'y', ylim = c(0.01,5), xlim = c(as.POSIXct('2000-01-01'), as.POSIXct('2020-01-01')))
+plot(BES_WQ_Sites_TN[[i]]$SortDateTime, BES_WQ_Sites_TN[[i]]$TN..mg.N.L., log = 'y', ylim = c(0.01,5), xlim = xlim_BESTN)
 rm(i)
 #NoTNDL = c(1, 2, 3, 4, 6, 7, 8)
 #TNDL = c(5)
@@ -333,9 +378,9 @@ BES_WQ_Sites_TN$POBR$DetectionLimit[BES_WQ_Sites_TN$POBR$TN..mg.N.L. == 0.01] = 
 BES_WQ_Sites_TN$POBR$DetectionLimit[which((BES_WQ_Sites_TN$POBR$TN..mg.N.L. == 0.05) & (BES_WQ_Sites_TN$POBR$SortDate > as.Date('2012-01-01')))] = 2
 
 i = 5
-plot(BES_WQ_Sites_TN[[i]]$SortDateTime, BES_WQ_Sites_TN[[i]]$TN..mg.N.L., log = 'y', ylim = c(0.01,5), xlim = c(as.POSIXct('2000-01-01'), as.POSIXct('2020-01-01')))
+plot(BES_WQ_Sites_TN[[i]]$SortDateTime, BES_WQ_Sites_TN[[i]]$TN..mg.N.L., log = 'y', ylim = c(0.01,5), xlim = xlim_BESTN)
 par(new = T)
-plot(BES_WQ_Sites_TN[[i]]$SortDateTime[is.na(BES_WQ_Sites_TN[[i]]$DetectionLimit) == FALSE], BES_WQ_Sites_TN[[i]]$TN..mg.N.L.[is.na(BES_WQ_Sites_TN[[i]]$DetectionLimit) == FALSE], log = 'y', ylim = c(0.01,5), xlim = c(as.POSIXct('2000-01-01'), as.POSIXct('2020-01-01')), col = 'red')
+plot(BES_WQ_Sites_TN[[i]]$SortDateTime[is.na(BES_WQ_Sites_TN[[i]]$DetectionLimit) == FALSE], BES_WQ_Sites_TN[[i]]$TN..mg.N.L.[is.na(BES_WQ_Sites_TN[[i]]$DetectionLimit) == FALSE], log = 'y', ylim = c(0.01,5), xlim = xlim_BESTN, col = 'red')
 rm(i)
 
 #   TP - quite variable over time----
@@ -670,14 +715,14 @@ for (i in 1:length(BES_TN)){
        xlab = 'Year', 
        ylab = 'Total Nitrogen (mg/L as N)', 
        main = paste0('Station #', BES_TN[[i]]$USGSgauge[1], ' ', BES_TN[[i]]$Site[1]),
-       ylim = c(0, 10), xlim = c(as.Date("1995-01-01"), as.Date("2010-01-01")))
+       ylim = c(0, 10), xlim = xlim_BESTN_Full)
   if(length(which(is.na(BES_TN[[i]]$TN..mg.N.L.))) > 0){
     #Plot where there are NA days that do not correspond to detection limits
     par(new = TRUE)
     plot(y = rep(0, length(which(is.na(BES_TN[[i]]$TN..mg.N.L.)))), x = as.Date(BES_TN[[i]]$SortDate[which(is.na(BES_TN[[i]]$TN..mg.N.L.))]), pch = 4, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1995-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = c(0, 0.5), xlim = xlim_BESTN_Full, axes = FALSE,
          col = 'grey')
     legend('topright', legend = 'NA values', col = 'grey', pch = 4)
   }
@@ -691,14 +736,14 @@ for (i in 1:length(BES_TN)){
        xlab = 'Year', 
        ylab = 'Total Nitrogen (mg/L as N)', 
        main = paste0('Station #', BES_TN[[i]]$USGSgauge[1], ' ', BES_TN[[i]]$Site[1]),
-       ylim = c(0, 10), xlim = c(as.Date("1995-01-01"), as.Date("2010-01-01")))
+       ylim = c(0, 10), xlim = xlim_BESTN_Full)
   if(length(which(is.na(BES_TN[[i]]$TN..mg.N.L.))) > 0){
     #Plot where there are NA days that do not correspond to detection limits
     par(new = TRUE)
     plot(y = rep(0, length(which(is.na(BES_TN[[i]]$TN..mg.N.L.)))), x = as.Date(BES_TN[[i]]$SortDate[which(is.na(BES_TN[[i]]$TN..mg.N.L.))]), pch = 4, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1995-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = c(0, 0.5), xlim = xlim_BESTN_Full, axes = FALSE,
          col = 'grey')
     legend('topright', legend = 'NA values', col = 'grey', pch = 4)
   }
@@ -845,14 +890,14 @@ for (i in 1:length(BES_TP)){
        xlab = 'Year', 
        ylab = expression(paste('Total Phosphorus ( ', mu, 'g/L as P)')), 
        main = paste0('Station #', BES_TP[[i]]$USGSgauge[1], ' ', BES_TP[[i]]$Site[1]),
-       ylim = c(0, 10), xlim = c(as.Date("1995-01-01"), as.Date("2010-01-01")))
+       ylim = c(0, 10), xlim = xlim_BESTN_Full)
   if(length(which(is.na(BES_TP[[i]]$TP..ugP.L.))) > 0){
     #Plot where there are NA days that do not correspond to detection limits
     par(new = TRUE)
     plot(y = rep(0, length(which(is.na(BES_TP[[i]]$TP..ugP.L.)))), x = as.Date(BES_TP[[i]]$SortDate[which(is.na(BES_TP[[i]]$TP..ugP.L.))]), pch = 4, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1995-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = c(0, 0.5), xlim = xlim_BESTN_Full, axes = FALSE,
          col = 'grey')
     legend('topright', legend = 'NA values', col = 'grey', pch = 4)
   }
@@ -866,14 +911,14 @@ for (i in 1:length(BES_TP)){
        xlab = 'Year', 
        ylab = expression(paste('Total Phosphorus ( ', mu, 'g/L as P)')), 
        main = paste0('Station #', BES_TP[[i]]$USGSgauge[1], ' ', BES_TP[[i]]$Site[1]),
-       ylim = c(0, 10), xlim = c(as.Date("1995-01-01"), as.Date("2010-01-01")))
+       ylim = c(0, 10), xlim = xlim_BESTN_Full)
   if(length(which(is.na(BES_TP[[i]]$TP..ugP.L.))) > 0){
     #Plot where there are NA days that do not correspond to detection limits
     par(new = TRUE)
     plot(y = rep(0, length(which(is.na(BES_TP[[i]]$TP..ugP.L.)))), x = as.Date(BES_TP[[i]]$SortDate[which(is.na(BES_TP[[i]]$TP..ugP.L.))]), pch = 4, cex = 0.3,
          xlab = '', 
          ylab = "",
-         ylim = c(0, 0.5), xlim = c(as.Date("1995-01-01"), as.Date("2010-01-01")), axes = FALSE,
+         ylim = c(0, 0.5), xlim = xlim_BESTN_Full, axes = FALSE,
          col = 'grey')
     legend('topright', legend = 'NA values', col = 'grey', pch = 4)
   }
@@ -1846,12 +1891,15 @@ BaisPix_Processed = BaisNex_Precip_d2$Dataset
 BaisNex_Precip_d = BaisNex_Precip_d2$StationList
 rm(BaisNex_Precip_d2)
 
-#   Convert units to mm/km^2 from mm/ha----
+names(BaisNex_Precip_d) = paste0('Pix', seq(1,length(BaisNex_Precip_d),1))
+
+#   Fixme?: Convert units to mm/km^2 from mm/ha----
+# Based on the BES website, the units are simply mm, not mm/ha. But, the readme file says mm/ha.
 #1 ha = .01 km^2
-for(i in 1:length(BaisNex_Precip_d)){
-  BaisNex_Precip_d[[i]]$Precip = BaisNex_Precip_d[[i]]$Precip/.01
-}
-rm(i)
+#for(i in 1:length(BaisNex_Precip_d)){
+#  BaisNex_Precip_d[[i]]$Precip = BaisNex_Precip_d[[i]]$Precip/.01
+#}
+#rm(i)
 
 # Compare the pixels with each other----
 #make a matrix of the data to get a scatterplot matrix
@@ -1870,12 +1918,12 @@ matplotDates(as.Date(BaisNexPrecipMat[,1]), BaisNexPrecipMat[,c(5,6,7,10)], type
 dev.off()
 
 png('BaismanNexradPixPrecipScatterPlotMatrix.png', res = 300, height = 8, width = 8, units = 'in')
-pairs.panels(x = log10(BaisNexPrecipMat[,c(5,6,7,10)]+.1), scale = FALSE, density = FALSE, ellipses = FALSE, smooth = FALSE, 
+pairs.panels(x = log10(BaisNexPrecipMat[,c(6,7,8,11)]+.01), scale = FALSE, density = FALSE, ellipses = FALSE, smooth = FALSE, 
              digits = 3, lm = TRUE, jiggle = FALSE, rug = FALSE, cex.cor = .7, method = 'spearman')
 dev.off()
 
 png('BaismanNexradPixPrecipScatterPlotMatrix_BufferPix.png', res = 300, height = 16, width = 16, units = 'in')
-pairs.panels(x = log10(BaisNexPrecipMat[,-1]+.1), scale = FALSE, density = FALSE, ellipses = FALSE, smooth = FALSE, 
+pairs.panels(x = log10(BaisNexPrecipMat[,-1]+.01), scale = FALSE, density = FALSE, ellipses = FALSE, smooth = FALSE, 
              digits = 3, lm = TRUE, jiggle = FALSE, rug = FALSE, cex.cor = .7, method = 'spearman')
 dev.off()
 
@@ -1885,168 +1933,217 @@ max(as.Date(BaisNex_Precip_d[[1]]$Date))
 IndStart = which(as.Date(BaisNex_Precip_d[[1]]$Date) == min(as.Date(BES_Precip_d$WXORDG_RG1$SortDate)))
 
 #Plot the rain gauge vs. this gauge
-BaisNex_Precip_d[[1]][IndStart:nrow(BaisNex_Precip_d[[1]]),]
+#BaisNex_Precip_d[[1]][IndStart:nrow(BaisNex_Precip_d[[1]]),]
 
 BaisNexPrecipMat$ORGauge = NA 
 BaisNexPrecipMat$ORGauge[IndStart:nrow(BaisNexPrecipMat)] = BES_Precip_Avg_d$`Oregon Ridge Park`$mean[as.Date(BES_Precip_Avg_d$`Oregon Ridge Park`$SortDate) <= max(as.Date(BaisNex_Precip_d[[1]]$Date))]
 
 png('BaismanNexradPixPrecipScatterPlotMatrix_WithRainGauge.png', res = 300, height = 8, width = 8, units = 'in')
-pairs.panels(x = log10(BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),-1][which((BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),-1]$Pix1 > 0) & !is.nan(BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),-1]$ORGauge)),]), scale = FALSE, density = FALSE, ellipses = FALSE, smooth = FALSE, 
+pairs.panels(x = log10(BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),c(6,7,8,11,14)][which((BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),6] > 0) & !is.nan(BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),14])),]), scale = FALSE, density = FALSE, ellipses = FALSE, smooth = FALSE, 
              digits = 3, lm = TRUE, jiggle = FALSE, rug = FALSE, cex.cor = .7, method = 'spearman', xlim = c(-2.5,2.5), ylim = c(-2.5, 2.5))
 dev.off()
 
+png('BaismanNexradPixPrecipScatterPlotMatrix_BufferPix_WithRainGauge.png', res = 300, height = 8, width = 8, units = 'in')
+pairs.panels(x = log10(BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),-1][which((BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),6] > 0) & (BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),3] > 0) & !is.nan(BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),14])),]), scale = FALSE, density = FALSE, ellipses = FALSE, smooth = FALSE, 
+             digits = 3, lm = TRUE, jiggle = FALSE, rug = FALSE, cex.cor = .7, method = 'spearman', xlim = c(-2.5,2.5), ylim = c(-2.5, 2.5))
+dev.off()
 
 # Fixme: Fill in rasters with gauge values on days without radar information----
-# Fixme: Convert to a raster for use in RHESSys patch precip assignment----
-gridded(Nexrad) = TRUE
-gridded(Nexrad2) = TRUE
-NexradRas = raster(Nexrad)
-NexradRas = projectRaster(NexradRas, crs = CRS(pCRS))
+# Save the Nexrad data----
+BaisNexPrecipMat$Date = as.Date(BaisNexPrecipMat$Date)
+write.csv(BaisNexPrecipMat, file = f_BaismanNexradPixels_d, row.names = FALSE)
+write.csv(NexradMat, file = f_BaismanNexradPixels_15min, row.names = FALSE)
+writeOGR(BaisPix, dsn = getwd(), layer = f_BaismanNexradPixelsMap, driver = 'ESRI Shapefile')
 
-NexradRas2 = raster(Nexrad2)
-NexradRas2 = projectRaster(NexradRas2, crs = CRS(pCRS))
+# Fixme: Convert to a raster for use in RHESSys patch precip assignment----
+#gridded(Nexrad) = TRUE
+#gridded(Nexrad2) = TRUE
+#NexradRas = raster(Nexrad)
+#NexradRas = projectRaster(NexradRas, crs = CRS(pCRS))
+
+#NexradRas2 = raster(Nexrad2)
+#NexradRas2 = projectRaster(NexradRas2, crs = CRS(pCRS))
 
 #Fixme: Download climate indices (ENSO, PDO, etc.) and evaluate timeseries relative to those----
-#Create Observation timeseries for RHESSys calibration----
-#Baisman USGS Streamflow and TN----
-setwd("C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs")
+#Create Observation timeseries for RHESSys runs----
+# Baisman USGS Streamflow and TN----
+setwd(wd_RHESSysObs_BARN)
 
 #Streamflow and Nitrogen are both available in the BES_TN_d list
-BES_TN_d_load = list.load('C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\WaterChemistry\\Nitrogen\\BES_TN_d.yaml', type = "YAML")
+#Pond branch had several streamflow revisions in Sept 2019 as a result of a new stage-discharge relation. Updates here are for Feb. 2020.
 
 #Earliest possible start date for calibration
-min(as.Date(BES_TN_d_load$BARN$SortDate, origin="1970-01-01"))
+CalEarliestDate = max(min(as.Date(BES_TN_d$BARN$SortDate, origin="1970-01-01")), min(as.Date(BES_TN_d$POBR$SortDate, origin="1970-01-01")))
 
 #Latest possible end date for validation
-max(as.Date(BES_TN_d_load$BARN$SortDate, origin="1970-01-01"))
+ValLatestDate = min(max(as.Date(BES_TN_d$BARN$SortDate, origin="1970-01-01")), max(as.Date(BES_TN_d$POBR$SortDate, origin="1970-01-01")))
 
 #Total number of samples
-#Fixme: edit the hard coded numbers
-length(which(!is.na(BES_TN_d_load$BARN$TN..mg.N.L.)))
-#Want to have at least 15-20% of record for validation
-876*.85
-which(!is.na(BES_TN_d_load$BARN$TN..mg.N.L.))[743]
-as.Date(BES_TN_d_load$BARN$SortDate[5365], origin="1970-01-01")
+BARN_NumTNSamps = length(which(!is.na(BES_TN_d$BARN$TN..mg.N.L.)))
+POBR_NumTNSamps = length(which(!is.na(BES_TN_d$POBR$TN..mg.N.L.)))
+#Want to have at least 15-20% of record for validation. BARN has least number of data points, so use that as date reference.
+ValDate_15pct = as.Date(BES_TN_d$BARN$SortDate[which(!is.na(BES_TN_d$BARN$TN..mg.N.L.))[floor(BARN_NumTNSamps*.85)]], origin="1970-01-01")
+ValDate_20pct = as.Date(BES_TN_d$BARN$SortDate[which(!is.na(BES_TN_d$BARN$TN..mg.N.L.))[floor(BARN_NumTNSamps*.80)]], origin="1970-01-01")
 
-876*.80
-which(!is.na(BES_TN_d_load$BARN$TN..mg.N.L.))[700]
-as.Date(BES_TN_d_load$BARN$SortDate[5050], origin="1970-01-01")
+#Select the water year start between these values on Oct. 1, 2013 
+#TN about 20% of observations for validation at BARN
+1 - length(which((!is.na(BES_TN_d$BARN$TN..mg.N.L.)) & (as.Date(BES_TN_d$BARN$SortDate, origin="1970-01-01") < '2013-10-01')))/length(which((!is.na(BES_TN_d$BARN$TN..mg.N.L.))))
 
-#Calendar year end - about 18.4% of observations
-as.Date(BES_TN_d_load$BARN$SortDate[5162], origin="1970-01-01")
-length(which((!is.na(BES_TN_d_load$BARN$TN..mg.N.L.)) & (as.Date(BES_TN_d_load$BARN$SortDate, origin="1970-01-01") >= '2014-01-01')))/length(which((!is.na(BES_TN_d_load$BARN$TN..mg.N.L.))))
+#Flow about 20% of observations for validation at BARN
+1 - length(which(as.Date(BES_TN_d$BARN$SortDate, origin="1970-01-01") < '2013-10-01'))/length(BES_TN_d$BARN$SortDate)
 
-#Flow % about 18.7%
-length(which(as.Date(BES_TN_d_load$BARN$SortDate, origin="1970-01-01") < '2014-01-01'))/length(BES_TN_d_load$BARN$SortDate)
-
-#Water year peak on April 1 - about 17% of observations
-as.Date(BES_TN_d_load$BARN$SortDate[5252], origin="1970-01-01")
-length(which((!is.na(BES_TN_d_load$BARN$TN..mg.N.L.)) & (as.Date(BES_TN_d_load$BARN$SortDate, origin="1970-01-01") >= '2014-03-31')))/length(which((!is.na(BES_TN_d_load$BARN$TN..mg.N.L.))))
-
-#Flow % about 17.25% of observations
-1 - length(which(as.Date(BES_TN_d_load$BARN$SortDate, origin="1970-01-01") < '2014-03-31'))/length(BES_TN_d_load$BARN$SortDate)
-
+#  Save text files for RHESSys calibration and validation----
 #Streamflow - Calibration
-StreamCal = data.frame(Date = as.character(as.Date(BES_TN_d_load$BARN$SortDate, origin='1970-01-01')[as.Date(BES_TN_d_load$BARN$SortDate, origin='1970-01-01') < "2013-10-01"]), Flow = BES_TN_d_load$BARN$Flow[as.Date(BES_TN_d_load$BARN$SortDate, origin='1970-01-01') < "2013-10-01"], stringsAsFactors = FALSE)
+#Get indices for calibration and validation
+IndDatesCalBARN = which((as.Date(BES_TN_d$BARN$SortDate, origin='1970-01-01') < "2013-10-01") & (as.Date(BES_TN_d$BARN$SortDate, origin='1970-01-01') >= CalEarliestDate))
+IndDatesValBARN = which((as.Date(BES_TN_d$BARN$SortDate, origin='1970-01-01') >= "2008-11-15") & (as.Date(BES_TN_d$BARN$SortDate, origin='1970-01-01') <= ValLatestDate))
+#File for saving
+StreamCal = data.frame(Date = as.character(as.Date(BES_TN_d$BARN$SortDate, origin='1970-01-01')[IndDatesCalBARN]), 
+                       Flow = BES_TN_d$BARN$Flow[IndDatesCalBARN], 
+                       stringsAsFactors = FALSE)
 options(scipen = 999)
-write.table(x = StreamCal, file = 'BaismanStreamflow_Cal.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+write.table(x = StreamCal, file = 'BaismanStreamflow_Feb2020Revised_Cal.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
 options(scipen = 0)
-#Streamflow - Validation
-StreamVal = data.frame(Date = as.character(as.Date(BES_TN_d_load$BARN$SortDate, origin='1970-01-01')[as.Date(BES_TN_d_load$BARN$SortDate, origin='1970-01-01') >= "2008-11-15"]), Flow = BES_TN_d_load$BARN$Flow[as.Date(BES_TN_d_load$BARN$SortDate, origin='1970-01-01') >= "2008-11-15"], stringsAsFactors = FALSE)
+#Streamflow - Validation - needs 5 years of spinup before validation starts.
+StreamVal = data.frame(Date = as.character(as.Date(BES_TN_d$BARN$SortDate, origin='1970-01-01')[IndDatesValBARN]), 
+                       Flow = BES_TN_d$BARN$Flow[IndDatesValBARN], 
+                       stringsAsFactors = FALSE)
 options(scipen = 999)
-write.table(x = StreamVal, file = 'BaismanStreamflow_Val.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+write.table(x = StreamVal, file = 'BaismanStreamflow_Feb2020Revised_Val.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
 options(scipen = 0)
 
 #Streamflow - Calibration - Pond Branch
-StreamCal_POBR = data.frame(Date = as.character(as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01')[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') < "2013-10-01"]), Flow = BES_TN_d_load$POBR$Flow[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') < "2013-10-01"], stringsAsFactors = FALSE)
+setwd(wd_RHESSysObs_POBR)
+IndDatesCalPOBR = which((as.Date(BES_TN_d$POBR$SortDate, origin='1970-01-01') < "2013-10-01") & (as.Date(BES_TN_d$POBR$SortDate, origin='1970-01-01') >= CalEarliestDate))
+IndDatesValPOBR = which((as.Date(BES_TN_d$POBR$SortDate, origin='1970-01-01') >= "2008-11-15") & (as.Date(BES_TN_d$POBR$SortDate, origin='1970-01-01') <= ValLatestDate))
+StreamCal_POBR = data.frame(Date = as.character(as.Date(BES_TN_d$POBR$SortDate, origin='1970-01-01')[IndDatesCalPOBR]), 
+                            Flow = BES_TN_d$POBR$Flow[IndDatesCalPOBR], 
+                            stringsAsFactors = FALSE)
 options(scipen = 999)
-write.table(x = StreamCal_POBR, file = 'BaismanStreamflow_POBR_Cal.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+write.table(x = StreamCal_POBR, file = 'BaismanStreamflow_POBR_Feb2020Revised__Cal.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
 options(scipen = 0)
 #Streamflow - Validation - Pond Branch
-StreamVal_POBR = data.frame(Date = as.character(as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01')[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') >= "2008-11-15"]), Flow = BES_TN_d_load$POBR$Flow[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') >= "2008-11-15"], stringsAsFactors = FALSE)
+StreamVal_POBR = data.frame(Date = as.character(as.Date(BES_TN_d$POBR$SortDate, origin='1970-01-01')[IndDatesValPOBR]), 
+                            Flow = BES_TN_d$POBR$Flow[IndDatesValPOBR], 
+                            stringsAsFactors = FALSE)
 options(scipen = 999)
-write.table(x = StreamVal_POBR, file = 'BaismanStreamflow_POBR_Val.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+write.table(x = StreamVal_POBR, file = 'BaismanStreamflow_POBR_Feb2020Revised_Val.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
 options(scipen = 0)
 
 #TN - Calibration
-TNCal = data.frame(Date = as.character(as.Date(BES_TN_d_load$BARN$SortDate, origin='1970-01-01')[as.Date(BES_TN_d_load$BARN$SortDate, origin='1970-01-01') < "2013-10-01"]), TN = BES_TN_d_load$BARN$TN..mg.N.L.[as.Date(BES_TN_d_load$BARN$SortDate, origin='1970-01-01') < "2013-10-01"], stringsAsFactors = FALSE)
-TNCal_WRTDS = data.frame(Date = as.character(as.Date(BES_TN_d_load$BARN$SortDate, origin='1970-01-01')[as.Date(BES_TN_d_load$BARN$SortDate, origin='1970-01-01') < "2013-10-01"]), remark = rep('', length(BES_TN_d_load$BARN$TN..mg.N.L.[as.Date(BES_TN_d_load$BARN$SortDate, origin='1970-01-01') < "2013-10-01"])), TN = BES_TN_d_load$BARN$TN..mg.N.L.[as.Date(BES_TN_d_load$BARN$SortDate, origin='1970-01-01') < "2013-10-01"], stringsAsFactors = FALSE)
+setwd(wd_RHESSysObs_BARN)
+TNCal = data.frame(Date = as.character(as.Date(BES_TN_d$BARN$SortDate, origin='1970-01-01')[IndDatesCalBARN]), 
+                   TN = BES_TN_d$BARN$TN..mg.N.L.[IndDatesCalBARN], 
+                   stringsAsFactors = FALSE)
+#WRTDS needs another column to run their functions.
+TNCal_WRTDS = data.frame(Date = as.character(as.Date(BES_TN_d$BARN$SortDate, origin='1970-01-01')[IndDatesCalBARN]), 
+                         remark = rep('', length(BES_TN_d$BARN$TN..mg.N.L.[IndDatesCalBARN])), 
+                         TN = BES_TN_d$BARN$TN..mg.N.L.[IndDatesCalBARN], 
+                         stringsAsFactors = FALSE)
 options(scipen = 999)
-write.table(x = TNCal, file = 'TN_Cal.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
-write.table(x = TNCal_WRTDS, file = 'TN_Cal_WRTDS.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+write.table(x = TNCal, file = 'TN_Feb2020Revised_Cal.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+write.table(x = TNCal_WRTDS, file = 'TN_Feb2020Revised_Cal_WRTDS.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
 options(scipen = 0)
 #TN - Validation
-TNVal = data.frame(Date = as.character(as.Date(BES_TN_d_load$BARN$SortDate, origin='1970-01-01')[as.Date(BES_TN_d_load$BARN$SortDate, origin='1970-01-01') >= "2008-11-15"]), TN = BES_TN_d_load$BARN$TN..mg.N.L.[as.Date(BES_TN_d_load$BARN$SortDate, origin='1970-01-01') >= "2008-11-15"], stringsAsFactors = FALSE)
-TNVal_WRTDS = data.frame(Date = as.character(as.Date(BES_TN_d_load$BARN$SortDate, origin='1970-01-01')[as.Date(BES_TN_d_load$BARN$SortDate, origin='1970-01-01') >= "2008-11-15"]), remark = rep('', length(BES_TN_d_load$BARN$TN..mg.N.L.[as.Date(BES_TN_d_load$BARN$SortDate, origin='1970-01-01') >= "2008-11-15"])), TN = BES_TN_d_load$BARN$TN..mg.N.L.[as.Date(BES_TN_d_load$BARN$SortDate, origin='1970-01-01') >= "2008-11-15"], stringsAsFactors = FALSE)
+TNVal = data.frame(Date = as.character(as.Date(BES_TN_d$BARN$SortDate, origin='1970-01-01')[IndDatesValBARN]), 
+                   TN = BES_TN_d$BARN$TN..mg.N.L.[IndDatesValBARN], 
+                   stringsAsFactors = FALSE)
+TNVal_WRTDS = data.frame(Date = as.character(as.Date(BES_TN_d$BARN$SortDate, origin='1970-01-01')[IndDatesValBARN]), 
+                         remark = rep('', length(BES_TN_d$BARN$TN..mg.N.L.[IndDatesValBARN])), 
+                         TN = BES_TN_d$BARN$TN..mg.N.L.[IndDatesValBARN], 
+                         stringsAsFactors = FALSE)
 options(scipen = 999)
-write.table(x = TNVal, file = 'TN_Val.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
-write.table(x = TNVal_WRTDS, file = 'TN_Val_WRTDS.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+write.table(x = TNVal, file = 'TN_Feb2020Revised_Val.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+write.table(x = TNVal_WRTDS, file = 'TN_Feb2020Revised_Val_WRTDS.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
 options(scipen = 0)
 
 #TN - Calibration - Pond Branch
-TNCal_POBR = data.frame(Date = as.character(as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01')[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') < "2013-10-01"]), TN = BES_TN_d_load$POBR$TN..mg.N.L.[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') < "2013-10-01"], stringsAsFactors = FALSE)
-TNCal_POBR_WRTDS = data.frame(Date = as.character(as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01')[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') < "2013-10-01"]), remark = rep('', length(BES_TN_d_load$POBR$TN..mg.N.L.[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') < "2013-10-01"])), TN = BES_TN_d_load$POBR$TN..mg.N.L.[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') < "2013-10-01"], stringsAsFactors = FALSE)
+setwd(wd_RHESSysObs_POBR)
+TNCal_POBR = data.frame(Date = as.character(as.Date(BES_TN_d$POBR$SortDate, origin='1970-01-01')[IndDatesCalPOBR]), 
+                        TN = BES_TN_d$POBR$TN..mg.N.L.[IndDatesCalPOBR], 
+                        stringsAsFactors = FALSE)
+TNCal_POBR_WRTDS = data.frame(Date = as.character(as.Date(BES_TN_d$POBR$SortDate, origin='1970-01-01')[IndDatesCalPOBR]), 
+                              remark = rep('', length(BES_TN_d$POBR$TN..mg.N.L.[IndDatesCalPOBR])), 
+                              TN = BES_TN_d$POBR$TN..mg.N.L.[IndDatesCalPOBR], 
+                              stringsAsFactors = FALSE)
 options(scipen = 999)
-write.table(x = TNCal_POBR, file = 'TN_POBR_Cal.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
-write.table(x = TNCal_POBR_WRTDS, file = 'TN_POBR_Cal_WRTDS.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+write.table(x = TNCal_POBR, file = 'TN_POBR_Feb2020Revised_Cal.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+write.table(x = TNCal_POBR_WRTDS, file = 'TN_POBR_Feb2020Revised_Cal_WRTDS.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
 options(scipen = 0)
 #TN - Validation - Pond Branch
-TNVal_POBR = data.frame(Date = as.character(as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01')[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') >= "2008-11-15"]), TN = BES_TN_d_load$POBR$TN..mg.N.L.[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') >= "2008-11-15"], stringsAsFactors = FALSE)
-TNVal_POBR_WRTDS = data.frame(Date = as.character(as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01')[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') >= "2008-11-15"]), remark = rep('', length(BES_TN_d_load$POBR$TN..mg.N.L.[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') >= "2008-11-15"])), TN = BES_TN_d_load$POBR$TN..mg.N.L.[as.Date(BES_TN_d_load$POBR$SortDate, origin='1970-01-01') >= "2008-11-15"], stringsAsFactors = FALSE)
+TNVal_POBR = data.frame(Date = as.character(as.Date(BES_TN_d$POBR$SortDate, origin='1970-01-01')[IndDatesValPOBR]), 
+                        TN = BES_TN_d$POBR$TN..mg.N.L.[IndDatesValPOBR], 
+                        stringsAsFactors = FALSE)
+TNVal_POBR_WRTDS = data.frame(Date = as.character(as.Date(BES_TN_d$POBR$SortDate, origin='1970-01-01')[IndDatesValPOBR]), 
+                              remark = rep('', length(BES_TN_d$POBR$TN..mg.N.L.[IndDatesValPOBR])), 
+                              TN = BES_TN_d$POBR$TN..mg.N.L.[IndDatesValPOBR], 
+                              stringsAsFactors = FALSE)
 options(scipen = 999)
-write.table(x = TNVal_POBR, file = 'TN_POBR_Val.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
-write.table(x = TNVal_POBR_WRTDS, file = 'TN_POBR_Val_WRTDS.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+write.table(x = TNVal_POBR, file = 'TN_POBR_Feb2020Revised_Val.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+write.table(x = TNVal_POBR_WRTDS, file = 'TN_POBR_Feb2020Revised_Val_WRTDS.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
 options(scipen = 0)
 
-#Create climate station timeseries for RHESSys----
-#Rainfall for Oregon Ridge----
-#Laurence's dataset
-OR_Lin = read.table(file = 'C:\\Users\\js4yd\\Documents\\rhessys30m_Pond\\clim\\Oregon.rain', sep = '\t', stringsAsFactors = FALSE)
+#Create climate station timeseries for RHESSys runs----
+# Rainfall for Oregon Ridge gauge at Baisman Run----
+#Laurence Lin's Oregon Ridge gauge dataset
+OR_Lin = read.table(file = paste0(wd_LinData, "\\", f_LinRain), sep = '\t', stringsAsFactors = FALSE)
 
 x = as.Date('2006-01-01')
 x = x + seq(0, nrow(OR_Lin)-2, 1)
 plot(x, OR_Lin[-1,], type ='l')
 
-
-#Baisman Oregon Ridge vs. MD Science Center precip
-plot(MetStations_5km$USW00093784[3938:7118,]$prcp/10, BES_Precip_Avg_d$`Oregon Ridge Park`$mean, log = 'xy')
-lines(c(1,2000), c(1,2000), col = 'red')
-
-#Compare to BES OR precip
+#Compare Lin to BES OR precip
 plot(BES_Precip_Avg_d$`Oregon Ridge Park`$mean/1000, as.numeric(OR_Lin[-1,][1197:4377]), log = 'xy')
-#Laurence used BES gauge 1, did not average the two gauges
+#Laurence used OR rain gauge 1, did not average the two gauges
 plot(BES_Precip_d$WXORDG_RG1$Precipitation_.mm./1000, as.numeric(OR_Lin[-1,][1197:4377]), log = 'xy')
 
-#Compare to MD Science Center USW00093784
+#Compare Lin to MD Science Center USW00093784
 plot(MetStations_5km$USW00093784[2742:3937,]$prcp/10000, as.numeric(OR_Lin[-1,][1:1196]), log = 'xy')
 
-#Compare to BALTIMORE WASH INTL AP USW00093721
+#Compare Lin to BALTIMORE WASH INTL AP USW00093721
 BWI = meteo_tidy_ghcnd(stationid = 'USW00093721', var = 'all', keep_flags = TRUE)
-plot(BWI[24292:25487,]$prcp/10000, as.numeric(OR_Lin[-1,][1:1196]), log = 'xy')
+BWI_LinDateStart = which(BWI$date == '2006-01-01')
+BWI_LinDateEnd = which(BWI$date == max(x))
+plot(BWI[BWI_LinDateStart:BWI_LinDateEnd,]$prcp/10000, as.numeric(OR_Lin[-1,][1:1196]), log = 'xy')
+rm(x)
 
 #Compare BWI and MD Sci Center
-plot(BWI[24292:25487,]$prcp/10000, MetStations_5km$USW00093784[2742:3937,]$prcp/10000, log = 'xy')
+BWI_CalDateStart = which(BWI$date == CalEarliestDate)
+MDSci_CalDateStart = which(MetStations_5km$USW00093784$date == CalEarliestDate)
+#Not sure why these specific dates were selected.
+plot(BWI[BWI_CalDateStart:(BWI_CalDateStart+6697),]$prcp/10, MetStations_5km$USW00093784[MDSci_CalDateStart:(MDSci_CalDateStart+6697),]$prcp/10, pch = 16, cex = 0.2, log='xy')
+lines(c(1,2000), c(1,2000), col = 'red')
 
-#Compare BES and BWI
-plot(BES_Precip_d$WXORDG_RG1$Precipitation_.mm./1000, BWI[25488:(25488+3180),]$prcp/10000, log = 'xy')
-#Compare BWI and MD Sci Center
-plot(MetStations_5km$USW00093784[3938:(3938+3180),]$prcp/10000, BWI[25488:(25488+3180),]$prcp/10, log = 'xy', cex = 0.2, pch = 16)
-plot(BWI[(22053):(22053+6697),]$prcp/10, MetStations_5km$USW00093784[503:(503+6697),]$prcp/10, pch = 16, cex = 0.2, log='xy')
+#Baisman Oregon Ridge Average vs. MD Science Center precip - OR ridge starts in 2009
+MDSci_ORStartDate = which(MetStations_5km$USW00093784$date == BES_Precip_Avg_d$`Oregon Ridge Park`$SortDate[1])
+MDSci_OREndDate = which(MetStations_5km$USW00093784$date == max(BES_Precip_Avg_d$`Oregon Ridge Park`$SortDate))
+plot(MetStations_5km$USW00093784[MDSci_ORStartDate:MDSci_OREndDate,]$prcp/10, BES_Precip_Avg_d$`Oregon Ridge Park`$mean, log = 'xy', xlab = 'MD Science Center', ylab = 'Oregon Ridge Gauge - Average')
+lines(c(1,2000), c(1,2000), col = 'red')
 
-#More correlated with the MD Science Center - Use that station to fill in before OR Ridge data are available.
-RainTimeseries = MetStations_5km$USW00093784[503:3937,]$prcp/10
+#Baisman Oregon Ridge Average vs. BWI
+BWI_ORStartDate = which(BWI$date == BES_Precip_Avg_d$`Oregon Ridge Park`$SortDate[1])
+BWI_OREndDate = which(BWI$date == max(BES_Precip_Avg_d$`Oregon Ridge Park`$SortDate))
+plot(y = BES_Precip_Avg_d$`Oregon Ridge Park`$mean, x = BWI[BWI_ORStartDate:BWI_OREndDate,]$prcp/10, log = 'xy', xlab = 'BWI Airport', ylab = 'Oregon Ridge Gauge - Average')
+lines(c(1,2000), c(1,2000), col = 'red')
+
+#Oregon Ridge is More correlated with the MD Science Center - Use that station to fill in before OR Ridge data are available.
+#From calibration start date to the start of OR ridge data
+RainTimeseries = MetStations_5km$USW00093784[MDSci_CalDateStart:(MDSci_ORStartDate-1),]$prcp/10
 
 #Fill in NAs in the MD Science Center data with the BWI data. Most are zeros or a small amount of rain
-RainTimeseries[which(is.na(MetStations_5km$USW00093784[503:3937,]$prcp))] = BWI$prcp[which(BWI$date %in% MetStations_5km$USW00093784[503:3937,]$date[which(is.na(MetStations_5km$USW00093784[503:3937,]$prcp))])]/10
+RainTimeseries[which(is.na(MetStations_5km$USW00093784[MDSci_CalDateStart:(MDSci_ORStartDate-1),]$prcp))] = BWI$prcp[which(BWI$date %in% MetStations_5km$USW00093784[MDSci_CalDateStart:(MDSci_ORStartDate-1),]$date[which(is.na(MetStations_5km$USW00093784[MDSci_CalDateStart:(MDSci_ORStartDate-1),]$prcp))])]/10
 
 #Add the corrected/fixed Oregon Ridge data to this timeseries
 #Correct Oregon Ridge dataset
+#Rain gauge 2 vs 1
 plot(BES_Precip_d$WXORDG_RG1$Precipitation_.mm., BES_Precip_d$WXORDG_RG2$Precipitation_.mm., ylim = c(0,150), xlim = c(0,150), xlab = 'Gauge 1', ylab = 'Gauge 2')
 par(new = TRUE)
+#More than 15 mm different
 plot(BES_Precip_Avg_d$`Oregon Ridge Park`$P_WXORDG_RG1[which(abs(BES_Precip_Avg_d$`Oregon Ridge Park`$GaugeDiff) > 15)], BES_Precip_Avg_d$`Oregon Ridge Park`$P_WXORDG_RG2[which(abs(BES_Precip_Avg_d$`Oregon Ridge Park`$GaugeDiff) > 15)], col = 'red', ylim = c(0,150), xlim = c(0,150), xlab = '', ylab = '', axes = FALSE)
 par(new = TRUE)
+#More than 20 mm different
 plot(BES_Precip_Avg_d$`Oregon Ridge Park`$P_WXORDG_RG1[which(abs(BES_Precip_Avg_d$`Oregon Ridge Park`$GaugeDiff) > 20)], BES_Precip_Avg_d$`Oregon Ridge Park`$P_WXORDG_RG2[which(abs(BES_Precip_Avg_d$`Oregon Ridge Park`$GaugeDiff) > 20)], col = 'blue', ylim = c(0,150), xlim = c(0,150), xlab = '', ylab = '', axes = FALSE)
-#Cloud cover lines
+#Full cloud cover lines
 lines(c(.0254*1000,.0254*1000), c(0,150))
 lines(y = c(.0254*1000,.0254*1000), x = c(0,150))
 
@@ -2056,49 +2153,51 @@ BES_Precip_Avg_d$`Oregon Ridge Park`$Selected = BES_Precip_Avg_d$`Oregon Ridge P
 BES_Precip_Avg_d$`Oregon Ridge Park`$Selected[which(abs(BES_Precip_Avg_d$`Oregon Ridge Park`$GaugeDiff) > 20)] = apply(X = rbind(BES_Precip_Avg_d$`Oregon Ridge Park`$P_WXORDG_RG1[which(abs(BES_Precip_Avg_d$`Oregon Ridge Park`$GaugeDiff) > 20)], BES_Precip_Avg_d$`Oregon Ridge Park`$P_WXORDG_RG2[which(abs(BES_Precip_Avg_d$`Oregon Ridge Park`$GaugeDiff) > 20)]), MARGIN = 2, FUN = max)
 
 #Check the NA rain dates with the MD Science Center precip. It's possible that some of these NA dates were days that the gauges did not record.
-#BES_Precip_Avg_d$`Oregon Ridge Park`$SortDate[which(is.na(BES_Precip_Avg_d$`Oregon Ridge Park`$Selected))]
-plot(MetStations_5km$USW00093784[3938:(3938+3180),]$date[MetStations_5km$USW00093784[3938:(3938+3180),]$date %in% BES_Precip_Avg_d$`Oregon Ridge Park`$SortDate[which(is.na(BES_Precip_Avg_d$`Oregon Ridge Park`$Selected))]],
-     MetStations_5km$USW00093784[3938:(3938+3180),]$prcp[MetStations_5km$USW00093784[3938:(3938+3180),]$date %in% BES_Precip_Avg_d$`Oregon Ridge Park`$SortDate[which(is.na(BES_Precip_Avg_d$`Oregon Ridge Park`$Selected))]]/10)
+ORGauge_NADates = BES_Precip_Avg_d$`Oregon Ridge Park`$SortDate[which(is.na(BES_Precip_Avg_d$`Oregon Ridge Park`$Selected))]
+plot(MetStations_5km$USW00093784[MDSci_ORStartDate:MDSci_OREndDate,]$date[MetStations_5km$USW00093784[MDSci_ORStartDate:MDSci_OREndDate,]$date %in% ORGauge_NADates],
+     MetStations_5km$USW00093784[MDSci_ORStartDate:MDSci_OREndDate,]$prcp[MetStations_5km$USW00093784[MDSci_ORStartDate:MDSci_OREndDate,]$date %in% ORGauge_NADates]/10)
 #Any storm larger than 1 in of rain will be considered falling in OR Ridge, too.
-FillInDates = MetStations_5km$USW00093784[3938:(3938+3180),]$date[MetStations_5km$USW00093784[3938:(3938+3180),]$date %in% BES_Precip_Avg_d$`Oregon Ridge Park`$SortDate[which(is.na(BES_Precip_Avg_d$`Oregon Ridge Park`$Selected))]][which(MetStations_5km$USW00093784[3938:(3938+3180),]$prcp[MetStations_5km$USW00093784[3938:(3938+3180),]$date %in% BES_Precip_Avg_d$`Oregon Ridge Park`$SortDate[which(is.na(BES_Precip_Avg_d$`Oregon Ridge Park`$Selected))]]/10 >= 25.4)]
-FillInPrecips = MetStations_5km$USW00093784[3938:(3938+3180),]$prcp[MetStations_5km$USW00093784[3938:(3938+3180),]$date %in% BES_Precip_Avg_d$`Oregon Ridge Park`$SortDate[which(is.na(BES_Precip_Avg_d$`Oregon Ridge Park`$Selected))]][which(MetStations_5km$USW00093784[3938:(3938+3180),]$prcp[MetStations_5km$USW00093784[3938:(3938+3180),]$date %in% BES_Precip_Avg_d$`Oregon Ridge Park`$SortDate[which(is.na(BES_Precip_Avg_d$`Oregon Ridge Park`$Selected))]]/10 >= 25.4)]
+FillInDates = MetStations_5km$USW00093784[MDSci_ORStartDate:MDSci_OREndDate,]$date[MetStations_5km$USW00093784[MDSci_ORStartDate:MDSci_OREndDate,]$date %in% ORGauge_NADates][which(MetStations_5km$USW00093784[MDSci_ORStartDate:MDSci_OREndDate,]$prcp[MetStations_5km$USW00093784[MDSci_ORStartDate:MDSci_OREndDate,]$date %in% ORGauge_NADates]/10 >= 25.4)]
+FillInPrecips = MetStations_5km$USW00093784[MDSci_ORStartDate:MDSci_OREndDate,]$prcp[MetStations_5km$USW00093784[MDSci_ORStartDate:MDSci_OREndDate,]$date %in% ORGauge_NADates][which(MetStations_5km$USW00093784[MDSci_ORStartDate:MDSci_OREndDate,]$prcp[MetStations_5km$USW00093784[MDSci_ORStartDate:MDSci_OREndDate,]$date %in% ORGauge_NADates]/10 >= 25.4)]
 BES_Precip_Avg_d$`Oregon Ridge Park`$Selected[which(BES_Precip_Avg_d$`Oregon Ridge Park`$SortDate %in% FillInDates)] = FillInPrecips/10
 
 #Make all other NA values equal to 0
 BES_Precip_Avg_d$`Oregon Ridge Park`$Selected[is.na(BES_Precip_Avg_d$`Oregon Ridge Park`$Selected)] = 0
 
 RainTimeseries = c(RainTimeseries, BES_Precip_Avg_d$`Oregon Ridge Park`$Selected)
+#Convert to m
 RainTimeseries = RainTimeseries/1000
-RainDates = seq(as.Date(MetStations_5km$USW00093784[503,]$date), max(as.Date(BES_Precip_Avg_d$`Oregon Ridge Park`$SortDate)), 1) 
+RainDates = seq(as.Date(MetStations_5km$USW00093784[MDSci_CalDateStart,]$date), max(as.Date(BES_Precip_Avg_d$`Oregon Ridge Park`$SortDate)), 1) 
 
-#Save text file for RHESSys input - in m instead of mm
+#  Save text file for RHESSys input (m units)----
+setwd(wd_clim)
 #FullTimeseries
 options(scipen = 999)
-write.table(x = c("1999 11 15 1", RainTimeseries), file = 'AllTN.rain', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote = FALSE)
+write.table(x = c("1999 11 15 1", RainTimeseries), file = 'AllTN_Feb2020Revised.rain', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote = FALSE)
 options(scipen = 0)
 
 #SA
 #1999-11-15 to 2010-09-30
 options(scipen = 999)
-write.table(x = c("1999 11 15 1", RainTimeseries[1:which(RainDates == '2010-09-30')]), file = 'SA.rain', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote = FALSE)
+write.table(x = c("1999 11 15 1", RainTimeseries[1:which(RainDates == '2010-09-30')]), file = 'SA_Feb2020Revised.rain', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote = FALSE)
 options(scipen = 0)
 
 #Calibration
 #1999-11-15 to 2013-09-30
 options(scipen = 999)
-write.table(x = c("1999 11 15 1", RainTimeseries[1:which(RainDates == '2013-09-30')]), file = 'Cal.rain', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote = FALSE)
+write.table(x = c("1999 11 15 1", RainTimeseries[1:which(RainDates == '2013-09-30')]), file = 'Cal_Feb2020Revised.rain', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote = FALSE)
 options(scipen = 0)
 
 #Validation
 #2008-11-15 to 2017-04-01
 options(scipen = 999)
-write.table(x = c("2008 11 15 1", RainTimeseries[which(RainDates == '2008-11-15'):which(RainDates == '2017-04-01')]), file = 'Val.rain', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote = FALSE)
+write.table(x = c("2008 11 15 1", RainTimeseries[which(RainDates == '2008-11-15'):which(RainDates == '2017-04-01')]), file = 'Val_Feb2020Revised.rain', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote = FALSE)
 options(scipen = 0)
 
-#Temperature min and max from MD Science Center and BWI Airport ----
+# Temperature min and max from MD Science Center and BWI Airport ----
 #Laurence's dataset
-OR_Lin_tmin = read.table(file = 'C:\\Users\\js4yd\\Documents\\rhessys30m_Pond\\clim\\Oregon.tmin', sep = '\t', stringsAsFactors = FALSE)
-OR_Lin_tmax = read.table(file = 'C:\\Users\\js4yd\\Documents\\rhessys30m_Pond\\clim\\Oregon.tmax', sep = '\t', stringsAsFactors = FALSE)
+OR_Lin_tmin = read.table(file = paste0(wd_LinData, '\\', f_LinTmin), sep = '\t', stringsAsFactors = FALSE)
+OR_Lin_tmax = read.table(file = paste0(wd_LinData, '\\', f_LinTmax), sep = '\t', stringsAsFactors = FALSE)
 
 x = as.Date('1996-04-01')
 x = x + seq(0, nrow(OR_Lin_tmin)-2, 1)
@@ -2106,26 +2205,27 @@ plot(x, as.numeric(OR_Lin_tmin[-1,]), type ='l', col = 'blue', ylim = c(-20,50),
 par(new=TRUE)
 plot(x, as.numeric(OR_Lin_tmax[-1,]), type ='l', col = 'red', ylim = c(-20,50), axes=FALSE, xlab = '', ylab = '')
 
-#Compare to MD Science Center USW00093784
-plot(MetStations_5km$USW00093784[503:(503+6697),]$tmin/10, as.numeric(OR_Lin_tmin[-1,][1324:(nrow(OR_Lin_tmin)-1)]))
-plot(MetStations_5km$USW00093784[503:(503+6697),]$tmax/10, as.numeric(OR_Lin_tmax[-1,][1324:(nrow(OR_Lin_tmin)-1)]))
+#Compare Lin to MD Science Center USW00093784
+plot(MetStations_5km$USW00093784[MDSci_CalDateStart:(MDSci_CalDateStart+6697),]$tmin/10, as.numeric(OR_Lin_tmin[-1,][1324:(nrow(OR_Lin_tmin)-1)]))
+plot(MetStations_5km$USW00093784[MDSci_CalDateStart:(MDSci_CalDateStart+6697),]$tmax/10, as.numeric(OR_Lin_tmax[-1,][1324:(nrow(OR_Lin_tmin)-1)]))
 
-#Compare to BALTIMORE WASH INTL AP USW00093721
-plot(BWI[20730:(20730+8020),]$tmin/10, as.numeric(OR_Lin_tmin[-1,]))
-plot(BWI[(22053):(22053+6697),]$tmin/10, as.numeric(OR_Lin_tmin[-1,][1324:(nrow(OR_Lin_tmin)-1)]))
-
+#Compare Lin to BALTIMORE WASH INTL AP USW00093721
 #Laurence used BWI
+plot(BWI[20730:(20730+8020),]$tmin/10, as.numeric(OR_Lin_tmin[-1,]))
+plot(BWI[BWI_CalDateStart:(BWI_CalDateStart+6697),]$tmin/10, as.numeric(OR_Lin_tmin[-1,][1324:(nrow(OR_Lin_tmin)-1)]))
 plot(BWI[20730:(20730+8020),]$tmax/10, as.numeric(OR_Lin_tmax[-1,]))
-plot(BWI[(22053):(22053+6697),]$tmax/10, as.numeric(OR_Lin_tmax[-1,][1324:(nrow(OR_Lin_tmax)-1)]))
+plot(BWI[(BWI_CalDateStart):(BWI_CalDateStart+6697),]$tmax/10, as.numeric(OR_Lin_tmax[-1,][1324:(nrow(OR_Lin_tmax)-1)]))
+
 
 #Compare BWI and MD Sci Center
-plot(BWI[(22053):(22053+6697),]$tmin/10, MetStations_5km$USW00093784[503:(503+6697),]$tmin/10, pch = 16, cex = 0.2)
-plot(BWI[(22053):(22053+6697),]$tmax/10, MetStations_5km$USW00093784[503:(503+6697),]$tmax/10, pch = 16, cex = 0.2)
+plot(BWI[(BWI_CalDateStart):(BWI_CalDateStart+6697),]$tmin/10, MetStations_5km$USW00093784[MDSci_CalDateStart:(MDSci_CalDateStart+6697),]$tmin/10, pch = 16, cex = 0.2)
+#max better correlated
+plot(BWI[(BWI_CalDateStart):(BWI_CalDateStart+6697),]$tmax/10, MetStations_5km$USW00093784[MDSci_CalDateStart:(MDSci_CalDateStart+6697),]$tmax/10, pch = 16, cex = 0.2)
 
 #Make temperature timeseries for MD Sci Center
-TminTimeseries = MetStations_5km$USW00093784[503:(503+6615),]$tmin/10
-TmaxTimeseries = MetStations_5km$USW00093784[503:(503+6615),]$tmax/10
-TempDates = MetStations_5km$USW00093784[503:(503+6615),]$date
+TminTimeseries = MetStations_5km$USW00093784[MDSci_CalDateStart:MDSci_OREndDate,]$tmin/10
+TmaxTimeseries = MetStations_5km$USW00093784[MDSci_CalDateStart:MDSci_OREndDate,]$tmax/10
+TempDates = MetStations_5km$USW00093784[MDSci_CalDateStart:MDSci_OREndDate,]$date
 
 #Fill in the NA dates with the BWI airport temperatures
 TminTimeseries[which(is.na(TminTimeseries))] = BWI$tmin[which(BWI$date %in% TempDates[which(is.na(TminTimeseries))])]/10
@@ -2139,58 +2239,56 @@ TempDates[which((TmaxTimeseries - TminTimeseries) <0)]
 TminTimeseries[which((TmaxTimeseries - TminTimeseries) <0)] = BWI$tmin[which(BWI$date %in% TempDates[which((TmaxTimeseries - TminTimeseries) <0)])]/10
 TmaxTimeseries[which((TmaxTimeseries - TminTimeseries) <0)] = BWI$tmax[which(BWI$date %in% TempDates[which((TmaxTimeseries - TminTimeseries) <0)])]/10
 
+#  Save text file for RHESSys input (deg. C units)----
+setwd(wd_clim)
 #Full Timeseries
 options(scipen = 999)
-write.table(x = c("1999 11 15 1", TminTimeseries), file = 'AllTN.tmin', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
-write.table(x = c("1999 11 15 1", TmaxTimeseries), file = 'AllTN.tmax', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
+write.table(x = c("1999 11 15 1", TminTimeseries), file = 'AllTN_Feb2020Revised.tmin', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
+write.table(x = c("1999 11 15 1", TmaxTimeseries), file = 'AllTN_Feb2020Revised.tmax', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
 options(scipen = 0)
 
 #SA
 #1999-11-15 to 2010-09-30
 options(scipen = 999)
-write.table(x = c("1999 11 15 1", TminTimeseries[1:which(TempDates == '2010-09-30')]), file = 'SA.tmin', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
-write.table(x = c("1999 11 15 1", TmaxTimeseries[1:which(TempDates == '2010-09-30')]), file = 'SA.tmax', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
+write.table(x = c("1999 11 15 1", TminTimeseries[1:which(TempDates == '2010-09-30')]), file = 'SA_Feb2020Revised.tmin', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
+write.table(x = c("1999 11 15 1", TmaxTimeseries[1:which(TempDates == '2010-09-30')]), file = 'SA_Feb2020Revised.tmax', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
 options(scipen = 0)
 
 #Calibration
 #1999-11-15 to 2013-09-30
 options(scipen = 999)
-write.table(x = c("1999 11 15 1", TminTimeseries[1:which(TempDates == '2013-09-30')]), file = 'Cal.tmin', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
-write.table(x = c("1999 11 15 1", TmaxTimeseries[1:which(TempDates == '2013-09-30')]), file = 'Cal.tmax', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
+write.table(x = c("1999 11 15 1", TminTimeseries[1:which(TempDates == '2013-09-30')]), file = 'Cal_Feb2020Revised.tmin', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
+write.table(x = c("1999 11 15 1", TmaxTimeseries[1:which(TempDates == '2013-09-30')]), file = 'Cal_Feb2020Revised.tmax', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
 options(scipen = 0)
 
 #Validation
 #2008-11-15 to 2017-04-01
 options(scipen = 999)
-write.table(x = c("2008 11 15 1", TminTimeseries[which(TempDates == '2008-11-15'):which(TempDates == '2017-04-01')]), file = 'Val.tmin', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
-write.table(x = c("2008 11 15 1", TmaxTimeseries[which(TempDates == '2008-11-15'):which(TempDates == '2017-04-01')]), file = 'Val.tmax', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
+write.table(x = c("2008 11 15 1", TminTimeseries[which(TempDates == '2008-11-15'):which(TempDates == '2017-04-01')]), file = 'Val_Feb2020Revised.tmin', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
+write.table(x = c("2008 11 15 1", TmaxTimeseries[which(TempDates == '2008-11-15'):which(TempDates == '2017-04-01')]), file = 'Val_Feb2020Revised.tmax', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
 options(scipen = 0)
 
-#Elevation of BWI and MD Sci Center----
+# Elevation of BWI and MD Sci Center for RHESSys----
 #No lapse rate correction made for these stations. 
 #Fixme: hard coded numbers
-#MD Sci Center
-NOAAstations_locs@data[874,]
-#BWI
+#MD Sci Center - 6.1 m
+NOAAstations_locs@data[886,]
+#BWI - 47.5 m
 NOAAstations_locs@data[871,]
 #BES Oregon Ridge: 178.22 according to Laurence. 60 m screen height, which has been changed to 6 m.
 #Using these elevations in calculations.
 
-
-#CO2 from Mauna Loa - just for the general trend ----
-
-#Nitrogen deposition from CAST sources----
-
-#Baisman rainfall-runoff----
+#Fixme: Baisman rainfall-runoff plots using filled-in precip timeseries----
 setwd(wd_sf)
 #Find streamflow date that matches the precip date
+#Pond Branch
 Ind17 = which(StreamStationList$`01583570`$Date == BES_Precip_Avg_d$`Oregon Ridge Park`$SortDate[1])
 Ind27 = which(StreamStationList$`01583570`$Date == BES_Precip_Avg_d$`Oregon Ridge Park`$SortDate[nrow(BES_Precip_Avg_d$`Oregon Ridge Park`)])
 
 # Precip
 png('RainfallRunoff_POBR.png', res = 300, units = 'in', width = 6, height = 6)
 par(xaxs="i", yaxs="i", mar=c(5,5,5,5))
-plot(as.Date(BES_Precip_Avg_d$`Oregon Ridge Park`$SortDate), BES_Precip_Avg_d$`Oregon Ridge Park`$mean, type="h", ylim=c(max(BES_Precip_Avg_d$`Oregon Ridge Park`$mean, na.rm=TRUE)*1.5,0),
+plot(as.Date(RainDates), RainTimeseries, type="h", ylim=c(max(RainTimeseries)*1.5,0),
      axes=FALSE, xlab=NA, ylab=NA, col="blue",
      lwd=2, lend="square")
 axis(4)
@@ -2198,17 +2296,17 @@ mtext("Precipitation (mm)", side=4, line=3)
 
 # Streamflow
 par(new=TRUE)
-plot(as.Date(StreamStationList$`01583570`$Date[Ind17:Ind27]), StreamStationList$`01583570`$X_00060_00003[Ind1:Ind2], type="l", lwd=1, ylim=c(0, max(StreamStationList$`01583570`$X_00060_00003[Ind1:Ind2])*1.2),
+plot(as.Date(StreamStationList$`01583570`$Date[Ind17:Ind27]), StreamStationList$`01583570`$X_00060_00003[Ind17:Ind27], type="l", lwd=1, ylim=c(0, max(StreamStationList$`01583570`$X_00060_00003[Ind17:Ind27])*1.2),
      ylab = 'Streamflow (cfs)', xlab = 'Year', main = 'Pond Branch')
 dev.off()
 
 Ind1 = which(StreamStationList$`01583580`$Date == BES_Precip_Avg_d$`Oregon Ridge Park`$SortDate[1])
 Ind2 = which(StreamStationList$`01583580`$Date == BES_Precip_Avg_d$`Oregon Ridge Park`$SortDate[nrow(BES_Precip_Avg_d$`Oregon Ridge Park`)])
 
-# Precip
+# Baisman Outlet Precip
 png('RainfallRunoff_BARN.png', res = 300, units = 'in', width = 6, height = 6)
 par(xaxs="i", yaxs="i", mar=c(5,5,5,5))
-plot(as.Date(BES_Precip_Avg_d$`Oregon Ridge Park`$SortDate), BES_Precip_Avg_d$`Oregon Ridge Park`$mean, type="h", ylim=c(max(BES_Precip_Avg_d$`Oregon Ridge Park`$mean, na.rm=TRUE)*1.5,0),
+plot(as.Date(RainDates), RainTimeseries, type="h", ylim=c(max(RainTimeseries)*1.5,0),
      axes=FALSE, xlab=NA, ylab=NA, col="blue",
      lwd=2, lend="square")
 axis(4)
@@ -2229,24 +2327,25 @@ dev.off()
 
 cor(StreamStationList$`01583580`$X_00060_00003[Ind1:Ind2], StreamStationList$`01583570`$X_00060_00003[Ind17:Ind27])
 
-a = lm(StreamStationList$`01583580`$X_00060_00003[Ind1:Ind2] ~ StreamStationList$`01583570`$X_00060_00003[Ind17:Ind27])
+#Fixme: CO2 from Mauna Loa - just for the general trend ----
 
+#Fixme: Nitrogen deposition from CAST sources----
 
 #Estimate WRTDS interpolation tables----
 #Fixme: Was the regression made with cms instead of cfs? Does it matter?
 #Load the streamflow data into WRTDS format
-Daily = readUserDaily(filePath = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs", fileName = 'BaismanStreamflow_Cal.txt', hasHeader = TRUE, separator = '\t', qUnit = 1, verbose = FALSE)
+Daily = readUserDaily(filePath = wd_RHESSysObs_BARN, fileName = 'BaismanStreamflow_Cal.txt', hasHeader = TRUE, separator = '\t', qUnit = 1, verbose = FALSE)
 #Read the TN data
-Sample = readUserSample(filePath = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs", fileName = 'TN_Cal_WRTDS.txt', hasHeader = TRUE, separator = '\t', verbose = FALSE)
+Sample = readUserSample(filePath = wd_RHESSysObs_BARN, fileName = 'TN_Cal_WRTDS.txt', hasHeader = TRUE, separator = '\t', verbose = FALSE)
 #Set the required information
-INFO = readUserInfo(filePath = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs", fileName = 'WRTDS_INFO.csv', interactive = FALSE)
+INFO = readUserInfo(filePath = wd_WRTDS_BARN, fileName = 'WRTDS_INFO.csv', interactive = FALSE)
 eList = mergeReport(INFO = INFO, Daily = Daily, Sample = Sample)
-saveResults("C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs\\", eList)
+saveResults(wd_WRTDS_BARN, eList)
 
 # Default WRTDS parameters----
 WRTDSmod = modelEstimation(eList = eList, windowY = 7, windowQ = 2, windowS = .5, minNumObs = 100, minNumUncen = 50, edgeAdjust = TRUE)
 
-setwd("C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs\\")
+setwd(wd_WRTDS_BARN)
 png('ConcFluxTime.png', res = 300, units ='in', width = 12, height = 6)
 layout(rbind(c(1,2)))
 plotConcTimeDaily(WRTDSmod)
@@ -2449,7 +2548,6 @@ dev.off()
 
 
 # Running selected model with the modified functions that report the parameters of the surfaces----
-setwd('C:\\Users\\js4yd\\OneDrive - University of Virginia\\RHESSys_ParameterSA')
 WRTDSmod4m = modelEstimation(eList = eList, windowY = 2, windowQ = 2, windowS = .25, minNumObs = 50, minNumUncen = 50, edgeAdjust = TRUE, numTsteps = 50, numQsteps = 100)
 
 #Make interpolation tables from the surfaces information and save to files that can be loaded in
@@ -2633,7 +2731,7 @@ rm(ir, TempTabInt, TempTabCosYear, TempColInd, TempRowInd, TempTabLogErr, TempTa
 rm(Row2, Row1, Col1, Col2, count, Col2Exists, Row2Exists, RepVal, IndReplace)
 
 #Write the tables
-setwd('C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\WRTDS')
+setwd(wd_WRTDS_BARN)
 options(scipen = 999)
 write.table(round(TabInt,5), file = 'TabIntMod4_p5.txt', sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
 write.table(signif(TabYear,4), file = 'TabYearMod4_p4.txt', sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
@@ -2662,8 +2760,9 @@ dev.off()
 png('TabLogErr.png', units = 'in', res = 300, height = 7, width = 7)
 plotContours(WRTDSmod4m, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,.5,0.05),qUnit=1, qBottom = 0.001, qTop = 50, whatSurface = 2)
 dev.off()
+
 # Load WRTDS Interpolation Tables----
-setwd("C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\WRTDS")
+setwd(wd_WRTDS_BARN)
 #Baisman
 TabInt = as.matrix(read.table(file = 'TabIntMod4_p5.txt', sep = '\t', header = TRUE, check.names = FALSE))
 TabYear = as.matrix(read.table(file = 'TabYearMod4_p4.txt', sep = '\t', header = TRUE, check.names = FALSE))
@@ -2675,17 +2774,17 @@ TabLogErr = as.matrix(read.table(file = 'TabLogErrMod4_p5.txt', sep = '\t', head
 #WRTDS for hillslopes----
 # Data: Kenworth 2001-2002----
 setwd(dir_SynWChem_Kenworth)
-K_Q = read.csv(file = "Kenworth_Q.csv",stringsAsFactors = FALSE)
+K_Q = read.csv(file = f_KenworthWQ_Q, stringsAsFactors = FALSE)
 #Convert to m^3/s
 K_Q[,-1] = K_Q[,-1]/1000
-K_TN = read.csv(file = "Kenworth_TN.csv",stringsAsFactors = FALSE)
-K_Sites = readOGR(dsn = getwd(), layer = "Kenworth_Chem_Sites", stringsAsFactors = FALSE)
+K_TN = read.csv(file = f_KenworthWQ_TN, stringsAsFactors = FALSE)
+K_Sites = readOGR(dsn = getwd(), layer = f_KenworthSites, stringsAsFactors = FALSE)
 
 # Data: Smith 2006-2007----
 setwd(dir_SynWChem_Smith)
-S_Q = read.csv(file = "Smith_discharge.csv",stringsAsFactors = FALSE)
-S_TN = read.csv(file = "Smith_TN.csv",stringsAsFactors = FALSE)
-S_Sites = readOGR(dsn = getwd(), layer = "Smith_Chem_Sites", stringsAsFactors = FALSE)
+S_Q = read.csv(file = f_SmithWQ_Q, stringsAsFactors = FALSE)
+S_TN = read.csv(file = f_SmithWQ_TN, stringsAsFactors = FALSE)
+S_Sites = readOGR(dsn = getwd(), layer = f_SmithSites, stringsAsFactors = FALSE)
 
 # Make regressions for the hillslopes that were sampled by both Kenworth and Smith----
 #  BR3----
@@ -2865,7 +2964,6 @@ plot(y = BR5_PredTN$DiffMed[BR5_PredTN$True > 1], x = cos(2*pi*DatesNums_BR5[BR5
 
 #  Pond Branch----
 setwd(wd_BESN)
-BES_TN_d = list.load(file = "BES_TN_d.yaml", type = 'YAML')
 
 #   Relation using only the dates that match the BARN outlet sampling----
 #length(which(as.Date(BES_TN_d$POBR$SortDate[!is.na(BES_TN_d$POBR$TN..mg.N.L.)]) %in% as.Date(BES_TN_d$BARN$SortDate[!is.na(BES_TN_d$BARN$TN..mg.N.L.)])))
@@ -3330,11 +3428,11 @@ cor(y = BR5_PredTN$MedLoad, x = I(Flows_BR5*12^3*2.54^3/100^3))
 
 # WRTDS Interpolation Tables for Pond Branch----
 #Load the streamflow data into WRTDS format
-Daily_POBR = readUserDaily(filePath = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs", fileName = 'BaismanStreamflow_POBR_Cal.txt', hasHeader = TRUE, separator = '\t', qUnit = 2, verbose = FALSE)
+Daily_POBR = readUserDaily(filePath = wd_RHESSysObs_POBR, fileName = 'BaismanStreamflow_POBR_Cal.txt', hasHeader = TRUE, separator = '\t', qUnit = 2, verbose = FALSE)
 #Read the TN data
-Sample_POBR = readUserSample(filePath = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs", fileName = 'TN_POBR_Cal_WRTDS.txt', hasHeader = TRUE, separator = '\t', verbose = FALSE)
+Sample_POBR = readUserSample(filePath = wd_RHESSysObs_POBR, fileName = 'TN_POBR_Cal_WRTDS.txt', hasHeader = TRUE, separator = '\t', verbose = FALSE)
 #Set the required information
-INFO_POBR = readUserInfo(filePath = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs", fileName = 'WRTDS_INFO_POBR.csv', interactive = FALSE)
+INFO_POBR = readUserInfo(filePath = wd_WRTDS_POBR, fileName = 'WRTDS_INFO_POBR.csv', interactive = FALSE)
 eList_POBR = mergeReport(INFO = INFO_POBR, Daily = Daily_POBR, Sample = Sample_POBR)
 
 #Make edits to include left-censored data. Nore two different thresholds.
@@ -3347,12 +3445,12 @@ Sample_POBR$ConcHigh = ifelse((as.Date(Sample_POBR$Date) < '2012-03-15') & (Samp
 eList_POBR$Sample = Sample_POBR
 eList_POBR = fixSampleFrame(eList_POBR)
 
-saveResults(savePath = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs\\", eList = eList_POBR)
+saveResults(savePath = wd_WRTDS_POBR, eList = eList_POBR)
 
 #  Default WRTDS parameters----
 WRTDSmod_POBR = modelEstimation(eList = eList_POBR, windowY = 7, windowQ = 2, windowS = .5, minNumObs = 100, minNumUncen = 50, edgeAdjust = TRUE)
 
-setwd(wd_WRTDS_PondBranch)
+setwd(wd_WRTDS_POBR)
 png('ConcFluxTime_POBR.png', res = 300, units ='in', width = 12, height = 6)
 layout(rbind(c(1,2)))
 plotConcTimeDaily(WRTDSmod_POBR)
@@ -3584,7 +3682,6 @@ mean((WRTDSmod5_POBR$Sample$ConcHat - WRTDSmod5_POBR$Sample$ConcAve))^2 + sum((W
 mean((WRTDSmod6_POBR$Sample$ConcHat - WRTDSmod6_POBR$Sample$ConcAve))^2 + sum((WRTDSmod6_POBR$Sample$ConcHat - WRTDSmod6_POBR$Sample$ConcAve)^2)/(nrow(Sample_POBR)-1)
 
 #  Make tables for selected model----
-setwd('C:\\Users\\js4yd\\OneDrive - University of Virginia\\RHESSys_ParameterSA')
 WRTDSmod5m_POBR = modelEstimation(eList = eList_POBR, windowY = 4, windowQ = 5, windowS = .5, minNumObs = 50, minNumUncen = 50, edgeAdjust = TRUE, numTsteps = 50, numQsteps = 100)
 
 #Make interpolation tables from the surfaces information and save to files that can be loaded in
@@ -3620,7 +3717,7 @@ plotContours(WRTDSmod5m_POBR, yearStart = 1999, yearEnd = 2011, contourLevels=se
 dev.off()
 
 #Write the tables
-setwd('C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\WRTDS')
+setwd(wd_WRTDS_POBR)
 options(scipen = 999)
 write.table(round(TabInt_POBR,5), file = 'TabInt_POBRMod5_p5.txt', sep = '\t', row.names = attr(WRTDSmod5m_POBR$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod5m_POBR$surfaces, which = 'Year'))
 write.table(signif(TabYear_POBR,4), file = 'TabYear_POBRMod5_p4.txt', sep = '\t', row.names = attr(WRTDSmod5m_POBR$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod5m_POBR$surfaces, which = 'Year'))
@@ -3631,7 +3728,7 @@ write.table(round(TabLogErr_POBR,5), file = 'TabLogErr_POBRMod5_p5.txt', sep = '
 options(scipen = 0)
 
 # Load WRTDS Interpolation Tables----
-setwd("C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\WRTDS")
+setwd(wd_WRTDS_POBR)
 #Pond Branch
 TabInt_POBR = as.matrix(read.table(file = 'TabInt_POBRMod5_p5.txt', sep = '\t', header = TRUE, check.names = FALSE))
 TabYear_POBR = as.matrix(read.table(file = 'TabYear_POBRMod5_p4.txt', sep = '\t', header = TRUE, check.names = FALSE))
@@ -3742,11 +3839,12 @@ lines(c(1e-7,1e7), c(1e-7,1e7))
 legend('topleft', title = 'Detection Limits (mg N/L)', legend = c('0.01', '0.05'), pch = 1, col = c('blue', 'red'))
 dev.off()
 
-#Make a map of these water quality sampling locations----
+# Make a map of these water quality sampling locations----
 setwd(dir_WChem)
 
 res = 30
 
+#Fixme: directory to variable
 world = read.csv("C:\\Users\\js4yd\\Documents\\BaismanSA\\RHESSysRuns\\Run0\\worldfiles\\worldfile.csv", stringsAsFactors = FALSE)
 
 #Taking the unique patch IDs because strata can exist in more than one patch.
@@ -3790,7 +3888,7 @@ dev.off()
 # north.arrow(xb = -76.712, yb = 39.469, len = .0005, lab = 'N', tcol = 'black', col='black')
 # text(x = -76.712, y = 39.467, 'WGS84')
 
-#Make a map of the land ID in the world file----
+# Make a map of the land ID in the world file----
 #Check that the number of unique patches equals the number of unique land uses
 if (length(unique(world$patchID)) != length(unique(world$patchID[world$patchLandID == 2])) + length(unique(world$patchID[world$patchLandID == 1])) + length(unique(world$patchID[world$patchLandID == 3])) + length(unique(world$patchID[world$patchLandID == 4]))){
   print('Number of unique patches by land use ID is not equal to the number of unique patches.')
@@ -3877,7 +3975,7 @@ box(which = 'figure', lwd = 2)
 dev.off()
 
 # Make a forest model (Pond Branch WRTDS) and a developed model (based on Baisman outlet WRTDS) for TN----
-#Obtain the fraction of developed land in each of the hillslopes, and for the basin----
+#  Obtain the fraction of developed land in each of the hillslopes, and for the basin----
 FracDev = vector('numeric', length = length(unique(world$hillID)))
 for (i in 1:length(FracDev)){
   FracDev[i] = length(which((world$hillID == uhills[i]) & ((world$patchLandID == 3) | (world$patchLandID == 4))))/length(which((world$hillID == uhills[i])))
@@ -3885,7 +3983,7 @@ for (i in 1:length(FracDev)){
 #Because this is a 2-component mixture model, assume that the remainder is undeveloped land
 FracUnDev = 1 - FracDev
 
-#Use export coefficient/source-contribution model----
+#  Use export coefficient/source-contribution model----
 #This is a signal + background model at BARN because BARN = POBR + all other catchments
 Flows_BARN = BES_TN_d$BARN$Flow[which((as.Date(BES_TN_d$BARN$SortDate) <= '2014-01-01'))]
 Dates_BARN = BES_TN_d$BARN$SortDate[which((as.Date(BES_TN_d$BARN$SortDate) <= '2014-01-01'))]
@@ -3932,7 +4030,7 @@ POBR_AllDates_PredTN$Load05 = POBR_AllDates_PredTN$`05`*Flows_POBR_AllDates*12^3
 POBR_AllDates_PredTN$MedLoad = POBR_AllDates_PredTN$Med*Flows_POBR_AllDates*12^3*2.54^3/100^3
 POBR_AllDates_PredTN$Load95 = POBR_AllDates_PredTN$`95`*Flows_POBR_AllDates*12^3*2.54^3/100^3
 
-#ECM based on land use type----
+#   ECM based on land use type----
 #Export coefficient for Pond Branch = undeveloped export coefficient
 EC_Undev = POBR_AllDates_PredTN$MedLoad/sum(Area.Hills[c(3,4),2])
 #Export coefficient for developed = (Baisman load - undeveloped load)/(developed land area)
@@ -3950,8 +4048,8 @@ Flows_POBR_AllDates[EC_Dev < 0]
 #EC_Undev[EC_Dev < 0] = BARN_PredTN$MedLoad - EC_Dev[EC_Dev < 0]*sum(Area.Hills[,2]*FracDev)
 #EC_Dev[EC_Dev < 0] = 0
 
-#ECM based on impervious fraction of land----
-impFrac = raster(x = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\ImperviousFraction.tiff")
+#   ECM based on impervious fraction of land----
+impFrac = raster(x = paste0(wd_BRPOBR, '\\', f_BaismanImperviousFrac))
 impFrac = projectRaster(impFrac, crs = CRS(pCRS))
 
 #Add impervious fraction to worldfile information
@@ -4069,9 +4167,9 @@ plot(BR3_PredTN$TrueLoad[as.Date(Dates_BR3) %in% as.Date(Dates_BARN)], Load_ECM_
      xlim = c(0,0.006), ylim = c(0,0.006), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'Hillslope 3')
 lines(c(0,0.006), c(0,0.006))
 
-# Compare models to where there are datasets----
+#  Compare models to where there are datasets----
 #Obtain upstream contributing patches for each sampling location
 #Add those patch identifiers to the world dataframe, one column for each site
 
-#Evaluate adding flow information and other normalizers to the ECM models----
+# Evaluate adding flow information and other normalizers to the ECM models----
 # Convert back to concentration by subtracting flow that resulted from covered catchments. Then make a model for urban and a model for forest at basin outlet and make sure that forest is same as POBR and that devekoped matches the sampling site data well.
