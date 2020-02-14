@@ -113,6 +113,8 @@ f_BaismanImperviousFrac = "ImperviousFraction.tiff"
 f_LinRain = "Oregon.rain"
 f_LinTmax = "Oregon.tmax"
 f_LinTmin = "Oregon.tmin"
+#Baisman Worldfile
+f_worldfile = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\SARunReferenceData\\Run0\\worldfiles\\worldfile.csv"
 
 #Set output filenames----
 #all chemical data as lists by site
@@ -149,17 +151,56 @@ f_NOAAstationsROI = 'NOAA_StationLocs_20km'
 f_NOAAstationsDataList = 'NOAA_MetStations.yaml'
 #Nexrad Data
 f_NexradDataList = 'NexradYearList.yaml'
+f_NexradDataList_Gauges = 'NexradYearList_Gauges.yaml'
 f_BaismanNexradPixels_d = 'BaismanNexradPixels.csv'
 f_BaismanNexradPixels_15min = 'BaismanNexradPixels_15minPrecip.csv'
 f_BaismanNexradPixelsMap = 'BaismanNexradPixels'
-
-#Fixme: provide output filenames for these weather station gauge datasets
-# Precipitation
-
+f_BaismanNexradPixels_Gauges_d = 'GaugeNexradPixels.csv'
+f_BaismanNexradPixels_Gauges_15min = 'GaugeNexradPixels_15minPrecip.csv'
+f_BaismanNexradPixelsMap_Gauges = 'GaugeNexradPixels'
+#RHESSys calibration and validation data
+f_BaismanStreamflowCal = 'BaismanStreamflow_Feb2020Revised_Cal.txt'
+f_BaismanStreamflowVal = 'BaismanStreamflow_Feb2020Revised_Val.txt'
+f_POBRStreamflowCal = 'BaismanStreamflow_POBR_Feb2020Revised_Cal.txt'
+f_POBRStreamflowVal = 'BaismanStreamflow_POBR_Feb2020Revised_Val.txt'
+f_BaismanTNCal = 'TN_Feb2020Revised_Cal.txt'
+f_BaismanTNCal_WRTDS = 'TN_Feb2020Revised_Cal_WRTDS.txt'
+f_BaismanTNVal = 'TN_Feb2020Revised_Val.txt'
+f_BaismanTNVal_WRTDS = 'TN_Feb2020Revised_Val_WRTDS.txt'
+f_POBRTNCal = 'TN_POBR_Feb2020Revised_Cal.txt'
+f_POBRTNCal_WRTDS = 'TN_POBR_Feb2020Revised_Cal_WRTDS.txt'
+f_POBRTNVal = 'TN_POBR_Feb2020Revised_Val.txt'
+f_POBRTNVal_WRTDS = 'TN_POBR_Feb2020Revised_Val_WRTDS.txt'
+#RHESSys Climate Files
+#Precipitation
+f_Precip_All = 'AllTN_Feb2020Revised.rain'
+f_Precip_SA = 'SA_Feb2020Revised.rain'
+f_Precip_Cal = 'Cal_Feb2020Revised.rain'
+f_Precip_Val = 'Val_Feb2020Revised.rain'
 # Temperature
-
-#Fixme: provide names of WRTDS datasets
-
+f_Tmin_All = 'AllTN_Feb2020Revised.tmin'
+f_Tmax_All = 'AllTN_Feb2020Revised.tmax'
+f_Tmin_SA = 'SA_Feb2020Revised.tmin'
+f_Tmax_SA = 'SA_Feb2020Revised.tmax'
+f_Tmin_Cal = 'Cal_Feb2020Revised.tmin'
+f_Tmax_Cal = 'Cal_Feb2020Revised.tmax'
+f_Tmin_Val = 'Val_Feb2020Revised.tmin'
+f_Tmax_Val = 'Val_Feb2020Revised.tmax'
+#WRTDS datasets
+f_BaismanWRTDSInfo = 'WRTDS_INFO.csv'
+f_POBRWRTDSInfo = 'WRTDS_INFO_POBR.csv'
+f_BaismanWRTDS_TabInt = 'TabIntMod4_p5.txt'
+f_BaismanWRTDS_TabYear = 'TabYearMod4_p4.txt'
+f_BaismanWRTDS_TabLogQ = 'TabLogQMod4_p4.txt'
+f_BaismanWRTDS_TabSinYear = 'TabSinYearMod4_p4.txt'
+f_BaismanWRTDS_TabCosYear = 'TabCosYearMod4_p4.txt'
+f_BaismanWRTDS_TabLogErr = 'TabLogErrMod4_p5.txt'
+f_POBRWRTDS_TabInt = 'TabInt_POBRMod5_p5.txt'
+f_POBRWRTDS_TabYear = 'TabYear_POBRMod5_p4.txt'
+f_POBRWRTDS_TabLogQ = 'TabLogQ_POBRMod5_p4.txt'
+f_POBRWRTDS_TabSinYear = 'TabSinYear_POBRMod5_p4.txt'
+f_POBRWRTDS_TabCosYear = 'TabCosYear_POBRMod5_p4.txt'
+f_POBRWRTDS_TabLogErr = 'TabLogErr_POBRMod5_p5.txt'
 
 #Set project coordinate system----
 #This is the coordinate system that all data will be plotted and written in
@@ -1338,7 +1379,7 @@ for (i in 1:length(BES_PrecipList)){
 }
 rm(i, dts, mts, M)
 
-#  Spatially aggregate the gauges by averaging the 2 gauges per site----
+#  Aggregate the gauges by averaging the 2 gauges per site----
 #Working on daily precip
 # sites are in pairs of 2 in the list
 BES_Precip_Avg_d = list()
@@ -1414,7 +1455,7 @@ for (i in seq(1,(length(BES_PrecipList)-1),2)){
   dev.off()
 }
 
-#  Fixme: Do some diagnostics on the sites to come up with a single timeseries for each site----
+#  Fixme: Do some diagnostics on the sites to come up with a single timeseries for each site - completed below for Oregon Ridge----
 #  Fixme: check if the high bias days are also biased on the previous and following day----
 # Fixme: color the bias by the rainfall rate (> 1.5"/hr is prone to errors)
 # NOAA weather station data----
@@ -1696,9 +1737,26 @@ if (any((Nexrad@coords == Nexrad2@coords) == FALSE)){
   print('Some Nexrad coordinates are not the same from one time step to the next.')
 }
 
-#Plot the raster point (cell center) locations
+#Plot the location of the MD Science Center and BWI Airport gauges. 
+#These were used to fill in gaps. Want to check agreement with Nexrad data
+plot(Nexrad, col = 'red', pch = 15, cex = 0.3)
+plot(ROI, add = T)
+plot(NOAAstations_locs[NOAAstations_locs$id == "USW00093721",], add = T, col = 'blue')
+plot(NOAAstations_locs[NOAAstations_locs$id == "USW00093784",], add = T, col = 'green')
+
+#Get the pixel corresponding to the BWI and MD Science Center gauges
+#Find the minimum distance from all pixels to the gauge location
+NexradDistsMDSci = sqrt((Nexrad@coords[,1] - NOAAstations_locs[NOAAstations_locs$id == "USW00093784",]@coords[1,1])^2 + (Nexrad@coords[,2] - NOAAstations_locs[NOAAstations_locs$id == "USW00093784",]@coords[1,2])^2) 
+NexradDistsBWI = sqrt((Nexrad@coords[,1] - NOAAstations_locs[NOAAstations_locs$id == "USW00093721",]@coords[1,1])^2 + (Nexrad@coords[,2] - NOAAstations_locs[NOAAstations_locs$id == "USW00093721",]@coords[1,2])^2) 
+NexradPix_MDSci = Nexrad[which(NexradDistsMDSci == min(NexradDistsMDSci)), ]
+NexradPix_BWI = Nexrad[which(NexradDistsBWI == min(NexradDistsBWI)), ]
+
+#Plot the raster point (cell center) locations for ROI
 plot(ROI)
 plot(Nexrad, col = 'red', pch = 15, cex = 0.3, add = T)
+plot(NexradPix_MDSci, col = 'green', pch = 15, cex = 0.3, add = T)
+#BWI off screen
+plot(NexradPix_BWI, col = 'blue', pch = 15, cex = 0.3, add = T)
 
 BaispCRS = spTransform(BaisRun_Outlet, CRSobj = pCRS)
 plot(BaispCRS)
@@ -1726,7 +1784,7 @@ dev.off()
 
 rm(scaleRange, scaleBy, Pal)
 
-# Loop over the available NEXRAD txt files and extract these 4 pixels for Baisman Run----
+# Loop over the available NEXRAD txt files and extract the pixels for Baisman Run----
 #  Use 2007 as a test year----
 #Store as a dataframe with the pixels as columns and the dates/times as rows
 #setwd(paste0(dir_Nexrad, "/Balto2007"))
@@ -1921,6 +1979,122 @@ names(BaisNex_Precip_d) = paste0('Pix', seq(1,length(BaisNex_Precip_d),1))
 #}
 #rm(i)
 
+# Loop over the available NEXRAD txt files and extract the pixels for BWI and MD Science Center----
+#  Parallel over all available Nexrad years----
+setwd(dir_Nexrad)
+cl = makeCluster(detectCores() - 1)
+registerDoParallel(cl)
+NexradList_Gauges = list()
+for (j in 1:length(folsNexrad)){
+  fs = list.files(paste0(getwd(), '/', folsNexrad[j]))
+  #Get all of the nexrad data for this year.
+  BaisNexMat_Gauges = foreach (i = 1:length(fs), .combine = rbind, .inorder = FALSE, .packages = 'sp') %dopar% {
+    #Open the file and project into spatial dataframe
+    f = read.table(paste0(getwd(), '/', folsNexrad[j], '/', fs[i]), header = FALSE)
+    colnames(f) = c('lat', 'long', 'precip')
+    coordinates(f) = c('long', 'lat')
+    proj4string(f) = CRS('+init=epsg:4326')
+    f = spTransform(f, CRSobj = pCRS)
+    
+    #Extract the BWI and MD Science Center pixels
+    f_Pix = f[NexradPix_MDSci,]
+    f_Pix = rbind(f_Pix, f[NexradPix_BWI,])
+    rm(f)
+    
+    #Extract the date and time information
+    Date = paste(paste(substr(fs[i], start = 1, stop = 4), substr(fs[i], start = 5, stop = 6), substr(fs[i], start = 7, stop = 8), sep = '-'), paste(substr(fs[i], start = 9, stop = 10), substr(fs[i], start = 11, stop = 12), sep = ':'), sep = ' ') 
+    
+    #Store the date and time as Posix
+    Date = as.character(as.POSIXct(Date))
+    
+    #Store the precip info (mm/ha) and return as vector
+    retvals = c(Date, f_Pix$precip)
+  }
+  
+  rownames(BaisNexMat_Gauges) = NULL
+  colnames(BaisNexMat_Gauges) = c('Date', 'MDSci', 'BWI')
+  
+  #Save to list
+  NexradList_Gauges = c(NexradList_Gauges, list(BaisNexMat_Gauges))
+  names(NexradList_Gauges) = c(names(NexradList_Gauges)[1:(j-1)], folsNexrad[j])
+}
+stopCluster(cl)
+rm(fs, j, cl)
+
+#Save the Nexrad product list
+list.save(x = NexradList_Gauges, file = f_NexradDataList_Gauges, type = 'YAML')
+
+#Go from a list of years to a matrix / data.frame to make a continuous timeseries
+NexradMat_Gauges = as.data.frame(NexradList_Gauges[[1]])
+NexradMat_Gauges$Date = as.character(NexradMat_Gauges$Date)
+for(i in 2:length(NexradList_Gauges)){
+  NexradMat_Gauges[,i] = as.numeric(matrix(NexradMat_Gauges[,i]))
+}
+rm(i)
+#bind list elements
+for(i in 2:length(NexradList_Gauges)){
+  NexradMat_Gauges = rbind(NexradMat_Gauges, NexradList_Gauges[[i]])
+}
+rm(i)
+for(i in 2:length(NexradList_Gauges)){
+  NexradMat_Gauges[,i] = as.numeric(matrix(NexradMat_Gauges[,i]))
+}
+rm(i)
+
+#Convert all factor and character to numeric values
+for(i in 2:length(NexradList_Gauges)){
+  NexradMat_Gauges[,i] = as.numeric(as.character(NexradMat_Gauges[,i]))
+}
+rm(i)
+rm(NexradList_Gauges)
+
+#   Check for duplicate records----
+NexradDuplicates_Gauges = which(duplicated(NexradMat_Gauges))
+#All of these are for the timestamp 2:00 - 2:45 AM. 
+#I'm not sure why only a few dates have this problem. It does not affect further analysis, so leaving as is.
+
+#   Check for negative values----
+#Add new columns to store negative-removed information
+for (i in 2:ncol(NexradMat_Gauges)){
+  NexradMat_Gauges = cbind(NexradMat_Gauges, NexradMat_Gauges[,i])
+}
+rm(i)
+colnames(NexradMat_Gauges) = c(colnames(NexradMat_Gauges)[1:((ncol(NexradMat_Gauges)-1)/2+1)], paste0(colnames(NexradMat_Gauges)[2:((ncol(NexradMat_Gauges)-1)/2+1)], 'NegRm'))
+
+#make all the negative values NAs
+for (i in ((ncol(NexradMat_Gauges)-1)/2 + 2):ncol(NexradMat_Gauges)){
+  NexradMat_Gauges[NexradMat_Gauges[,i] < 0, i] = NA
+}
+rm(i)
+
+#   Aggregate to daily timeseries----
+#Make a list of the pixels to use the aggregate Timeseries function
+BaisPixList_Gauges = list()
+for (i in ((ncol(NexradMat_Gauges)-1)/2+2):ncol(NexradMat_Gauges)){
+  BaisPixList_Gauges = c(BaisPixList_Gauges, list(NexradMat_Gauges[,c(1,i)]))
+}
+#Add columns for the pixel number, date, and date with time
+for(i in 1:length(BaisPixList_Gauges)){
+  BaisPixList_Gauges[[i]]$Pix = i
+  BaisPixList_Gauges[[i]]$DateTime = BaisPixList_Gauges[[i]]$Date
+  colnames(BaisPixList_Gauges[[i]]) = c("Date", 'Precip', 'Pix', "DateTime")
+  BaisPixList_Gauges[[i]]$Date = as.Date(BaisPixList_Gauges[[i]]$Date)
+}
+BaisNexGauges_Precip_agg = aggregateTimesteps(StationList = BaisPixList_Gauges, aggVal = 'd', aggVar = 'Precip', date = 'Date', site = 'Pix', fun = 'sum')
+BaisNexGauges_Precip_d = BaisNexGauges_Precip_agg$daily
+rm(BaisNexGauges_Precip_agg)
+
+#   Fill in missing dates in the aggregated timeseries----
+BaisPix_Gauges = rbind(NexradPix_MDSci, NexradPix_BWI)
+BaisNexGauges_Precip_d2 = FillMissingDates_par(Dataset = BaisPix_Gauges, StationList = BaisNexGauges_Precip_d, Var = 'Precip', 
+                                         Date = 'Date', gapType = 'd', site_no_D = 'Pix', 
+                                         site_no_SL = 'Pix', NoNAcols = c('Pix'), NumCores = detectCores()-1)
+BaisPix_Gauges_Processed = BaisNex_Precip_d2$Dataset
+BaisNexGauges_Precip_d = BaisNexGauges_Precip_d2$StationList
+rm(BaisNexGauges_Precip_d2)
+
+names(BaisNexGauges_Precip_d) = c('MDSci', 'BWI')
+
 # Compare the pixels with each other----
 #make a matrix of the data to get a scatterplot matrix
 BaisNexPrecipMat = matrix(NA, nrow = nrow(BaisNex_Precip_d[[1]]), ncol = 1+length(BaisPix))
@@ -1931,6 +2105,16 @@ for (i in 1:length(BaisPix)){
 BaisNexPrecipMat = as.data.frame(BaisNexPrecipMat)
 colnames(BaisNexPrecipMat) = c('Date', paste0('Pix', seq(1,length(BaisPix),1)))
 
+#For rain gauges
+BaisNexPrecipMat_Gauges = matrix(NA, nrow = nrow(BaisNexGauges_Precip_d[[1]]), ncol = 1+length(BaisPix_Gauges))
+BaisNexPrecipMat_Gauges[,1] = BaisNexGauges_Precip_d[[1]]$Date
+for (i in 1:length(BaisPix_Gauges)){
+  BaisNexPrecipMat_Gauges[,1+i] = BaisNexGauges_Precip_d[[i]]$Precip
+}
+BaisNexPrecipMat_Gauges = as.data.frame(BaisNexPrecipMat_Gauges)
+colnames(BaisNexPrecipMat_Gauges) = c('Date', 'MDSci', 'BWI')
+
+#Figures for Baisman Only
 png('BaismanNexradPixPrecipTimeseries.png', res = 300, height = 5, width = 5, units = 'in')
 par(mar = c(5,5,2,2))
 matplotDates(as.Date(BaisNexPrecipMat[,1]), BaisNexPrecipMat[,c(5,6,7,10)], type = 'l', col = c('red', 'orange', 'green', 'blue'), 
@@ -1944,6 +2128,12 @@ dev.off()
 
 png('BaismanNexradPixPrecipScatterPlotMatrix_BufferPix.png', res = 300, height = 16, width = 16, units = 'in')
 pairs.panels(x = log10(BaisNexPrecipMat[,-1]+.01), scale = FALSE, density = FALSE, ellipses = FALSE, smooth = FALSE, 
+             digits = 3, lm = TRUE, jiggle = FALSE, rug = FALSE, cex.cor = .7, method = 'spearman')
+dev.off()
+
+#Figures with the other rain gauge Nexrad Data
+png('BaismanNexradPixPrecipScatterPlotMatrix_Gauges.png', res = 300, height = 8, width = 8, units = 'in')
+pairs.panels(x = log10(cbind(BaisNexPrecipMat[,c(6,7,8,11)], BaisNexPrecipMat_Gauges[,-1])+.01), scale = FALSE, density = FALSE, ellipses = FALSE, smooth = FALSE, 
              digits = 3, lm = TRUE, jiggle = FALSE, rug = FALSE, cex.cor = .7, method = 'spearman')
 dev.off()
 
@@ -1969,12 +2159,23 @@ pairs.panels(x = log10(BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),-1][whic
              digits = 3, lm = TRUE, jiggle = FALSE, rug = FALSE, cex.cor = .7, method = 'spearman', xlim = c(-2.5,2.5), ylim = c(-2.5, 2.5))
 dev.off()
 
+#With pixels from MD Sci and BWI gauges
+png('BaismanNexradPixPrecipScatterPlotMatrix_Gauges_WithRainGauge.png', res = 300, height = 8, width = 8, units = 'in')
+pairs.panels(x = log10(cbind(BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),c(6,7,8,11,14)][which((BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),6] > 0) & !is.nan(BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),14])),], BaisNexPrecipMat_Gauges[IndStart:nrow(BaisNexPrecipMat), -1][which((BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),6] > 0) & !is.nan(BaisNexPrecipMat[IndStart:nrow(BaisNexPrecipMat),14])),])), scale = FALSE, density = FALSE, ellipses = FALSE, smooth = FALSE, 
+             digits = 3, lm = TRUE, jiggle = FALSE, rug = FALSE, cex.cor = .7, method = 'spearman', xlim = c(-2.5,2.5), ylim = c(-2.5, 2.5))
+dev.off()
+
 # Fixme: Fill in rasters with gauge values on days without radar information----
 # Save the Nexrad data----
 BaisNexPrecipMat$Date = as.Date(BaisNexPrecipMat$Date)
 write.csv(BaisNexPrecipMat, file = f_BaismanNexradPixels_d, row.names = FALSE)
 write.csv(NexradMat, file = f_BaismanNexradPixels_15min, row.names = FALSE)
 writeOGR(BaisPix, dsn = getwd(), layer = f_BaismanNexradPixelsMap, driver = 'ESRI Shapefile')
+
+BaisNexPrecipMat_Gauges$Date = as.Date(BaisNexPrecipMat_Gauges$Date)
+write.csv(BaisNexPrecipMat_Gauges, file = f_BaismanNexradPixels_Gauges_d, row.names = FALSE)
+write.csv(NexradMat_Gauges, file = f_BaismanNexradPixels_Gauges_15min, row.names = FALSE)
+writeOGR(BaisPix_Gauges, dsn = getwd(), layer = f_BaismanNexradPixelsMap_Gauges, driver = 'ESRI Shapefile')
 
 # Fixme: Convert to a raster for use in RHESSys patch precip assignment----
 #gridded(Nexrad) = TRUE
@@ -2023,14 +2224,14 @@ StreamCal = data.frame(Date = as.character(as.Date(BES_TN_d$BARN$SortDate, origi
                        Flow = BES_TN_d$BARN$Flow[IndDatesCalBARN], 
                        stringsAsFactors = FALSE)
 options(scipen = 999)
-write.table(x = StreamCal, file = 'BaismanStreamflow_Feb2020Revised_Cal.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+write.table(x = StreamCal, file = f_BaismanStreamflowCal, sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
 options(scipen = 0)
 #Streamflow - Validation - needs 5 years of spinup before validation starts.
 StreamVal = data.frame(Date = as.character(as.Date(BES_TN_d$BARN$SortDate, origin='1970-01-01')[IndDatesValBARN]), 
                        Flow = BES_TN_d$BARN$Flow[IndDatesValBARN], 
                        stringsAsFactors = FALSE)
 options(scipen = 999)
-write.table(x = StreamVal, file = 'BaismanStreamflow_Feb2020Revised_Val.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+write.table(x = StreamVal, file = f_BaismanStreamflowVal, sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
 options(scipen = 0)
 
 #Streamflow - Calibration - Pond Branch
@@ -2041,14 +2242,14 @@ StreamCal_POBR = data.frame(Date = as.character(as.Date(BES_TN_d$POBR$SortDate, 
                             Flow = BES_TN_d$POBR$Flow[IndDatesCalPOBR], 
                             stringsAsFactors = FALSE)
 options(scipen = 999)
-write.table(x = StreamCal_POBR, file = 'BaismanStreamflow_POBR_Feb2020Revised__Cal.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+write.table(x = StreamCal_POBR, file = f_POBRStreamflowCal, sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
 options(scipen = 0)
 #Streamflow - Validation - Pond Branch
 StreamVal_POBR = data.frame(Date = as.character(as.Date(BES_TN_d$POBR$SortDate, origin='1970-01-01')[IndDatesValPOBR]), 
                             Flow = BES_TN_d$POBR$Flow[IndDatesValPOBR], 
                             stringsAsFactors = FALSE)
 options(scipen = 999)
-write.table(x = StreamVal_POBR, file = 'BaismanStreamflow_POBR_Feb2020Revised_Val.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+write.table(x = StreamVal_POBR, file = f_POBRStreamflowVal, sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
 options(scipen = 0)
 
 #TN - Calibration
@@ -2062,8 +2263,8 @@ TNCal_WRTDS = data.frame(Date = as.character(as.Date(BES_TN_d$BARN$SortDate, ori
                          TN = BES_TN_d$BARN$TN..mg.N.L.[IndDatesCalBARN], 
                          stringsAsFactors = FALSE)
 options(scipen = 999)
-write.table(x = TNCal, file = 'TN_Feb2020Revised_Cal.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
-write.table(x = TNCal_WRTDS, file = 'TN_Feb2020Revised_Cal_WRTDS.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+write.table(x = TNCal, file = f_BaismanTNCal, sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+write.table(x = TNCal_WRTDS, file = f_BaismanTNCal_WRTDS, sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
 options(scipen = 0)
 #TN - Validation
 TNVal = data.frame(Date = as.character(as.Date(BES_TN_d$BARN$SortDate, origin='1970-01-01')[IndDatesValBARN]), 
@@ -2074,8 +2275,8 @@ TNVal_WRTDS = data.frame(Date = as.character(as.Date(BES_TN_d$BARN$SortDate, ori
                          TN = BES_TN_d$BARN$TN..mg.N.L.[IndDatesValBARN], 
                          stringsAsFactors = FALSE)
 options(scipen = 999)
-write.table(x = TNVal, file = 'TN_Feb2020Revised_Val.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
-write.table(x = TNVal_WRTDS, file = 'TN_Feb2020Revised_Val_WRTDS.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+write.table(x = TNVal, file = f_BaismanTNVal, sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+write.table(x = TNVal_WRTDS, file = f_BaismanTNVal_WRTDS, sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
 options(scipen = 0)
 
 #TN - Calibration - Pond Branch
@@ -2088,8 +2289,8 @@ TNCal_POBR_WRTDS = data.frame(Date = as.character(as.Date(BES_TN_d$POBR$SortDate
                               TN = BES_TN_d$POBR$TN..mg.N.L.[IndDatesCalPOBR], 
                               stringsAsFactors = FALSE)
 options(scipen = 999)
-write.table(x = TNCal_POBR, file = 'TN_POBR_Feb2020Revised_Cal.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
-write.table(x = TNCal_POBR_WRTDS, file = 'TN_POBR_Feb2020Revised_Cal_WRTDS.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+write.table(x = TNCal_POBR, file = f_POBRTNCal, sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+write.table(x = TNCal_POBR_WRTDS, file = f_POBRTNCal_WRTDS, sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
 options(scipen = 0)
 #TN - Validation - Pond Branch
 TNVal_POBR = data.frame(Date = as.character(as.Date(BES_TN_d$POBR$SortDate, origin='1970-01-01')[IndDatesValPOBR]), 
@@ -2100,8 +2301,8 @@ TNVal_POBR_WRTDS = data.frame(Date = as.character(as.Date(BES_TN_d$POBR$SortDate
                               TN = BES_TN_d$POBR$TN..mg.N.L.[IndDatesValPOBR], 
                               stringsAsFactors = FALSE)
 options(scipen = 999)
-write.table(x = TNVal_POBR, file = 'TN_POBR_Feb2020Revised_Val.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
-write.table(x = TNVal_POBR_WRTDS, file = 'TN_POBR_Feb2020Revised_Val_WRTDS.txt', sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+write.table(x = TNVal_POBR, file = f_POBRTNVal, sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
+write.table(x = TNVal_POBR_WRTDS, file = f_POBRTNVal_WRTDS, sep = '\t', row.names = FALSE, col.names = TRUE, fileEncoding = 'UTF-8')
 options(scipen = 0)
 
 #Create climate station timeseries for RHESSys runs----
@@ -2195,25 +2396,25 @@ RainDates = seq(as.Date(MetStations_5km$USW00093784[MDSci_CalDateStart,]$date), 
 setwd(wd_clim)
 #FullTimeseries
 options(scipen = 999)
-write.table(x = c("1999 11 15 1", RainTimeseries), file = 'AllTN_Feb2020Revised.rain', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote = FALSE)
+write.table(x = c("1999 11 15 1", RainTimeseries), file = f_Precip_All, sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote = FALSE)
 options(scipen = 0)
 
 #SA
 #1999-11-15 to 2010-09-30
 options(scipen = 999)
-write.table(x = c("1999 11 15 1", RainTimeseries[1:which(RainDates == '2010-09-30')]), file = 'SA_Feb2020Revised.rain', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote = FALSE)
+write.table(x = c("1999 11 15 1", RainTimeseries[1:which(RainDates == '2010-09-30')]), file = f_Precip_SA, sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote = FALSE)
 options(scipen = 0)
 
 #Calibration
 #1999-11-15 to 2013-09-30
 options(scipen = 999)
-write.table(x = c("1999 11 15 1", RainTimeseries[1:which(RainDates == '2013-09-30')]), file = 'Cal_Feb2020Revised.rain', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote = FALSE)
+write.table(x = c("1999 11 15 1", RainTimeseries[1:which(RainDates == '2013-09-30')]), file = f_Precip_Cal, sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote = FALSE)
 options(scipen = 0)
 
 #Validation
 #2008-11-15 to 2017-04-01
 options(scipen = 999)
-write.table(x = c("2008 11 15 1", RainTimeseries[which(RainDates == '2008-11-15'):which(RainDates == '2017-04-01')]), file = 'Val_Feb2020Revised.rain', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote = FALSE)
+write.table(x = c("2008 11 15 1", RainTimeseries[which(RainDates == '2008-11-15'):which(RainDates == '2017-04-01')]), file = f_Precip_Val, sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote = FALSE)
 options(scipen = 0)
 
 # Temperature min and max from MD Science Center and BWI Airport ----
@@ -2265,29 +2466,29 @@ TmaxTimeseries[which((TmaxTimeseries - TminTimeseries) <0)] = BWI$tmax[which(BWI
 setwd(wd_clim)
 #Full Timeseries
 options(scipen = 999)
-write.table(x = c("1999 11 15 1", TminTimeseries), file = 'AllTN_Feb2020Revised.tmin', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
-write.table(x = c("1999 11 15 1", TmaxTimeseries), file = 'AllTN_Feb2020Revised.tmax', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
+write.table(x = c("1999 11 15 1", TminTimeseries), file = f_Tmin_All, sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
+write.table(x = c("1999 11 15 1", TmaxTimeseries), file = f_Tmax_All, sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
 options(scipen = 0)
 
 #SA
 #1999-11-15 to 2010-09-30
 options(scipen = 999)
-write.table(x = c("1999 11 15 1", TminTimeseries[1:which(TempDates == '2010-09-30')]), file = 'SA_Feb2020Revised.tmin', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
-write.table(x = c("1999 11 15 1", TmaxTimeseries[1:which(TempDates == '2010-09-30')]), file = 'SA_Feb2020Revised.tmax', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
+write.table(x = c("1999 11 15 1", TminTimeseries[1:which(TempDates == '2010-09-30')]), file = f_Tmin_SA, sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
+write.table(x = c("1999 11 15 1", TmaxTimeseries[1:which(TempDates == '2010-09-30')]), file = f_Tmax_SA, sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
 options(scipen = 0)
 
 #Calibration
 #1999-11-15 to 2013-09-30
 options(scipen = 999)
-write.table(x = c("1999 11 15 1", TminTimeseries[1:which(TempDates == '2013-09-30')]), file = 'Cal_Feb2020Revised.tmin', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
-write.table(x = c("1999 11 15 1", TmaxTimeseries[1:which(TempDates == '2013-09-30')]), file = 'Cal_Feb2020Revised.tmax', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
+write.table(x = c("1999 11 15 1", TminTimeseries[1:which(TempDates == '2013-09-30')]), file = f_Tmin_Cal, sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
+write.table(x = c("1999 11 15 1", TmaxTimeseries[1:which(TempDates == '2013-09-30')]), file = f_Tmax_Cal, sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
 options(scipen = 0)
 
 #Validation
 #2008-11-15 to 2017-04-01
 options(scipen = 999)
-write.table(x = c("2008 11 15 1", TminTimeseries[which(TempDates == '2008-11-15'):which(TempDates == '2017-04-01')]), file = 'Val_Feb2020Revised.tmin', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
-write.table(x = c("2008 11 15 1", TmaxTimeseries[which(TempDates == '2008-11-15'):which(TempDates == '2017-04-01')]), file = 'Val_Feb2020Revised.tmax', sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
+write.table(x = c("2008 11 15 1", TminTimeseries[which(TempDates == '2008-11-15'):which(TempDates == '2017-04-01')]), file = f_Tmin_Val, sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
+write.table(x = c("2008 11 15 1", TmaxTimeseries[which(TempDates == '2008-11-15'):which(TempDates == '2017-04-01')]), file = f_Tmax_Val, sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8', quote=FALSE)
 options(scipen = 0)
 
 # Elevation of BWI and MD Sci Center for RHESSys----
@@ -2300,7 +2501,7 @@ NOAAstations_locs@data[871,]
 #BES Oregon Ridge: 178.22 according to Laurence. 60 m screen height, which has been changed to 6 m.
 #Using these elevations in calculations.
 
-#Fixme: Baisman rainfall-runoff plots using filled-in precip timeseries----
+#Fixme-rerun: Baisman rainfall-runoff plots using filled-in precip timeseries----
 setwd(wd_sf)
 #Find streamflow date that matches the precip date
 #Pond Branch
@@ -2356,11 +2557,11 @@ cor(StreamStationList$`01583580`$X_00060_00003[Ind1:Ind2], StreamStationList$`01
 #Estimate WRTDS interpolation tables----
 #Fixme: Was the regression made with cms instead of cfs? Does it matter?
 #Load the streamflow data into WRTDS format
-Daily = readUserDaily(filePath = wd_RHESSysObs_BARN, fileName = 'BaismanStreamflow_Cal.txt', hasHeader = TRUE, separator = '\t', qUnit = 1, verbose = FALSE)
+Daily = readUserDaily(filePath = wd_RHESSysObs_BARN, fileName = f_BaismanStreamflowCal, hasHeader = TRUE, separator = '\t', qUnit = 1, verbose = FALSE)
 #Read the TN data
-Sample = readUserSample(filePath = wd_RHESSysObs_BARN, fileName = 'TN_Cal_WRTDS.txt', hasHeader = TRUE, separator = '\t', verbose = FALSE)
+Sample = readUserSample(filePath = wd_RHESSysObs_BARN, fileName = f_BaismanTNCal_WRTDS, hasHeader = TRUE, separator = '\t', verbose = FALSE)
 #Set the required information
-INFO = readUserInfo(filePath = wd_WRTDS_BARN, fileName = 'WRTDS_INFO.csv', interactive = FALSE)
+INFO = readUserInfo(filePath = wd_WRTDS_BARN, fileName = f_BaismanWRTDSInfo, interactive = FALSE)
 eList = mergeReport(INFO = INFO, Daily = Daily, Sample = Sample)
 saveResults(wd_WRTDS_BARN, eList)
 
@@ -2539,7 +2740,7 @@ png('ContourPlotErr_mod5.png', res = 300, units ='in', width = 6, height = 6)
 plotContours(WRTDSmod5, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,.5,0.05),qUnit=1, qBottom = 0.001, qTop = 50, whatSurface = 2)
 dev.off()
 
-#LOOCV SE for sample and discharge---
+# LOOCV SE for sample and discharge----
 sum(WRTDSmod$Sample$SE^2)
 sum(WRTDSmod2$Sample$SE^2)
 sum(WRTDSmod3$Sample$SE^2)
@@ -2559,7 +2760,6 @@ mean((WRTDSmod3$Sample$ConcHat - WRTDSmod3$Sample$ConcAve))^2 + sum((WRTDSmod3$S
 mean((WRTDSmod4$Sample$ConcHat - WRTDSmod4$Sample$ConcAve))^2 + sum((WRTDSmod4$Sample$ConcHat - WRTDSmod4$Sample$ConcAve)^2)/(nrow(Sample)-1)
 mean((WRTDSmod5$Sample$ConcHat - WRTDSmod5$Sample$ConcAve))^2 + sum((WRTDSmod5$Sample$ConcHat - WRTDSmod5$Sample$ConcAve)^2)/(nrow(Sample)-1)
 
-
 # Concentration and Discharge - shift after 2005?----
 png('ConcDischarge.png', res = 300, units ='in', width = 5, height = 5)
 par(mar=c(4,4,.5,.5))
@@ -2567,7 +2767,6 @@ layout(c(1,2))
 plot(Daily$Date, log(Daily$Q), type = 'l', ylab = 'log(Flow [cms])', xlab = 'Year')
 plot(Sample$Date, Sample$ConcAve, type = 'l', ylab = 'Total Nitrogen (mg/L)', xlab = 'Year')
 dev.off()
-
 
 # Running selected model with the modified functions that report the parameters of the surfaces----
 WRTDSmod4m = modelEstimation(eList = eList, windowY = 2, windowQ = 2, windowS = .25, minNumObs = 50, minNumUncen = 50, edgeAdjust = TRUE, numTsteps = 50, numQsteps = 100)
@@ -2584,6 +2783,7 @@ TabLogErr = WRTDSmod4m$surfaces[,,2]
 rownames(TabInt) = rownames(TabYear) = rownames(TabLogQ) = rownames(TabSinYear) = rownames(TabCosYear) = rownames(TabLogErr) = attr(WRTDSmod4m$surfaces, which = 'LogQ')
 colnames(TabInt) = colnames(TabYear) = colnames(TabLogQ) = colnames(TabSinYear) = colnames(TabCosYear) = colnames(TabLogErr) = attr(WRTDSmod4m$surfaces, which = 'Year')
 
+#  Fill NA values in tables----
 #There are 3 cells that have NA values that need to be adjusted using parameter interpolation from the tables.
 IndReplace = which(is.na(TabInt))
 #6 is one for each of the parameters from WRTDS
@@ -2752,15 +2952,15 @@ TabLogErr[IndReplace] = RepVal[,6]
 rm(ir, TempTabInt, TempTabCosYear, TempColInd, TempRowInd, TempTabLogErr, TempTabLogQ, TempTabSinYear, TempTabYear)
 rm(Row2, Row1, Col1, Col2, count, Col2Exists, Row2Exists, RepVal, IndReplace)
 
-#Write the tables
+#  Write the tables----
 setwd(wd_WRTDS_BARN)
 options(scipen = 999)
-write.table(round(TabInt,5), file = 'TabIntMod4_p5.txt', sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
-write.table(signif(TabYear,4), file = 'TabYearMod4_p4.txt', sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
-write.table(signif(TabLogQ,4), file = 'TabLogQMod4_p4.txt', sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
-write.table(signif(TabSinYear,4), file = 'TabSinYearMod4_p4.txt', sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
-write.table(signif(TabCosYear,4), file = 'TabCosYearMod4_p4.txt', sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
-write.table(round(TabLogErr,5), file = 'TabLogErrMod4_p5.txt', sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
+write.table(round(TabInt,5), file = f_BaismanWRTDS_TabInt, sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
+write.table(signif(TabYear,4), file = f_BaismanWRTDS_TabYear, sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
+write.table(signif(TabLogQ,4), file = f_BaismanWRTDS_TabLogQ, sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
+write.table(signif(TabSinYear,4), file = f_BaismanWRTDS_TabSinYear, sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
+write.table(signif(TabCosYear,4), file = f_BaismanWRTDS_TabCosYear, sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
+write.table(round(TabLogErr,5), file = f_BaismanWRTDS_TabLogErr, sep = '\t', row.names = attr(WRTDSmod4m$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod4m$surfaces, which = 'Year'))
 options(scipen = 0)
 
 #Contour plots of the parameters
@@ -2786,12 +2986,12 @@ dev.off()
 # Load WRTDS Interpolation Tables----
 setwd(wd_WRTDS_BARN)
 #Baisman
-TabInt = as.matrix(read.table(file = 'TabIntMod4_p5.txt', sep = '\t', header = TRUE, check.names = FALSE))
-TabYear = as.matrix(read.table(file = 'TabYearMod4_p4.txt', sep = '\t', header = TRUE, check.names = FALSE))
-TabLogQ = as.matrix(read.table(file = 'TabLogQMod4_p4.txt', sep = '\t', header = TRUE, check.names = FALSE))
-TabSinYear = as.matrix(read.table(file = 'TabSinYearMod4_p4.txt', sep = '\t', header = TRUE, check.names = FALSE))
-TabCosYear = as.matrix(read.table(file = 'TabCosYearMod4_p4.txt', sep = '\t', header = TRUE, check.names = FALSE))
-TabLogErr = as.matrix(read.table(file = 'TabLogErrMod4_p5.txt', sep = '\t', header = TRUE, check.names = FALSE))
+TabInt = as.matrix(read.table(file = f_BaismanWRTDS_TabInt, sep = '\t', header = TRUE, check.names = FALSE))
+TabYear = as.matrix(read.table(file = f_BaismanWRTDS_TabYear, sep = '\t', header = TRUE, check.names = FALSE))
+TabLogQ = as.matrix(read.table(file = f_BaismanWRTDS_TabLogQ, sep = '\t', header = TRUE, check.names = FALSE))
+TabSinYear = as.matrix(read.table(file = f_BaismanWRTDS_TabSinYear, sep = '\t', header = TRUE, check.names = FALSE))
+TabCosYear = as.matrix(read.table(file = f_BaismanWRTDS_TabCosYear, sep = '\t', header = TRUE, check.names = FALSE))
+TabLogErr = as.matrix(read.table(file = f_BaismanWRTDS_TabLogErr, sep = '\t', header = TRUE, check.names = FALSE))
 
 #WRTDS for hillslopes----
 # Data: Kenworth 2001-2002----
@@ -3464,11 +3664,11 @@ cor(y = BR5_PredTN$MedLoad, x = I(Flows_BR5*12^3*2.54^3/100^3))
 
 # WRTDS Interpolation Tables for Pond Branch----
 #Load the streamflow data into WRTDS format
-Daily_POBR = readUserDaily(filePath = wd_RHESSysObs_POBR, fileName = 'BaismanStreamflow_POBR_Cal.txt', hasHeader = TRUE, separator = '\t', qUnit = 2, verbose = FALSE)
+Daily_POBR = readUserDaily(filePath = wd_RHESSysObs_POBR, fileName = f_POBRStreamflowCal, hasHeader = TRUE, separator = '\t', qUnit = 2, verbose = FALSE)
 #Read the TN data
-Sample_POBR = readUserSample(filePath = wd_RHESSysObs_POBR, fileName = 'TN_POBR_Cal_WRTDS.txt', hasHeader = TRUE, separator = '\t', verbose = FALSE)
+Sample_POBR = readUserSample(filePath = wd_RHESSysObs_POBR, fileName = f_POBRTNCal_WRTDS, hasHeader = TRUE, separator = '\t', verbose = FALSE)
 #Set the required information
-INFO_POBR = readUserInfo(filePath = wd_WRTDS_POBR, fileName = 'WRTDS_INFO_POBR.csv', interactive = FALSE)
+INFO_POBR = readUserInfo(filePath = wd_WRTDS_POBR, fileName = f_POBRWRTDSInfo, interactive = FALSE)
 eList_POBR = mergeReport(INFO = INFO_POBR, Daily = Daily_POBR, Sample = Sample_POBR)
 
 #Make edits to include left-censored data. Nore two different thresholds.
@@ -3694,7 +3894,7 @@ plotContours(WRTDSmod6_POBR, yearStart = 1999, yearEnd = 2011, contourLevels=seq
 dev.off()
 
 
-#LOOCV SE for sample and discharge---
+#  LOOCV SE for sample and discharge----
 sum(WRTDSmod_POBR$Sample$SE^2)
 sum(WRTDSmod2_POBR$Sample$SE^2)
 sum(WRTDSmod3_POBR$Sample$SE^2)
@@ -3752,26 +3952,26 @@ png('TabLogErr_POBR.png', units = 'in', res = 300, height = 7, width = 7)
 plotContours(WRTDSmod5m_POBR, yearStart = 1999, yearEnd = 2011, contourLevels=seq(0,2.5,0.1),qUnit=1, qBottom = 0.0001, qTop = 5, whatSurface = 2)
 dev.off()
 
-#Write the tables
+#   Write the tables----
 setwd(wd_WRTDS_POBR)
 options(scipen = 999)
-write.table(round(TabInt_POBR,5), file = 'TabInt_POBRMod5_p5.txt', sep = '\t', row.names = attr(WRTDSmod5m_POBR$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod5m_POBR$surfaces, which = 'Year'))
-write.table(signif(TabYear_POBR,4), file = 'TabYear_POBRMod5_p4.txt', sep = '\t', row.names = attr(WRTDSmod5m_POBR$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod5m_POBR$surfaces, which = 'Year'))
-write.table(signif(TabLogQ_POBR,4), file = 'TabLogQ_POBRMod5_p4.txt', sep = '\t', row.names = attr(WRTDSmod5m_POBR$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod5m_POBR$surfaces, which = 'Year'))
-write.table(signif(TabSinYear_POBR,4), file = 'TabSinYear_POBRMod5_p4.txt', sep = '\t', row.names = attr(WRTDSmod5m_POBR$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod5m_POBR$surfaces, which = 'Year'))
-write.table(signif(TabCosYear_POBR,4), file = 'TabCosYear_POBRMod5_p4.txt', sep = '\t', row.names = attr(WRTDSmod5m_POBR$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod5m_POBR$surfaces, which = 'Year'))
-write.table(round(TabLogErr_POBR,5), file = 'TabLogErr_POBRMod5_p5.txt', sep = '\t', row.names = attr(WRTDSmod5m_POBR$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod5m_POBR$surfaces, which = 'Year'))
+write.table(round(TabInt_POBR,5), file = f_POBRWRTDS_TabInt, sep = '\t', row.names = attr(WRTDSmod5m_POBR$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod5m_POBR$surfaces, which = 'Year'))
+write.table(signif(TabYear_POBR,4), file = f_POBRWRTDS_TabYear, sep = '\t', row.names = attr(WRTDSmod5m_POBR$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod5m_POBR$surfaces, which = 'Year'))
+write.table(signif(TabLogQ_POBR,4), file = f_POBRWRTDS_TabLogQ, sep = '\t', row.names = attr(WRTDSmod5m_POBR$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod5m_POBR$surfaces, which = 'Year'))
+write.table(signif(TabSinYear_POBR,4), file = f_POBRWRTDS_TabSinYear, sep = '\t', row.names = attr(WRTDSmod5m_POBR$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod5m_POBR$surfaces, which = 'Year'))
+write.table(signif(TabCosYear_POBR,4), file = f_POBRWRTDS_TabCosYear, sep = '\t', row.names = attr(WRTDSmod5m_POBR$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod5m_POBR$surfaces, which = 'Year'))
+write.table(round(TabLogErr_POBR,5), file = f_POBRWRTDS_TabLogErr, sep = '\t', row.names = attr(WRTDSmod5m_POBR$surfaces, which = 'LogQ'), col.names = attr(WRTDSmod5m_POBR$surfaces, which = 'Year'))
 options(scipen = 0)
 
 # Load WRTDS Interpolation Tables----
 setwd(wd_WRTDS_POBR)
 #Pond Branch
-TabInt_POBR = as.matrix(read.table(file = 'TabInt_POBRMod5_p5.txt', sep = '\t', header = TRUE, check.names = FALSE))
-TabYear_POBR = as.matrix(read.table(file = 'TabYear_POBRMod5_p4.txt', sep = '\t', header = TRUE, check.names = FALSE))
-TabLogQ_POBR = as.matrix(read.table(file = 'TabLogQ_POBRMod5_p4.txt', sep = '\t', header = TRUE, check.names = FALSE))
-TabSinYear_POBR = as.matrix(read.table(file = 'TabSinYear_POBRMod5_p4.txt', sep = '\t', header = TRUE, check.names = FALSE))
-TabCosYear_POBR = as.matrix(read.table(file = 'TabCosYear_POBRMod5_p4.txt', sep = '\t', header = TRUE, check.names = FALSE))
-TabLogErr_POBR = as.matrix(read.table(file = 'TabLogErr_POBRMod5_p5.txt', sep = '\t', header = TRUE, check.names = FALSE))
+TabInt_POBR = as.matrix(read.table(file = f_POBRWRTDS_TabInt, sep = '\t', header = TRUE, check.names = FALSE))
+TabYear_POBR = as.matrix(read.table(file = f_POBRWRTDS_TabYear, sep = '\t', header = TRUE, check.names = FALSE))
+TabLogQ_POBR = as.matrix(read.table(file = f_POBRWRTDS_TabLogQ, sep = '\t', header = TRUE, check.names = FALSE))
+TabSinYear_POBR = as.matrix(read.table(file = f_POBRWRTDS_TabSinYear, sep = '\t', header = TRUE, check.names = FALSE))
+TabCosYear_POBR = as.matrix(read.table(file = f_POBRWRTDS_TabCosYear, sep = '\t', header = TRUE, check.names = FALSE))
+TabLogErr_POBR = as.matrix(read.table(file = f_POBRWRTDS_TabLogErr, sep = '\t', header = TRUE, check.names = FALSE))
 
 #  Compare predictions of Pond Branch WRTDS and the other regression to true value----
 POBR_PredTN_POBRWRTDS = matrix(NA, ncol = 3, nrow = length(Flows_POBR))
@@ -3886,8 +4086,7 @@ setwd(dir_WChem)
 
 res = 30
 
-#Fixme: directory to variable
-world = read.csv("C:\\Users\\js4yd\\Documents\\BaismanSA\\RHESSysRuns\\Run0\\worldfiles\\worldfile.csv", stringsAsFactors = FALSE)
+world = read.csv(f_worldfile, stringsAsFactors = FALSE)
 
 #Taking the unique patch IDs because strata can exist in more than one patch.
 Area.basin = length(unique(world$patchID))*res^2
