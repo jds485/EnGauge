@@ -3700,6 +3700,8 @@ K_Q = read.csv(file = f_KenworthWQ_Q, stringsAsFactors = FALSE)
 K_Q[,-1] = K_Q[,-1]/1000
 K_TN = read.csv(file = f_KenworthWQ_TN, stringsAsFactors = FALSE)
 K_Sites = readOGR(dsn = getwd(), layer = f_KenworthSites, stringsAsFactors = FALSE)
+K_Sites$NAME[7] = "POBR"
+K_Sites$NAME[9] = "PB4"
 
 # Data: Smith 2006-2007----
 setwd(dir_SynWChem_Smith)
@@ -5724,10 +5726,23 @@ if(cor(Load_ECM_Baisman, BARN_PredTN$MedLoad) != 1){
 
 #  Compare models to where there are datasets----
 #   Obtain upstream contributing patches for each sampling location----
+#An ArcGIS script was used to get the raster cells corresponding to the upstream areas for each sampling site.
+#For that script, the tif file extension did not want to be added. So, need to add that manually to the filename.
+file.rename(from = paste0("C:\\Users\\js4yd\\Documents\\DEMtest\\SynopticSites\\", grep(grep(list.files("C:\\Users\\js4yd\\Documents\\DEMtest\\SynopticSites"), pattern = '.', fixed = TRUE, invert = TRUE, value = TRUE), pattern = '_', fixed = TRUE, value = TRUE)),
+            to = paste0("C:\\Users\\js4yd\\Documents\\DEMtest\\SynopticSites\\", grep(grep(list.files("C:\\Users\\js4yd\\Documents\\DEMtest\\SynopticSites"), pattern = '.', fixed = TRUE, invert = TRUE, value = TRUE), pattern = '_', fixed = TRUE, value = TRUE), '.tif'))
+            
+#    Add patch identifiers for each sampling site to the world dataframe, one column for each site----
+fs = grep(list.files("C:\\Users\\js4yd\\Documents\\DEMtest\\SynopticSites"), pattern = '.tif', fixed = TRUE, value = TRUE)
+for (i in 1:length(fs)){
+  temp = raster::extract(x = projectRaster(raster(x = paste0("C:\\Users\\js4yd\\Documents\\DEMtest\\SynopticSites\\", fs[i])), crs = pCRS), y = world)
+  temp[!is.na(temp)] = 1
+  temp = as.data.frame(temp)
+  colnames(temp) = strsplit(fs[i], split = '.tif', fixed = TRUE)
+  world@data = cbind(world@data, temp)
+}
+rm(i,temp,fs)
 
-#    Add those patch identifiers to the world dataframe, one column for each site----
-
-#   BR3----
+#   BR3 as collected from above analysis----
 Load_ECM_BR305 = EC_Undev05*sum(Area.Hills[c(13,14),2]-Area.Hills[c(13,14),3]) + EC_Dev05*sum(Area.Hills[c(13,14),3])
 Load_ECM_BR3 = EC_Undev*sum(Area.Hills[c(13,14),2]-Area.Hills[c(13,14),3]) + EC_Dev*sum(Area.Hills[c(13,14),3])
 Load_ECM_BR395 = EC_Undev95*sum(Area.Hills[c(13,14),2]-Area.Hills[c(13,14),3]) + EC_Dev95*sum(Area.Hills[c(13,14),3])
@@ -5761,8 +5776,1166 @@ plot(BR3_PredTN$TrueLoad[as.Date(Dates_BR3) %in% as.Date(Dates_BARN)], Load_ECM_
      xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'Hillslope 3', xlim = c(0,100), ylim = c(0,100))
 lines(c(0,100), c(0,100))
 
-#   BR5----
+#   BR5 as collected from above analysis----
+#   Other Smith Sampling Gauges----
+#    BR3 S1----
+#Get the impervious surface area contributing to this location
+AreaImp_S1 = 0
+Area_S1 = length(which(world[which(duplicated(world$patchID) == FALSE),]$G_10 == 1))*res^2
+for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$G_10 == 1))){
+  AreaImp_S1 = AreaImp_S1 + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$G_10 == 1)[i]]*res^2
+}
+rm(i)
+#Observed data for this site
+BR3S1_TN = S_TN[S_TN$Site == S_Sites@data$NAME[11],]
+BR3S1_Q = S_Q[S_Q$Site == S_Sites@data$NAME[11],]
+#Check for NAs and remove
+IndRm = which((is.na(BR3S1_TN)) | (is.na(BR3S1_Q)))
+BR3S1_Q = BR3S1_Q[-IndRm]
+BR3S1_TN = BR3S1_TN[-IndRm]
+rm(IndRm)
+Dates_BR3S1 = vector('character', ncol(BR3S1_Q)-1)
+for (i in 1:(ncol(BR3S1_Q)-1)){
+  temp = strsplit(colnames(BR3S1_Q)[i+1], split = '.', fixed = TRUE)[[1]]
+  Dates_BR3S1[i] = paste(temp[2], temp[3], temp[4], sep = '-')
+}
+Dates_BR3S1 = as.Date(Dates_BR3S1)
 
+#mg/s unit
+BR3S1_TrueLoad = as.numeric(BR3S1_TN[-1]*1000*BR3S1_Q[-1])
+
+Load_ECM_BR3S105 = EC_Undev05*(Area_S1 - AreaImp_S1) + EC_Dev05*AreaImp_S1
+Load_ECM_BR3S1 = EC_Undev*(Area_S1 - AreaImp_S1) + EC_Dev*AreaImp_S1
+Load_ECM_BR3S195 = EC_Undev95*(Area_S1 - AreaImp_S1) + EC_Dev95*AreaImp_S1
+Load_ECM_BR3S1_QLQ05 = EC_Undev05*(Area_S1 - AreaImp_S1) + EC_DevQLQ05*AreaImp_S1
+Load_ECM_BR3S1_QLQ = EC_Undev*(Area_S1 - AreaImp_S1) + EC_DevQLQ*AreaImp_S1
+Load_ECM_BR3S1_QLQ95 = EC_Undev95*(Area_S1 - AreaImp_S1) + EC_DevQLQ95*AreaImp_S1
+
+plot(as.Date(Dates_BARN), Load_ECM_BR3S1, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
+par(new = TRUE)
+plot(as.Date(Dates_BR3S1), BR3S1_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
+
+plot(as.Date(Dates_BARN), Load_ECM_BR3S1_QLQ, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
+par(new = TRUE)
+plot(as.Date(Dates_BR3S1), BR3S1_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
+
+png('ECMBR3S1.png', res = 300, units = 'in', width = 5, height = 5)
+plot(x = BR3S1_TrueLoad[as.Date(Dates_BR3S1) %in% as.Date(Dates_BARN)], y = Load_ECM_BR3S1[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)], 
+     xlim = c(0,30), ylim = c(0,30), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S1')
+arrows(BR3S1_TrueLoad[as.Date(Dates_BR3S1) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S1[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)] - Load_ECM_BR3S105[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)]), BR3S1_TrueLoad[as.Date(Dates_BR3S1) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S1[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)] + Load_ECM_BR3S195[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col = 'red')
+dev.off()
+
+png('ECMBR3S1_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
+plot(BR3S1_TrueLoad[as.Date(Dates_BR3S1) %in% as.Date(Dates_BARN)], Load_ECM_BR3S1_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)], 
+     xlim = c(0,30), ylim = c(0,30), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S1')
+arrows(BR3S1_TrueLoad[as.Date(Dates_BR3S1) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S1_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)] - Load_ECM_BR3S1_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)]), BR3S1_TrueLoad[as.Date(Dates_BR3S1) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S195[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)] + Load_ECM_BR3S1_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col ='red')
+dev.off()
+
+#    BR3 S2----
+#Get the impervious surface area contributing to this location
+AreaImp_S2 = 0
+Area_S2 = length(which(world[which(duplicated(world$patchID) == FALSE),]$G_0 == 1))*res^2
+for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$G_0 == 1))){
+  AreaImp_S2 = AreaImp_S2 + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$G_0 == 1)[i]]*res^2
+}
+rm(i)
+#Observed data for this site
+BR3S2_TN = S_TN[S_TN$Site == S_Sites@data$NAME[1],]
+BR3S2_Q = S_Q[S_Q$Site == S_Sites@data$NAME[1],]
+#Check for NAs and remove
+IndRm = which((is.na(BR3S2_TN)) | (is.na(BR3S2_Q)))
+BR3S2_Q = BR3S2_Q[-IndRm]
+BR3S2_TN = BR3S2_TN[-IndRm]
+rm(IndRm)
+Dates_BR3S2 = vector('character', ncol(BR3S2_Q)-1)
+for (i in 1:(ncol(BR3S2_Q)-1)){
+  temp = strsplit(colnames(BR3S2_Q)[i+1], split = '.', fixed = TRUE)[[1]]
+  Dates_BR3S2[i] = paste(temp[2], temp[3], temp[4], sep = '-')
+}
+Dates_BR3S2 = as.Date(Dates_BR3S2)
+
+#mg/s unit
+BR3S2_TrueLoad = as.numeric(BR3S2_TN[-1]*1000*BR3S2_Q[-1])
+
+Load_ECM_BR3S205 = EC_Undev05*(Area_S2 - AreaImp_S2) + EC_Dev05*AreaImp_S2
+Load_ECM_BR3S2 = EC_Undev*(Area_S2 - AreaImp_S2) + EC_Dev*AreaImp_S2
+Load_ECM_BR3S295 = EC_Undev95*(Area_S2 - AreaImp_S2) + EC_Dev95*AreaImp_S2
+Load_ECM_BR3S2_QLQ05 = EC_Undev05*(Area_S2 - AreaImp_S2) + EC_DevQLQ05*AreaImp_S2
+Load_ECM_BR3S2_QLQ = EC_Undev*(Area_S2 - AreaImp_S2) + EC_DevQLQ*AreaImp_S2
+Load_ECM_BR3S2_QLQ95 = EC_Undev95*(Area_S2 - AreaImp_S2) + EC_DevQLQ95*AreaImp_S2
+
+plot(as.Date(Dates_BARN), Load_ECM_BR3S2, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
+par(new = TRUE)
+plot(as.Date(Dates_BR3S2), BR3S2_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
+
+plot(as.Date(Dates_BARN), Load_ECM_BR3S2_QLQ, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
+par(new = TRUE)
+plot(as.Date(Dates_BR3S2), BR3S2_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
+
+png('ECMBR3S2.png', res = 300, units = 'in', width = 5, height = 5)
+plot(x = BR3S2_TrueLoad[as.Date(Dates_BR3S2) %in% as.Date(Dates_BARN)], y = Load_ECM_BR3S2[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S2)], 
+     xlim = c(0,40), ylim = c(0,40), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S2')
+arrows(BR3S2_TrueLoad[as.Date(Dates_BR3S2) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S2[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S2)] - Load_ECM_BR3S205[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S2)]), BR3S2_TrueLoad[as.Date(Dates_BR3S2) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S2[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S2)] + Load_ECM_BR3S295[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S2)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col = 'red')
+dev.off()
+
+png('ECMBR3S2_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
+plot(BR3S2_TrueLoad[as.Date(Dates_BR3S2) %in% as.Date(Dates_BARN)], Load_ECM_BR3S2_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S2)], 
+     xlim = c(0,40), ylim = c(0,40), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S2')
+arrows(BR3S2_TrueLoad[as.Date(Dates_BR3S2) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S2_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S2)] - Load_ECM_BR3S2_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S2)]), BR3S2_TrueLoad[as.Date(Dates_BR3S2) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S295[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S2)] + Load_ECM_BR3S2_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S2)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col ='red')
+dev.off()
+
+#    BR3 S3----
+#Get the impervious surface area contributing to this location
+AreaImp_S3 = 0
+Area_S3 = length(which(world[which(duplicated(world$patchID) == FALSE),]$G_1 == 1))*res^2
+for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$G_1 == 1))){
+  AreaImp_S3 = AreaImp_S3 + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$G_1 == 1)[i]]*res^2
+}
+rm(i)
+#Observed data for this site
+BR3S3_TN = S_TN[S_TN$Site == S_Sites@data$NAME[2],]
+BR3S3_Q = S_Q[S_Q$Site == S_Sites@data$NAME[2],]
+#Check for NAs and remove
+IndRm = which((is.na(BR3S3_TN)) | (is.na(BR3S3_Q)))
+BR3S3_Q = BR3S3_Q[-IndRm]
+BR3S3_TN = BR3S3_TN[-IndRm]
+rm(IndRm)
+Dates_BR3S3 = vector('character', ncol(BR3S3_Q)-1)
+for (i in 1:(ncol(BR3S3_Q)-1)){
+  temp = strsplit(colnames(BR3S3_Q)[i+1], split = '.', fixed = TRUE)[[1]]
+  Dates_BR3S3[i] = paste(temp[2], temp[3], temp[4], sep = '-')
+}
+Dates_BR3S3 = as.Date(Dates_BR3S3)
+
+#mg/s unit
+BR3S3_TrueLoad = as.numeric(BR3S3_TN[-1]*1000*BR3S3_Q[-1])
+
+Load_ECM_BR3S305 = EC_Undev05*(Area_S3 - AreaImp_S3) + EC_Dev05*AreaImp_S3
+Load_ECM_BR3S3 = EC_Undev*(Area_S3 - AreaImp_S3) + EC_Dev*AreaImp_S3
+Load_ECM_BR3S395 = EC_Undev95*(Area_S3 - AreaImp_S3) + EC_Dev95*AreaImp_S3
+Load_ECM_BR3S3_QLQ05 = EC_Undev05*(Area_S3 - AreaImp_S3) + EC_DevQLQ05*AreaImp_S3
+Load_ECM_BR3S3_QLQ = EC_Undev*(Area_S3 - AreaImp_S3) + EC_DevQLQ*AreaImp_S3
+Load_ECM_BR3S3_QLQ95 = EC_Undev95*(Area_S3 - AreaImp_S3) + EC_DevQLQ95*AreaImp_S3
+
+plot(as.Date(Dates_BARN), Load_ECM_BR3S3, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
+par(new = TRUE)
+plot(as.Date(Dates_BR3S3), BR3S3_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
+
+plot(as.Date(Dates_BARN), Load_ECM_BR3S3_QLQ, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
+par(new = TRUE)
+plot(as.Date(Dates_BR3S3), BR3S3_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
+
+png('ECMBR3S3.png', res = 300, units = 'in', width = 5, height = 5)
+plot(x = BR3S3_TrueLoad[as.Date(Dates_BR3S3) %in% as.Date(Dates_BARN)], y = Load_ECM_BR3S3[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S3)], 
+     xlim = c(0,30), ylim = c(0,30), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S3')
+arrows(BR3S3_TrueLoad[as.Date(Dates_BR3S3) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S3[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S3)] - Load_ECM_BR3S305[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S3)]), BR3S3_TrueLoad[as.Date(Dates_BR3S3) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S3[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S3)] + Load_ECM_BR3S395[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S3)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col = 'red')
+dev.off()
+
+png('ECMBR3S3_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
+plot(BR3S3_TrueLoad[as.Date(Dates_BR3S3) %in% as.Date(Dates_BARN)], Load_ECM_BR3S3_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S3)], 
+     xlim = c(0,30), ylim = c(0,30), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S3')
+arrows(BR3S3_TrueLoad[as.Date(Dates_BR3S3) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S3_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S3)] - Load_ECM_BR3S3_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S3)]), BR3S3_TrueLoad[as.Date(Dates_BR3S3) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S395[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S3)] + Load_ECM_BR3S3_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S3)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col ='red')
+dev.off()
+
+#    BR3 S4----
+#Get the impervious surface area contributing to this location
+AreaImp_S4 = 0
+Area_S4 = length(which(world[which(duplicated(world$patchID) == FALSE),]$G_2 == 1))*res^2
+for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$G_2 == 1))){
+  AreaImp_S4 = AreaImp_S4 + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$G_2 == 1)[i]]*res^2
+}
+rm(i)
+#Observed data for this site
+BR3S4_TN = S_TN[S_TN$Site == S_Sites@data$NAME[3],]
+BR3S4_Q = S_Q[S_Q$Site == S_Sites@data$NAME[3],]
+#Check for NAs and remove
+IndRm = which((is.na(BR3S4_TN)) | (is.na(BR3S4_Q)))
+BR3S4_Q = BR3S4_Q[-IndRm]
+BR3S4_TN = BR3S4_TN[-IndRm]
+rm(IndRm)
+Dates_BR3S4 = vector('character', ncol(BR3S4_Q)-1)
+for (i in 1:(ncol(BR3S4_Q)-1)){
+  temp = strsplit(colnames(BR3S4_Q)[i+1], split = '.', fixed = TRUE)[[1]]
+  Dates_BR3S4[i] = paste(temp[2], temp[3], temp[4], sep = '-')
+}
+Dates_BR3S4 = as.Date(Dates_BR3S4)
+
+#mg/s unit
+BR3S4_TrueLoad = as.numeric(BR3S4_TN[-1]*1000*BR3S4_Q[-1])
+
+Load_ECM_BR3S405 = EC_Undev05*(Area_S4 - AreaImp_S4) + EC_Dev05*AreaImp_S4
+Load_ECM_BR3S4 = EC_Undev*(Area_S4 - AreaImp_S4) + EC_Dev*AreaImp_S4
+Load_ECM_BR3S495 = EC_Undev95*(Area_S4 - AreaImp_S4) + EC_Dev95*AreaImp_S4
+Load_ECM_BR3S4_QLQ05 = EC_Undev05*(Area_S4 - AreaImp_S4) + EC_DevQLQ05*AreaImp_S4
+Load_ECM_BR3S4_QLQ = EC_Undev*(Area_S4 - AreaImp_S4) + EC_DevQLQ*AreaImp_S4
+Load_ECM_BR3S4_QLQ95 = EC_Undev95*(Area_S4 - AreaImp_S4) + EC_DevQLQ95*AreaImp_S4
+
+plot(as.Date(Dates_BARN), Load_ECM_BR3S4, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
+par(new = TRUE)
+plot(as.Date(Dates_BR3S4), BR3S4_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
+
+plot(as.Date(Dates_BARN), Load_ECM_BR3S4_QLQ, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
+par(new = TRUE)
+plot(as.Date(Dates_BR3S4), BR3S4_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
+
+png('ECMBR3S4.png', res = 300, units = 'in', width = 5, height = 5)
+plot(x = BR3S4_TrueLoad[as.Date(Dates_BR3S4) %in% as.Date(Dates_BARN)], y = Load_ECM_BR3S4[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S4)], 
+     xlim = c(0,30), ylim = c(0,30), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S4')
+arrows(BR3S4_TrueLoad[as.Date(Dates_BR3S4) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S4[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S4)] - Load_ECM_BR3S405[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S4)]), BR3S4_TrueLoad[as.Date(Dates_BR3S4) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S4[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S4)] + Load_ECM_BR3S495[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S4)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col = 'red')
+dev.off()
+
+png('ECMBR3S4_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
+plot(BR3S4_TrueLoad[as.Date(Dates_BR3S4) %in% as.Date(Dates_BARN)], Load_ECM_BR3S4_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S4)], 
+     xlim = c(0,30), ylim = c(0,30), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S4')
+arrows(BR3S4_TrueLoad[as.Date(Dates_BR3S4) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S4_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S4)] - Load_ECM_BR3S4_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S4)]), BR3S4_TrueLoad[as.Date(Dates_BR3S4) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S495[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S4)] + Load_ECM_BR3S4_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S4)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col ='red')
+dev.off()
+
+#    BR3 S5 - poor fit - located in headwaters, might be Arc problem----
+#Get the impervious surface area contributing to this location
+AreaImp_S5 = 0
+Area_S5 = length(which(world[which(duplicated(world$patchID) == FALSE),]$G_3 == 1))*res^2
+for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$G_3 == 1))){
+  AreaImp_S5 = AreaImp_S5 + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$G_3 == 1)[i]]*res^2
+}
+rm(i)
+#Observed data for this site
+BR3S5_TN = S_TN[S_TN$Site == S_Sites@data$NAME[4],]
+BR3S5_Q = S_Q[S_Q$Site == S_Sites@data$NAME[4],]
+#Check for NAs and remove
+IndRm = which((is.na(BR3S5_TN)) | (is.na(BR3S5_Q)))
+BR3S5_Q = BR3S5_Q[-IndRm]
+BR3S5_TN = BR3S5_TN[-IndRm]
+rm(IndRm)
+Dates_BR3S5 = vector('character', ncol(BR3S5_Q)-1)
+for (i in 1:(ncol(BR3S5_Q)-1)){
+  temp = strsplit(colnames(BR3S5_Q)[i+1], split = '.', fixed = TRUE)[[1]]
+  Dates_BR3S5[i] = paste(temp[2], temp[3], temp[4], sep = '-')
+}
+Dates_BR3S5 = as.Date(Dates_BR3S5)
+
+#mg/s unit
+BR3S5_TrueLoad = as.numeric(BR3S5_TN[-1]*1000*BR3S5_Q[-1])
+
+Load_ECM_BR3S505 = EC_Undev05*(Area_S5 - AreaImp_S5) + EC_Dev05*AreaImp_S5
+Load_ECM_BR3S5 = EC_Undev*(Area_S5 - AreaImp_S5) + EC_Dev*AreaImp_S5
+Load_ECM_BR3S595 = EC_Undev95*(Area_S5 - AreaImp_S5) + EC_Dev95*AreaImp_S5
+Load_ECM_BR3S5_QLQ05 = EC_Undev05*(Area_S5 - AreaImp_S5) + EC_DevQLQ05*AreaImp_S5
+Load_ECM_BR3S5_QLQ = EC_Undev*(Area_S5 - AreaImp_S5) + EC_DevQLQ*AreaImp_S5
+Load_ECM_BR3S5_QLQ95 = EC_Undev95*(Area_S5 - AreaImp_S5) + EC_DevQLQ95*AreaImp_S5
+
+plot(as.Date(Dates_BARN), Load_ECM_BR3S5, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40))
+par(new = TRUE)
+plot(as.Date(Dates_BR3S5), BR3S5_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
+
+plot(as.Date(Dates_BARN), Load_ECM_BR3S5_QLQ, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40))
+par(new = TRUE)
+plot(as.Date(Dates_BR3S5), BR3S5_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
+
+png('ECMBR3S5.png', res = 300, units = 'in', width = 5, height = 5)
+plot(x = BR3S5_TrueLoad[as.Date(Dates_BR3S5) %in% as.Date(Dates_BARN)], y = Load_ECM_BR3S5[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S5)], 
+     xlim = c(0,30), ylim = c(0,30), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S5')
+arrows(BR3S5_TrueLoad[as.Date(Dates_BR3S5) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S5[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S5)] - Load_ECM_BR3S505[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S5)]), BR3S5_TrueLoad[as.Date(Dates_BR3S5) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S5[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S5)] + Load_ECM_BR3S595[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S5)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col = 'red')
+dev.off()
+
+png('ECMBR3S5_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
+plot(BR3S5_TrueLoad[as.Date(Dates_BR3S5) %in% as.Date(Dates_BARN)], Load_ECM_BR3S5_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S5)], 
+     xlim = c(0,30), ylim = c(0,30), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S5')
+arrows(BR3S5_TrueLoad[as.Date(Dates_BR3S5) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S5_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S5)] - Load_ECM_BR3S5_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S5)]), BR3S5_TrueLoad[as.Date(Dates_BR3S5) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S595[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S5)] + Load_ECM_BR3S5_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S5)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col ='red')
+dev.off()
+
+#    BR3 S6 - poor fit - located in headwaters, might be Arc problem----
+#Get the impervious surface area contributing to this location
+AreaImp_S6 = 0
+Area_S6 = length(which(world[which(duplicated(world$patchID) == FALSE),]$G_4 == 1))*res^2
+for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$G_4 == 1))){
+  AreaImp_S6 = AreaImp_S6 + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$G_4 == 1)[i]]*res^2
+}
+rm(i)
+#Observed data for this site
+BR3S6_TN = S_TN[S_TN$Site == S_Sites@data$NAME[5],]
+BR3S6_Q = S_Q[S_Q$Site == S_Sites@data$NAME[5],]
+#Check for NAs and remove
+IndRm = which((is.na(BR3S6_TN)) | (is.na(BR3S6_Q)))
+BR3S6_Q = BR3S6_Q[-IndRm]
+BR3S6_TN = BR3S6_TN[-IndRm]
+rm(IndRm)
+Dates_BR3S6 = vector('character', ncol(BR3S6_Q)-1)
+for (i in 1:(ncol(BR3S6_Q)-1)){
+  temp = strsplit(colnames(BR3S6_Q)[i+1], split = '.', fixed = TRUE)[[1]]
+  Dates_BR3S6[i] = paste(temp[2], temp[3], temp[4], sep = '-')
+}
+Dates_BR3S6 = as.Date(Dates_BR3S6)
+
+#mg/s unit
+BR3S6_TrueLoad = as.numeric(BR3S6_TN[-1]*1000*BR3S6_Q[-1])
+
+Load_ECM_BR3S605 = EC_Undev05*(Area_S6 - AreaImp_S6) + EC_Dev05*AreaImp_S6
+Load_ECM_BR3S6 = EC_Undev*(Area_S6 - AreaImp_S6) + EC_Dev*AreaImp_S6
+Load_ECM_BR3S695 = EC_Undev95*(Area_S6 - AreaImp_S6) + EC_Dev95*AreaImp_S6
+Load_ECM_BR3S6_QLQ05 = EC_Undev05*(Area_S6 - AreaImp_S6) + EC_DevQLQ05*AreaImp_S6
+Load_ECM_BR3S6_QLQ = EC_Undev*(Area_S6 - AreaImp_S6) + EC_DevQLQ*AreaImp_S6
+Load_ECM_BR3S6_QLQ95 = EC_Undev95*(Area_S6 - AreaImp_S6) + EC_DevQLQ95*AreaImp_S6
+
+plot(as.Date(Dates_BARN), Load_ECM_BR3S6, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
+par(new = TRUE)
+plot(as.Date(Dates_BR3S6), BR3S6_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
+
+plot(as.Date(Dates_BARN), Load_ECM_BR3S6_QLQ, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
+par(new = TRUE)
+plot(as.Date(Dates_BR3S6), BR3S6_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
+
+png('ECMBR3S6.png', res = 300, units = 'in', width = 5, height = 5)
+plot(x = BR3S6_TrueLoad[as.Date(Dates_BR3S6) %in% as.Date(Dates_BARN)], y = Load_ECM_BR3S6[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S6)], 
+     xlim = c(0,30), ylim = c(0,30), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S6')
+arrows(BR3S6_TrueLoad[as.Date(Dates_BR3S6) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S6[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S6)] - Load_ECM_BR3S605[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S6)]), BR3S6_TrueLoad[as.Date(Dates_BR3S6) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S6[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S6)] + Load_ECM_BR3S695[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S6)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col = 'red')
+dev.off()
+
+png('ECMBR3S6_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
+plot(BR3S6_TrueLoad[as.Date(Dates_BR3S6) %in% as.Date(Dates_BARN)], Load_ECM_BR3S6_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S6)], 
+     xlim = c(0,30), ylim = c(0,30), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S6')
+arrows(BR3S6_TrueLoad[as.Date(Dates_BR3S6) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S6_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S6)] - Load_ECM_BR3S6_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S6)]), BR3S6_TrueLoad[as.Date(Dates_BR3S6) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S695[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S6)] + Load_ECM_BR3S6_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S6)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col ='red')
+dev.off()
+
+#    BR3 S7 - no data----
+#    BR3 S8----
+#Get the impervious surface area contributing to this location
+AreaImp_S8 = 0
+Area_S8 = length(which(world[which(duplicated(world$patchID) == FALSE),]$G_6 == 1))*res^2
+for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$G_6 == 1))){
+  AreaImp_S8 = AreaImp_S8 + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$G_6 == 1)[i]]*res^2
+}
+rm(i)
+#Observed data for this site
+BR3S8_TN = S_TN[S_TN$Site == S_Sites@data$NAME[7],]
+BR3S8_Q = S_Q[S_Q$Site == S_Sites@data$NAME[7],]
+#Check for NAs and remove
+IndRm = which((is.na(BR3S8_TN)) | (is.na(BR3S8_Q)))
+BR3S8_Q = BR3S8_Q[-IndRm]
+BR3S8_TN = BR3S8_TN[-IndRm]
+rm(IndRm)
+Dates_BR3S8 = vector('character', ncol(BR3S8_Q)-1)
+for (i in 1:(ncol(BR3S8_Q)-1)){
+  temp = strsplit(colnames(BR3S8_Q)[i+1], split = '.', fixed = TRUE)[[1]]
+  Dates_BR3S8[i] = paste(temp[2], temp[3], temp[4], sep = '-')
+}
+Dates_BR3S8 = as.Date(Dates_BR3S8)
+
+#mg/s unit
+BR3S8_TrueLoad = as.numeric(BR3S8_TN[-1]*1000*BR3S8_Q[-1])
+
+Load_ECM_BR3S805 = EC_Undev05*(Area_S8 - AreaImp_S8) + EC_Dev05*AreaImp_S8
+Load_ECM_BR3S8 = EC_Undev*(Area_S8 - AreaImp_S8) + EC_Dev*AreaImp_S8
+Load_ECM_BR3S895 = EC_Undev95*(Area_S8 - AreaImp_S8) + EC_Dev95*AreaImp_S8
+Load_ECM_BR3S8_QLQ05 = EC_Undev05*(Area_S8 - AreaImp_S8) + EC_DevQLQ05*AreaImp_S8
+Load_ECM_BR3S8_QLQ = EC_Undev*(Area_S8 - AreaImp_S8) + EC_DevQLQ*AreaImp_S8
+Load_ECM_BR3S8_QLQ95 = EC_Undev95*(Area_S8 - AreaImp_S8) + EC_DevQLQ95*AreaImp_S8
+
+plot(as.Date(Dates_BARN), Load_ECM_BR3S8, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
+par(new = TRUE)
+plot(as.Date(Dates_BR3S8), BR3S8_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
+
+plot(as.Date(Dates_BARN), Load_ECM_BR3S8_QLQ, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
+par(new = TRUE)
+plot(as.Date(Dates_BR3S8), BR3S8_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
+
+png('ECMBR3S8.png', res = 300, units = 'in', width = 5, height = 5)
+plot(x = BR3S8_TrueLoad[as.Date(Dates_BR3S8) %in% as.Date(Dates_BARN)], y = Load_ECM_BR3S8[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S8)], 
+     xlim = c(0,30), ylim = c(0,30), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S8')
+arrows(BR3S8_TrueLoad[as.Date(Dates_BR3S8) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S8[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S8)] - Load_ECM_BR3S805[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S8)]), BR3S8_TrueLoad[as.Date(Dates_BR3S8) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S8[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S8)] + Load_ECM_BR3S895[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S8)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col = 'red')
+dev.off()
+
+png('ECMBR3S8_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
+plot(BR3S8_TrueLoad[as.Date(Dates_BR3S8) %in% as.Date(Dates_BARN)], Load_ECM_BR3S8_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S8)], 
+     xlim = c(0,30), ylim = c(0,30), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S8')
+arrows(BR3S8_TrueLoad[as.Date(Dates_BR3S8) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S8_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S8)] - Load_ECM_BR3S8_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S8)]), BR3S8_TrueLoad[as.Date(Dates_BR3S8) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S895[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S8)] + Load_ECM_BR3S8_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S8)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col ='red')
+dev.off()
+
+#    BR5a S10 - poor fit----
+#Get the impervious surface area contributing to this location
+AreaImp_S10 = 0
+Area_S10 = length(which(world[which(duplicated(world$patchID) == FALSE),]$G_8 == 1))*res^2
+for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$G_8 == 1))){
+  AreaImp_S10 = AreaImp_S10 + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$G_8 == 1)[i]]*res^2
+}
+rm(i)
+#Observed data for this site
+BR5S10_TN = S_TN[S_TN$Site == toupper(S_Sites@data$NAME[9]),]
+BR5S10_Q = S_Q[S_Q$Site == toupper(S_Sites@data$NAME[9]),]
+#Check for NAs and remove
+IndRm = which((is.na(BR5S10_TN)) | (is.na(BR5S10_Q)))
+BR5S10_Q = BR5S10_Q[-IndRm]
+BR5S10_TN = BR5S10_TN[-IndRm]
+rm(IndRm)
+Dates_BR5S10 = vector('character', ncol(BR5S10_Q)-1)
+for (i in 1:(ncol(BR5S10_Q)-1)){
+  temp = strsplit(colnames(BR5S10_Q)[i+1], split = '.', fixed = TRUE)[[1]]
+  Dates_BR5S10[i] = paste(temp[2], temp[3], temp[4], sep = '-')
+}
+Dates_BR5S10 = as.Date(Dates_BR5S10)
+
+#mg/s unit
+BR5S10_TrueLoad = as.numeric(BR5S10_TN[-1]*1000*BR5S10_Q[-1])
+
+Load_ECM_BR5S1005 = EC_Undev05*(Area_S10 - AreaImp_S10) + EC_Dev05*AreaImp_S10
+Load_ECM_BR5S10 = EC_Undev*(Area_S10 - AreaImp_S10) + EC_Dev*AreaImp_S10
+Load_ECM_BR5S1095 = EC_Undev95*(Area_S10 - AreaImp_S10) + EC_Dev95*AreaImp_S10
+Load_ECM_BR5S10_QLQ05 = EC_Undev05*(Area_S10 - AreaImp_S10) + EC_DevQLQ05*AreaImp_S10
+Load_ECM_BR5S10_QLQ = EC_Undev*(Area_S10 - AreaImp_S10) + EC_DevQLQ*AreaImp_S10
+Load_ECM_BR5S10_QLQ95 = EC_Undev95*(Area_S10 - AreaImp_S10) + EC_DevQLQ95*AreaImp_S10
+
+plot(as.Date(Dates_BARN), Load_ECM_BR5S10, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
+par(new = TRUE)
+plot(as.Date(Dates_BR5S10), BR5S10_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
+
+plot(as.Date(Dates_BARN), Load_ECM_BR5S10_QLQ, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
+par(new = TRUE)
+plot(as.Date(Dates_BR5S10), BR5S10_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
+
+png('ECMBR5aS10.png', res = 300, units = 'in', width = 5, height = 5)
+plot(x = BR5S10_TrueLoad[as.Date(Dates_BR5S10) %in% as.Date(Dates_BARN)], y = Load_ECM_BR5S10[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S10)], 
+     xlim = c(0,35), ylim = c(0,35), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR5 S10')
+arrows(BR5S10_TrueLoad[as.Date(Dates_BR5S10) %in% as.Date(Dates_BARN)], (Load_ECM_BR5S10[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S10)] - Load_ECM_BR5S1005[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S10)]), BR5S10_TrueLoad[as.Date(Dates_BR5S10) %in% as.Date(Dates_BARN)], (Load_ECM_BR5S10[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S10)] + Load_ECM_BR5S1095[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S10)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col = 'red')
+dev.off()
+
+png('ECMBR5aS10_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
+plot(BR5S10_TrueLoad[as.Date(Dates_BR5S10) %in% as.Date(Dates_BARN)], Load_ECM_BR5S10_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S10)], 
+     xlim = c(0,35), ylim = c(0,35), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR5 S10')
+arrows(BR5S10_TrueLoad[as.Date(Dates_BR5S10) %in% as.Date(Dates_BARN)], (Load_ECM_BR5S10_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S10)] - Load_ECM_BR5S10_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S10)]), BR5S10_TrueLoad[as.Date(Dates_BR5S10) %in% as.Date(Dates_BARN)], (Load_ECM_BR5S1095[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S10)] + Load_ECM_BR5S10_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S10)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col ='red')
+dev.off()
+
+#    BR5a S11 - poor fit----
+#Get the impervious surface area contributing to this location
+AreaImp_S11 = 0
+Area_S11 = length(which(world[which(duplicated(world$patchID) == FALSE),]$G_9 == 1))*res^2
+for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$G_9 == 1))){
+  AreaImp_S11 = AreaImp_S11 + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$G_9 == 1)[i]]*res^2
+}
+rm(i)
+
+#Observed data for this site
+BR5S11_TN = S_TN[S_TN$Site == toupper(S_Sites@data$NAME[10]),]
+BR5S11_Q = S_Q[S_Q$Site == toupper(S_Sites@data$NAME[10]),]
+#Check for NAs and remove
+IndRm = which((is.na(BR5S11_TN)) | (is.na(BR5S11_Q)))
+BR5S11_Q = BR5S11_Q[-IndRm]
+BR5S11_TN = BR5S11_TN[-IndRm]
+rm(IndRm)
+Dates_BR5S11 = vector('character', ncol(BR5S11_Q)-1)
+for (i in 1:(ncol(BR5S11_Q)-1)){
+  temp = strsplit(colnames(BR5S11_Q)[i+1], split = '.', fixed = TRUE)[[1]]
+  Dates_BR5S11[i] = paste(temp[2], temp[3], temp[4], sep = '-')
+}
+Dates_BR5S11 = as.Date(Dates_BR5S11)
+
+#mg/s unit
+BR5S11_TrueLoad = as.numeric(BR5S11_TN[-1]*1000*BR5S11_Q[-1])
+
+Load_ECM_BR5S1105 = EC_Undev05*(Area_S11 - AreaImp_S11) + EC_Dev05*AreaImp_S11
+Load_ECM_BR5S11 = EC_Undev*(Area_S11 - AreaImp_S11) + EC_Dev*AreaImp_S11
+Load_ECM_BR5S1195 = EC_Undev95*(Area_S11 - AreaImp_S11) + EC_Dev95*AreaImp_S11
+Load_ECM_BR5S11_QLQ05 = EC_Undev05*(Area_S11 - AreaImp_S11) + EC_DevQLQ05*AreaImp_S11
+Load_ECM_BR5S11_QLQ = EC_Undev*(Area_S11 - AreaImp_S11) + EC_DevQLQ*AreaImp_S11
+Load_ECM_BR5S11_QLQ95 = EC_Undev95*(Area_S11 - AreaImp_S11) + EC_DevQLQ95*AreaImp_S11
+
+plot(as.Date(Dates_BARN), Load_ECM_BR5S11, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
+par(new = TRUE)
+plot(as.Date(Dates_BR5S11), BR5S11_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
+
+plot(as.Date(Dates_BARN), Load_ECM_BR5S11_QLQ, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
+par(new = TRUE)
+plot(as.Date(Dates_BR5S11), BR5S11_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
+
+png('ECMBR5aS11.png', res = 300, units = 'in', width = 5, height = 5)
+plot(x = BR5S11_TrueLoad[as.Date(Dates_BR5S11) %in% as.Date(Dates_BARN)], y = Load_ECM_BR5S11[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S11)], 
+     xlim = c(0,80), ylim = c(0,80), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR5 S11')
+arrows(BR5S11_TrueLoad[as.Date(Dates_BR5S11) %in% as.Date(Dates_BARN)], (Load_ECM_BR5S11[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S11)] - Load_ECM_BR5S1105[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S11)]), BR5S11_TrueLoad[as.Date(Dates_BR5S11) %in% as.Date(Dates_BARN)], (Load_ECM_BR5S11[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S11)] + Load_ECM_BR5S1195[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S11)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col = 'red')
+dev.off()
+
+png('ECMBR5aS11_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
+plot(BR5S11_TrueLoad[as.Date(Dates_BR5S11) %in% as.Date(Dates_BARN)], Load_ECM_BR5S11_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S11)], 
+     xlim = c(0,80), ylim = c(0,80), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR5 S11')
+arrows(BR5S11_TrueLoad[as.Date(Dates_BR5S11) %in% as.Date(Dates_BARN)], (Load_ECM_BR5S11_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S11)] - Load_ECM_BR5S11_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S11)]), BR5S11_TrueLoad[as.Date(Dates_BR5S11) %in% as.Date(Dates_BARN)], (Load_ECM_BR5S1195[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S11)] + Load_ECM_BR5S11_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S11)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col ='red')
+dev.off()
+
+#    BARN K1 Synoptic - poor fit because of an Arc problem - should be whole watershed contributing, but it's only a small portion----
+#Get the impervious surface area contributing to this location
+AreaImp_K1S = 0
+Area_K1S = length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_7 == 1))*res^2
+for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_7 == 1))){
+  AreaImp_K1S = AreaImp_K1S + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$GK_7 == 1)[i]]*res^2
+}
+rm(i)
+#Observed data for this site
+BARNK1S_TN = K_TN[K_TN$Site == K_Sites@data$NAME[8],]
+BARNK1S_Q = K_Q[K_Q$Site == K_Sites@data$NAME[8],]
+#Check for NAs and remove
+IndRm = which((is.na(BARNK1S_TN)) | (is.na(BARNK1S_Q)))
+BARNK1S_Q = BARNK1S_Q[-IndRm]
+BARNK1S_TN = BARNK1S_TN[-IndRm]
+rm(IndRm)
+Dates_BARNK1S = vector('character', ncol(BARNK1S_Q)-1)
+for (i in 1:(ncol(BARNK1S_Q)-1)){
+  temp = strsplit(colnames(BARNK1S_Q)[i+1], split = '.', fixed = TRUE)[[1]]
+  Dates_BARNK1S[i] = paste(temp[2], temp[3], temp[4], sep = '-')
+}
+Dates_BARNK1S = as.Date(Dates_BARNK1S)
+
+#mg/s unit
+BARNK1S_TrueLoad = as.numeric(BARNK1S_TN[-1]*1000*BARNK1S_Q[-1])
+
+Load_ECM_BARNK1S05 = EC_Undev05*(Area_K1S - AreaImp_K1S) + EC_Dev05*AreaImp_K1S
+Load_ECM_BARNK1S = EC_Undev*(Area_K1S - AreaImp_K1S) + EC_Dev*AreaImp_K1S
+Load_ECM_BARNK1S95 = EC_Undev95*(Area_K1S - AreaImp_K1S) + EC_Dev95*AreaImp_K1S
+Load_ECM_BARNK1S_QLQ05 = EC_Undev05*(Area_K1S - AreaImp_K1S) + EC_DevQLQ05*AreaImp_K1S
+Load_ECM_BARNK1S_QLQ = EC_Undev*(Area_K1S - AreaImp_K1S) + EC_DevQLQ*AreaImp_K1S
+Load_ECM_BARNK1S_QLQ95 = EC_Undev95*(Area_K1S - AreaImp_K1S) + EC_DevQLQ95*AreaImp_K1S
+
+plot(as.Date(Dates_BARN), Load_ECM_BARNK1S, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40))
+par(new = TRUE)
+plot(as.Date(Dates_BARNK1S), BARNK1S_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
+
+plot(as.Date(Dates_BARN), Load_ECM_BARNK1S_QLQ, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40))
+par(new = TRUE)
+plot(as.Date(Dates_BARNK1S), BARNK1S_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
+
+png('ECMBARNK1s.png', res = 300, units = 'in', width = 5, height = 5)
+plot(x = BARNK1S_TrueLoad[as.Date(Dates_BARNK1S) %in% as.Date(Dates_BARN)], y = Load_ECM_BARNK1S[as.Date(Dates_BARN) %in% as.Date(Dates_BARNK1S)], 
+     xlim = c(0,50), ylim = c(0,50), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BARN K1S')
+arrows(BARNK1S_TrueLoad[as.Date(Dates_BARNK1S) %in% as.Date(Dates_BARN)], (Load_ECM_BARNK1S[as.Date(Dates_BARN) %in% as.Date(Dates_BARNK1S)] - Load_ECM_BARNK1S05[as.Date(Dates_BARN) %in% as.Date(Dates_BARNK1S)]), BARNK1S_TrueLoad[as.Date(Dates_BARNK1S) %in% as.Date(Dates_BARN)], (Load_ECM_BARNK1S[as.Date(Dates_BARN) %in% as.Date(Dates_BARNK1S)] + Load_ECM_BARNK1S95[as.Date(Dates_BARN) %in% as.Date(Dates_BARNK1S)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col = 'red')
+dev.off()
+
+png('ECMBARNK1s_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
+plot(BARNK1S_TrueLoad[as.Date(Dates_BARNK1S) %in% as.Date(Dates_BARN)], Load_ECM_BARNK1S_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BARNK1S)], 
+     xlim = c(0,50), ylim = c(0,50), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BARN K1S')
+arrows(BARNK1S_TrueLoad[as.Date(Dates_BARNK1S) %in% as.Date(Dates_BARN)], (Load_ECM_BARNK1S_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BARNK1S)] - Load_ECM_BARNK1S_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BARNK1S)]), BARNK1S_TrueLoad[as.Date(Dates_BARNK1S) %in% as.Date(Dates_BARN)], (Load_ECM_BARNK1S95[as.Date(Dates_BARN) %in% as.Date(Dates_BARNK1S)] + Load_ECM_BARNK1S_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BARNK1S)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col ='red')
+dev.off()
+
+#    POBR K2----
+#Get the impervious surface area contributing to this location
+AreaImp_K2 = 0
+Area_K2 = length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_5 == 1))*res^2
+for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_5 == 1))){
+  AreaImp_K2 = AreaImp_K2 + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$GK_5 == 1)[i]]*res^2
+}
+rm(i)
+#Observed data for this site
+POBRK2_TN = K_TN[K_TN$Site == K_Sites@data$NAME[6],]
+POBRK2_Q = K_Q[K_Q$Site == K_Sites@data$NAME[6],]
+#Check for NAs and remove
+IndRm = which((is.na(POBRK2_TN)) | (is.na(POBRK2_Q)))
+POBRK2_Q = POBRK2_Q[-IndRm]
+POBRK2_TN = POBRK2_TN[-IndRm]
+rm(IndRm)
+Dates_POBRK2 = vector('character', ncol(POBRK2_Q)-1)
+for (i in 1:(ncol(POBRK2_Q)-1)){
+  temp = strsplit(colnames(POBRK2_Q)[i+1], split = '.', fixed = TRUE)[[1]]
+  Dates_POBRK2[i] = paste(temp[2], temp[3], temp[4], sep = '-')
+}
+Dates_POBRK2 = as.Date(Dates_POBRK2)
+
+#mg/s unit
+POBRK2_TrueLoad = as.numeric(POBRK2_TN[-1]*1000*POBRK2_Q[-1])
+
+Load_ECM_POBRK205 = EC_Undev05*(Area_K2 - AreaImp_K2) + EC_Dev05*AreaImp_K2
+Load_ECM_POBRK2 = EC_Undev*(Area_K2 - AreaImp_K2) + EC_Dev*AreaImp_K2
+Load_ECM_POBRK295 = EC_Undev95*(Area_K2 - AreaImp_K2) + EC_Dev95*AreaImp_K2
+Load_ECM_POBRK2_QLQ05 = EC_Undev05*(Area_K2 - AreaImp_K2) + EC_DevQLQ05*AreaImp_K2
+Load_ECM_POBRK2_QLQ = EC_Undev*(Area_K2 - AreaImp_K2) + EC_DevQLQ*AreaImp_K2
+Load_ECM_POBRK2_QLQ95 = EC_Undev95*(Area_K2 - AreaImp_K2) + EC_DevQLQ95*AreaImp_K2
+
+plot(as.Date(Dates_BARN), Load_ECM_POBRK2, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40))
+par(new = TRUE)
+plot(as.Date(Dates_POBRK2), POBRK2_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
+
+plot(as.Date(Dates_BARN), Load_ECM_POBRK2_QLQ, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40))
+par(new = TRUE)
+plot(as.Date(Dates_POBRK2), POBRK2_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
+
+png('ECMPOBRK2.png', res = 300, units = 'in', width = 5, height = 5)
+plot(x = POBRK2_TrueLoad[as.Date(Dates_POBRK2) %in% as.Date(Dates_BARN)], y = Load_ECM_POBRK2[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2)], 
+     xlim = c(0,5), ylim = c(0,5), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'POBR K2')
+arrows(POBRK2_TrueLoad[as.Date(Dates_POBRK2) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK2[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2)] - Load_ECM_POBRK205[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2)]), POBRK2_TrueLoad[as.Date(Dates_POBRK2) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK2[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2)] + Load_ECM_POBRK295[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col = 'red')
+dev.off()
+
+png('ECMPOBRK2_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
+plot(POBRK2_TrueLoad[as.Date(Dates_POBRK2) %in% as.Date(Dates_BARN)], Load_ECM_POBRK2_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2)], 
+     xlim = c(0,5), ylim = c(0,5), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'POBR K2')
+arrows(POBRK2_TrueLoad[as.Date(Dates_POBRK2) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK2_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2)] - Load_ECM_POBRK2_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2)]), POBRK2_TrueLoad[as.Date(Dates_POBRK2) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK295[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2)] + Load_ECM_POBRK2_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col ='red')
+dev.off()
+
+#    POBR K2 Synoptic----
+#Get the impervious surface area contributing to this location
+AreaImp_K2S = 0
+Area_K2S = length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_6 == 1))*res^2
+for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_6 == 1))){
+  AreaImp_K2S = AreaImp_K2S + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$GK_6 == 1)[i]]*res^2
+}
+rm(i)
+#Observed data for this site
+POBRK2S_TN = K_TN[K_TN$Site == K_Sites@data$NAME[7],]
+POBRK2S_Q = K_Q[K_Q$Site == K_Sites@data$NAME[7],]
+#Check for NAs and remove
+IndRm = which((is.na(POBRK2S_TN)) | (is.na(POBRK2S_Q)))
+POBRK2S_Q = POBRK2S_Q[-IndRm]
+POBRK2S_TN = POBRK2S_TN[-IndRm]
+rm(IndRm)
+Dates_POBRK2S = vector('character', ncol(POBRK2S_Q)-1)
+for (i in 1:(ncol(POBRK2S_Q)-1)){
+  temp = strsplit(colnames(POBRK2S_Q)[i+1], split = '.', fixed = TRUE)[[1]]
+  Dates_POBRK2S[i] = paste(temp[2], temp[3], temp[4], sep = '-')
+}
+Dates_POBRK2S = as.Date(Dates_POBRK2S)
+
+#mg/s unit
+POBRK2S_TrueLoad = as.numeric(POBRK2S_TN[-1]*1000*POBRK2S_Q[-1])
+
+Load_ECM_POBRK2S05 = EC_Undev05*(Area_K2S - AreaImp_K2S) + EC_Dev05*AreaImp_K2S
+Load_ECM_POBRK2S = EC_Undev*(Area_K2S - AreaImp_K2S) + EC_Dev*AreaImp_K2S
+Load_ECM_POBRK2S95 = EC_Undev95*(Area_K2S - AreaImp_K2S) + EC_Dev95*AreaImp_K2S
+Load_ECM_POBRK2S_QLQ05 = EC_Undev05*(Area_K2S - AreaImp_K2S) + EC_DevQLQ05*AreaImp_K2S
+Load_ECM_POBRK2S_QLQ = EC_Undev*(Area_K2S - AreaImp_K2S) + EC_DevQLQ*AreaImp_K2S
+Load_ECM_POBRK2S_QLQ95 = EC_Undev95*(Area_K2S - AreaImp_K2S) + EC_DevQLQ95*AreaImp_K2S
+
+plot(as.Date(Dates_BARN), Load_ECM_POBRK2S, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40))
+par(new = TRUE)
+plot(as.Date(Dates_POBRK2S), POBRK2S_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
+
+plot(as.Date(Dates_BARN), Load_ECM_POBRK2S_QLQ, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40))
+par(new = TRUE)
+plot(as.Date(Dates_POBRK2S), POBRK2S_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
+
+png('ECMPOBRK2s.png', res = 300, units = 'in', width = 5, height = 5)
+plot(x = POBRK2S_TrueLoad[as.Date(Dates_POBRK2S) %in% as.Date(Dates_BARN)], y = Load_ECM_POBRK2S[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2S)], 
+     xlim = c(0,5), ylim = c(0,5), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'POBR K2S')
+arrows(POBRK2S_TrueLoad[as.Date(Dates_POBRK2S) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK2S[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2S)] - Load_ECM_POBRK2S05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2S)]), POBRK2S_TrueLoad[as.Date(Dates_POBRK2S) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK2S[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2S)] + Load_ECM_POBRK2S95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2S)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col = 'red')
+dev.off()
+
+png('ECMPOBRK2s_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
+plot(POBRK2S_TrueLoad[as.Date(Dates_POBRK2S) %in% as.Date(Dates_BARN)], Load_ECM_POBRK2S_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2S)], 
+     xlim = c(0,5), ylim = c(0,5), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'POBR K2S')
+arrows(POBRK2S_TrueLoad[as.Date(Dates_POBRK2S) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK2S_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2S)] - Load_ECM_POBRK2S_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2S)]), POBRK2S_TrueLoad[as.Date(Dates_POBRK2S) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK2S95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2S)] + Load_ECM_POBRK2S_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2S)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col ='red')
+dev.off()
+
+#    POBR K3a----
+#Get the impervious surface area contributing to this location
+AreaImp_K3a = 0
+Area_K3a = length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_9 == 1))*res^2
+for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_9 == 1))){
+  AreaImp_K3a = AreaImp_K3a + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$GK_9 == 1)[i]]*res^2
+}
+rm(i)
+#Observed data for this site
+POBRK3a_TN = K_TN[K_TN$Site == K_Sites@data$NAME[10],]
+POBRK3a_Q = K_Q[K_Q$Site == K_Sites@data$NAME[10],]
+#Check for NAs and remove
+IndRm = which((is.na(POBRK3a_TN)) | (is.na(POBRK3a_Q)))
+POBRK3a_Q = POBRK3a_Q[-IndRm]
+POBRK3a_TN = POBRK3a_TN[-IndRm]
+rm(IndRm)
+Dates_POBRK3a = vector('character', ncol(POBRK3a_Q)-1)
+for (i in 1:(ncol(POBRK3a_Q)-1)){
+  temp = strsplit(colnames(POBRK3a_Q)[i+1], split = '.', fixed = TRUE)[[1]]
+  Dates_POBRK3a[i] = paste(temp[2], temp[3], temp[4], sep = '-')
+}
+Dates_POBRK3a = as.Date(Dates_POBRK3a)
+
+#mg/s unit
+POBRK3a_TrueLoad = as.numeric(POBRK3a_TN[-1]*1000*POBRK3a_Q[-1])
+
+Load_ECM_POBRK3a05 = EC_Undev05*(Area_K3a - AreaImp_K3a) + EC_Dev05*AreaImp_K3a
+Load_ECM_POBRK3a = EC_Undev*(Area_K3a - AreaImp_K3a) + EC_Dev*AreaImp_K3a
+Load_ECM_POBRK3a95 = EC_Undev95*(Area_K3a - AreaImp_K3a) + EC_Dev95*AreaImp_K3a
+Load_ECM_POBRK3a_QLQ05 = EC_Undev05*(Area_K3a - AreaImp_K3a) + EC_DevQLQ05*AreaImp_K3a
+Load_ECM_POBRK3a_QLQ = EC_Undev*(Area_K3a - AreaImp_K3a) + EC_DevQLQ*AreaImp_K3a
+Load_ECM_POBRK3a_QLQ95 = EC_Undev95*(Area_K3a - AreaImp_K3a) + EC_DevQLQ95*AreaImp_K3a
+
+plot(as.Date(Dates_BARN), Load_ECM_POBRK3a, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40))
+par(new = TRUE)
+plot(as.Date(Dates_POBRK3a), POBRK3a_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
+
+plot(as.Date(Dates_BARN), Load_ECM_POBRK3a_QLQ, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40))
+par(new = TRUE)
+plot(as.Date(Dates_POBRK3a), POBRK3a_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
+
+png('ECMPOBRK3a.png', res = 300, units = 'in', width = 5, height = 5)
+plot(x = POBRK3a_TrueLoad[as.Date(Dates_POBRK3a) %in% as.Date(Dates_BARN)], y = Load_ECM_POBRK3a[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3a)], 
+     xlim = c(0,1), ylim = c(0,1), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'POBR K3a')
+arrows(POBRK3a_TrueLoad[as.Date(Dates_POBRK3a) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK3a[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3a)] - Load_ECM_POBRK3a05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3a)]), POBRK3a_TrueLoad[as.Date(Dates_POBRK3a) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK3a[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3a)] + Load_ECM_POBRK3a95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3a)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col = 'red')
+dev.off()
+
+png('ECMPOBRK3a_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
+plot(POBRK3a_TrueLoad[as.Date(Dates_POBRK3a) %in% as.Date(Dates_BARN)], Load_ECM_POBRK3a_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3a)], 
+     xlim = c(0,1), ylim = c(0,1), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'POBR K3a')
+arrows(POBRK3a_TrueLoad[as.Date(Dates_POBRK3a) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK3a_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3a)] - Load_ECM_POBRK3a_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3a)]), POBRK3a_TrueLoad[as.Date(Dates_POBRK3a) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK3a95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3a)] + Load_ECM_POBRK3a_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3a)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col ='red')
+dev.off()
+
+#    POBR K3----
+#Get the impervious surface area contributing to this location
+AreaImp_K3 = 0
+Area_K3 = length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_10 == 1))*res^2
+for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_10 == 1))){
+  AreaImp_K3 = AreaImp_K3 + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$GK_10 == 1)[i]]*res^2
+}
+rm(i)
+#Observed data for this site
+POBRK3_TN = K_TN[K_TN$Site == K_Sites@data$NAME[11],]
+POBRK3_Q = K_Q[K_Q$Site == K_Sites@data$NAME[11],]
+#Check for NAs and remove
+IndRm = which((is.na(POBRK3_TN)) | (is.na(POBRK3_Q)))
+POBRK3_Q = POBRK3_Q[-IndRm]
+POBRK3_TN = POBRK3_TN[-IndRm]
+rm(IndRm)
+Dates_POBRK3 = vector('character', ncol(POBRK3_Q)-1)
+for (i in 1:(ncol(POBRK3_Q)-1)){
+  temp = strsplit(colnames(POBRK3_Q)[i+1], split = '.', fixed = TRUE)[[1]]
+  Dates_POBRK3[i] = paste(temp[2], temp[3], temp[4], sep = '-')
+}
+Dates_POBRK3 = as.Date(Dates_POBRK3)
+
+#mg/s unit
+POBRK3_TrueLoad = as.numeric(POBRK3_TN[-1]*1000*POBRK3_Q[-1])
+
+Load_ECM_POBRK305 = EC_Undev05*(Area_K3 - AreaImp_K3) + EC_Dev05*AreaImp_K3
+Load_ECM_POBRK3 = EC_Undev*(Area_K3 - AreaImp_K3) + EC_Dev*AreaImp_K3
+Load_ECM_POBRK395 = EC_Undev95*(Area_K3 - AreaImp_K3) + EC_Dev95*AreaImp_K3
+Load_ECM_POBRK3_QLQ05 = EC_Undev05*(Area_K3 - AreaImp_K3) + EC_DevQLQ05*AreaImp_K3
+Load_ECM_POBRK3_QLQ = EC_Undev*(Area_K3 - AreaImp_K3) + EC_DevQLQ*AreaImp_K3
+Load_ECM_POBRK3_QLQ95 = EC_Undev95*(Area_K3 - AreaImp_K3) + EC_DevQLQ95*AreaImp_K3
+
+plot(as.Date(Dates_BARN), Load_ECM_POBRK3, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40))
+par(new = TRUE)
+plot(as.Date(Dates_POBRK3), POBRK3_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
+
+plot(as.Date(Dates_BARN), Load_ECM_POBRK3_QLQ, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40))
+par(new = TRUE)
+plot(as.Date(Dates_POBRK3), POBRK3_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
+
+png('ECMPOBRK3.png', res = 300, units = 'in', width = 5, height = 5)
+plot(x = POBRK3_TrueLoad[as.Date(Dates_POBRK3) %in% as.Date(Dates_BARN)], y = Load_ECM_POBRK3[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3)], 
+     xlim = c(0,1), ylim = c(0,1), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'POBR K3')
+arrows(POBRK3_TrueLoad[as.Date(Dates_POBRK3) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK3[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3)] - Load_ECM_POBRK305[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3)]), POBRK3_TrueLoad[as.Date(Dates_POBRK3) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK3[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3)] + Load_ECM_POBRK395[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col = 'red')
+dev.off()
+
+png('ECMPOBRK3_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
+plot(POBRK3_TrueLoad[as.Date(Dates_POBRK3) %in% as.Date(Dates_BARN)], Load_ECM_POBRK3_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3)], 
+     xlim = c(0,1), ylim = c(0,1), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'POBR K3')
+arrows(POBRK3_TrueLoad[as.Date(Dates_POBRK3) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK3_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3)] - Load_ECM_POBRK3_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3)]), POBRK3_TrueLoad[as.Date(Dates_POBRK3) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK395[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3)] + Load_ECM_POBRK3_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col ='red')
+dev.off()
+
+#    POBR K11----
+#Get the impervious surface area contributing to this location
+AreaImp_K11 = 0
+Area_K11 = length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_11 == 1))*res^2
+for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_11 == 1))){
+  AreaImp_K11 = AreaImp_K11 + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$GK_11 == 1)[i]]*res^2
+}
+rm(i)
+#Observed data for this site
+POBRK11_TN = K_TN[K_TN$Site == K_Sites@data$NAME[12],]
+POBRK11_Q = K_Q[K_Q$Site == K_Sites@data$NAME[12],]
+#Check for NAs and remove
+IndRm = which((is.na(POBRK11_TN)) | (is.na(POBRK11_Q)))
+POBRK11_Q = POBRK11_Q[-IndRm]
+POBRK11_TN = POBRK11_TN[-IndRm]
+rm(IndRm)
+Dates_POBRK11 = vector('character', ncol(POBRK11_Q)-1)
+for (i in 1:(ncol(POBRK11_Q)-1)){
+  temp = strsplit(colnames(POBRK11_Q)[i+1], split = '.', fixed = TRUE)[[1]]
+  Dates_POBRK11[i] = paste(temp[2], temp[3], temp[4], sep = '-')
+}
+Dates_POBRK11 = as.Date(Dates_POBRK11)
+
+#mg/s unit
+POBRK11_TrueLoad = as.numeric(POBRK11_TN[-1]*1000*POBRK11_Q[-1])
+
+Load_ECM_POBRK1105 = EC_Undev05*(Area_K11 - AreaImp_K11) + EC_Dev05*AreaImp_K11
+Load_ECM_POBRK11 = EC_Undev*(Area_K11 - AreaImp_K11) + EC_Dev*AreaImp_K11
+Load_ECM_POBRK1195 = EC_Undev95*(Area_K11 - AreaImp_K11) + EC_Dev95*AreaImp_K11
+Load_ECM_POBRK11_QLQ05 = EC_Undev05*(Area_K11 - AreaImp_K11) + EC_DevQLQ05*AreaImp_K11
+Load_ECM_POBRK11_QLQ = EC_Undev*(Area_K11 - AreaImp_K11) + EC_DevQLQ*AreaImp_K11
+Load_ECM_POBRK11_QLQ95 = EC_Undev95*(Area_K11 - AreaImp_K11) + EC_DevQLQ95*AreaImp_K11
+
+plot(as.Date(Dates_BARN), Load_ECM_POBRK11, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40))
+par(new = TRUE)
+plot(as.Date(Dates_POBRK11), POBRK11_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
+
+plot(as.Date(Dates_BARN), Load_ECM_POBRK11_QLQ, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40))
+par(new = TRUE)
+plot(as.Date(Dates_POBRK11), POBRK11_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
+
+png('ECMPOBRK11.png', res = 300, units = 'in', width = 5, height = 5)
+plot(x = POBRK11_TrueLoad[as.Date(Dates_POBRK11) %in% as.Date(Dates_BARN)], y = Load_ECM_POBRK11[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK11)], 
+     xlim = c(0,1), ylim = c(0,1), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'POBR K11')
+arrows(POBRK11_TrueLoad[as.Date(Dates_POBRK11) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK11[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK11)] - Load_ECM_POBRK1105[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK11)]), POBRK11_TrueLoad[as.Date(Dates_POBRK11) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK11[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK11)] + Load_ECM_POBRK1195[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK11)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col = 'red')
+dev.off()
+
+png('ECMPOBRK11_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
+plot(POBRK11_TrueLoad[as.Date(Dates_POBRK11) %in% as.Date(Dates_BARN)], Load_ECM_POBRK11_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK11)], 
+     xlim = c(0,1), ylim = c(0,1), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'POBR K11')
+arrows(POBRK11_TrueLoad[as.Date(Dates_POBRK11) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK11_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK11)] - Load_ECM_POBRK11_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK11)]), POBRK11_TrueLoad[as.Date(Dates_POBRK11) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK1195[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK11)] + Load_ECM_POBRK11_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK11)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col ='red')
+dev.off()
+
+#    POBR K8----
+#Get the impervious surface area contributing to this location
+AreaImp_K8 = 0
+Area_K8 = length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_8 == 1))*res^2
+for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_8 == 1))){
+  AreaImp_K8 = AreaImp_K8 + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$GK_8 == 1)[i]]*res^2
+}
+rm(i)
+#Observed data for this site
+POBRK8_TN = K_TN[K_TN$Site == K_Sites@data$NAME[9],]
+POBRK8_Q = K_Q[K_Q$Site == K_Sites@data$NAME[9],]
+#Check for NAs and remove
+IndRm = which((is.na(POBRK8_TN)) | (is.na(POBRK8_Q)))
+POBRK8_Q = POBRK8_Q[-IndRm]
+POBRK8_TN = POBRK8_TN[-IndRm]
+rm(IndRm)
+Dates_POBRK8 = vector('character', ncol(POBRK8_Q)-1)
+for (i in 1:(ncol(POBRK8_Q)-1)){
+  temp = strsplit(colnames(POBRK8_Q)[i+1], split = '.', fixed = TRUE)[[1]]
+  Dates_POBRK8[i] = paste(temp[2], temp[3], temp[4], sep = '-')
+}
+Dates_POBRK8 = as.Date(Dates_POBRK8)
+
+#mg/s unit
+POBRK8_TrueLoad = as.numeric(POBRK8_TN[-1]*1000*POBRK8_Q[-1])
+
+Load_ECM_POBRK805 = EC_Undev05*(Area_K8 - AreaImp_K8) + EC_Dev05*AreaImp_K8
+Load_ECM_POBRK8 = EC_Undev*(Area_K8 - AreaImp_K8) + EC_Dev*AreaImp_K8
+Load_ECM_POBRK895 = EC_Undev95*(Area_K8 - AreaImp_K8) + EC_Dev95*AreaImp_K8
+Load_ECM_POBRK8_QLQ05 = EC_Undev05*(Area_K8 - AreaImp_K8) + EC_DevQLQ05*AreaImp_K8
+Load_ECM_POBRK8_QLQ = EC_Undev*(Area_K8 - AreaImp_K8) + EC_DevQLQ*AreaImp_K8
+Load_ECM_POBRK8_QLQ95 = EC_Undev95*(Area_K8 - AreaImp_K8) + EC_DevQLQ95*AreaImp_K8
+
+plot(as.Date(Dates_BARN), Load_ECM_POBRK8, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40))
+par(new = TRUE)
+plot(as.Date(Dates_POBRK8), POBRK8_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
+
+plot(as.Date(Dates_BARN), Load_ECM_POBRK8_QLQ, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40))
+par(new = TRUE)
+plot(as.Date(Dates_POBRK8), POBRK8_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
+
+png('ECMPOBRK8.png', res = 300, units = 'in', width = 5, height = 5)
+plot(x = POBRK8_TrueLoad[as.Date(Dates_POBRK8) %in% as.Date(Dates_BARN)], y = Load_ECM_POBRK8[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK8)], 
+     xlim = c(0,1), ylim = c(0,1), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'POBR K8')
+arrows(POBRK8_TrueLoad[as.Date(Dates_POBRK8) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK8[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK8)] - Load_ECM_POBRK805[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK8)]), POBRK8_TrueLoad[as.Date(Dates_POBRK8) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK8[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK8)] + Load_ECM_POBRK895[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK8)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col = 'red')
+dev.off()
+
+png('ECMPOBRK8_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
+plot(POBRK8_TrueLoad[as.Date(Dates_POBRK8) %in% as.Date(Dates_BARN)], Load_ECM_POBRK8_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK8)], 
+     xlim = c(0,1), ylim = c(0,1), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'POBR K8')
+arrows(POBRK8_TrueLoad[as.Date(Dates_POBRK8) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK8_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK8)] - Load_ECM_POBRK8_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK8)]), POBRK8_TrueLoad[as.Date(Dates_POBRK8) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK895[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK8)] + Load_ECM_POBRK8_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK8)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col ='red')
+dev.off()
+
+#    BR4 K4----
+#Get the impervious surface area contributing to this location
+AreaImp_K4 = 0
+Area_K4 = length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_2 == 1))*res^2
+for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_2 == 1))){
+  AreaImp_K4 = AreaImp_K4 + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$GK_2 == 1)[i]]*res^2
+}
+rm(i)
+#Observed data for this site
+BR4K4_TN = K_TN[K_TN$Site == K_Sites@data$NAME[3],]
+BR4K4_Q = K_Q[K_Q$Site == K_Sites@data$NAME[3],]
+#Check for NAs and remove
+IndRm = which((is.na(BR4K4_TN)) | (is.na(BR4K4_Q)))
+BR4K4_Q = BR4K4_Q[-IndRm]
+BR4K4_TN = BR4K4_TN[-IndRm]
+rm(IndRm)
+Dates_BR4K4 = vector('character', ncol(BR4K4_Q)-1)
+for (i in 1:(ncol(BR4K4_Q)-1)){
+  temp = strsplit(colnames(BR4K4_Q)[i+1], split = '.', fixed = TRUE)[[1]]
+  Dates_BR4K4[i] = paste(temp[2], temp[3], temp[4], sep = '-')
+}
+Dates_BR4K4 = as.Date(Dates_BR4K4)
+
+#mg/s unit
+BR4K4_TrueLoad = as.numeric(BR4K4_TN[-1]*1000*BR4K4_Q[-1])
+
+Load_ECM_BR4K405 = EC_Undev05*(Area_K4 - AreaImp_K4) + EC_Dev05*AreaImp_K4
+Load_ECM_BR4K4 = EC_Undev*(Area_K4 - AreaImp_K4) + EC_Dev*AreaImp_K4
+Load_ECM_BR4K495 = EC_Undev95*(Area_K4 - AreaImp_K4) + EC_Dev95*AreaImp_K4
+Load_ECM_BR4K4_QLQ05 = EC_Undev05*(Area_K4 - AreaImp_K4) + EC_DevQLQ05*AreaImp_K4
+Load_ECM_BR4K4_QLQ = EC_Undev*(Area_K4 - AreaImp_K4) + EC_DevQLQ*AreaImp_K4
+Load_ECM_BR4K4_QLQ95 = EC_Undev95*(Area_K4 - AreaImp_K4) + EC_DevQLQ95*AreaImp_K4
+
+plot(as.Date(Dates_BARN), Load_ECM_BR4K4, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
+par(new = TRUE)
+plot(as.Date(Dates_BR4K4), BR4K4_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
+
+plot(as.Date(Dates_BARN), Load_ECM_BR4K4_QLQ, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
+par(new = TRUE)
+plot(as.Date(Dates_BR4K4), BR4K4_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
+
+png('ECMBR4K4.png', res = 300, units = 'in', width = 5, height = 5)
+plot(x = BR4K4_TrueLoad[as.Date(Dates_BR4K4) %in% as.Date(Dates_BARN)], y = Load_ECM_BR4K4[as.Date(Dates_BARN) %in% as.Date(Dates_BR4K4)], 
+     xlim = c(0,5), ylim = c(0,5), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR4 K4')
+arrows(BR4K4_TrueLoad[as.Date(Dates_BR4K4) %in% as.Date(Dates_BARN)], (Load_ECM_BR4K4[as.Date(Dates_BARN) %in% as.Date(Dates_BR4K4)] - Load_ECM_BR4K405[as.Date(Dates_BARN) %in% as.Date(Dates_BR4K4)]), BR4K4_TrueLoad[as.Date(Dates_BR4K4) %in% as.Date(Dates_BARN)], (Load_ECM_BR4K4[as.Date(Dates_BARN) %in% as.Date(Dates_BR4K4)] + Load_ECM_BR4K495[as.Date(Dates_BARN) %in% as.Date(Dates_BR4K4)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col = 'red')
+dev.off()
+
+png('ECMBR4K4_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
+plot(BR4K4_TrueLoad[as.Date(Dates_BR4K4) %in% as.Date(Dates_BARN)], Load_ECM_BR4K4_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR4K4)], 
+     xlim = c(0,5), ylim = c(0,5), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR4 K4')
+arrows(BR4K4_TrueLoad[as.Date(Dates_BR4K4) %in% as.Date(Dates_BARN)], (Load_ECM_BR4K4_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR4K4)] - Load_ECM_BR4K4_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR4K4)]), BR4K4_TrueLoad[as.Date(Dates_BR4K4) %in% as.Date(Dates_BARN)], (Load_ECM_BR4K495[as.Date(Dates_BARN) %in% as.Date(Dates_BR4K4)] + Load_ECM_BR4K4_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR4K4)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col ='red')
+dev.off()
+
+#    BR5 K5----
+#Get the impervious surface area contributing to this location
+AreaImp_K5 = 0
+Area_K5 = length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_3 == 1))*res^2
+for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_3 == 1))){
+  AreaImp_K5 = AreaImp_K5 + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$GK_3 == 1)[i]]*res^2
+}
+rm(i)
+#Observed data for this site
+BR5K5_TN = K_TN[K_TN$Site == K_Sites@data$NAME[4],]
+BR5K5_Q = K_Q[K_Q$Site == K_Sites@data$NAME[4],]
+#Check for NAs and remove
+IndRm = which((is.na(BR5K5_TN)) | (is.na(BR5K5_Q)))
+BR5K5_Q = BR5K5_Q[-IndRm]
+BR5K5_TN = BR5K5_TN[-IndRm]
+rm(IndRm)
+Dates_BR5K5 = vector('character', ncol(BR5K5_Q)-1)
+for (i in 1:(ncol(BR5K5_Q)-1)){
+  temp = strsplit(colnames(BR5K5_Q)[i+1], split = '.', fixed = TRUE)[[1]]
+  Dates_BR5K5[i] = paste(temp[2], temp[3], temp[4], sep = '-')
+}
+Dates_BR5K5 = as.Date(Dates_BR5K5)
+
+#mg/s unit
+BR5K5_TrueLoad = as.numeric(BR5K5_TN[-1]*1000*BR5K5_Q[-1])
+
+Load_ECM_BR5K505 = EC_Undev05*(Area_K5 - AreaImp_K5) + EC_Dev05*AreaImp_K5
+Load_ECM_BR5K5 = EC_Undev*(Area_K5 - AreaImp_K5) + EC_Dev*AreaImp_K5
+Load_ECM_BR5K595 = EC_Undev95*(Area_K5 - AreaImp_K5) + EC_Dev95*AreaImp_K5
+Load_ECM_BR5K5_QLQ05 = EC_Undev05*(Area_K5 - AreaImp_K5) + EC_DevQLQ05*AreaImp_K5
+Load_ECM_BR5K5_QLQ = EC_Undev*(Area_K5 - AreaImp_K5) + EC_DevQLQ*AreaImp_K5
+Load_ECM_BR5K5_QLQ95 = EC_Undev95*(Area_K5 - AreaImp_K5) + EC_DevQLQ95*AreaImp_K5
+
+plot(as.Date(Dates_BARN), Load_ECM_BR5K5, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
+par(new = TRUE)
+plot(as.Date(Dates_BR5K5), BR5K5_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
+
+plot(as.Date(Dates_BARN), Load_ECM_BR5K5_QLQ, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
+par(new = TRUE)
+plot(as.Date(Dates_BR5K5), BR5K5_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
+
+png('ECMBR5K5.png', res = 300, units = 'in', width = 5, height = 5)
+plot(x = BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], y = Load_ECM_BR5K5[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)], 
+     xlim = c(0,20), ylim = c(0,20), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR5 K5')
+arrows(BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)] - Load_ECM_BR5K505[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)]), BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)] + Load_ECM_BR5K595[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col = 'red')
+dev.off()
+
+png('ECMBR5K5_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
+plot(BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], Load_ECM_BR5K5_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)], 
+     xlim = c(0,20), ylim = c(0,20), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR5 K5')
+arrows(BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)] - Load_ECM_BR5K5_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)]), BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K595[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)] + Load_ECM_BR5K5_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col ='red')
+dev.off()
+
+#    BR5a K5a----
+#Get the impervious surface area contributing to this location
+AreaImp_K5a = 0
+Area_K5a = length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_12 == 1))*res^2
+for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_12 == 1))){
+  AreaImp_K5a = AreaImp_K5a + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$GK_12 == 1)[i]]*res^2
+}
+rm(i)
+#Observed data for this site
+BR5K5a_TN = K_TN[K_TN$Site == K_Sites@data$NAME[4],]
+BR5K5a_Q = K_Q[K_Q$Site == K_Sites@data$NAME[4],]
+#Check for NAs and remove
+IndRm = which((is.na(BR5K5a_TN)) | (is.na(BR5K5a_Q)))
+BR5K5a_Q = BR5K5a_Q[-IndRm]
+BR5K5a_TN = BR5K5a_TN[-IndRm]
+rm(IndRm)
+Dates_BR5K5a = vector('character', ncol(BR5K5a_Q)-1)
+for (i in 1:(ncol(BR5K5a_Q)-1)){
+  temp = strsplit(colnames(BR5K5a_Q)[i+1], split = '.', fixed = TRUE)[[1]]
+  Dates_BR5K5a[i] = paste(temp[2], temp[3], temp[4], sep = '-')
+}
+Dates_BR5K5a = as.Date(Dates_BR5K5a)
+
+#mg/s unit
+BR5K5a_TrueLoad = as.numeric(BR5K5a_TN[-1]*1000*BR5K5a_Q[-1])
+
+Load_ECM_BR5K5a05 = EC_Undev05*(Area_K5a - AreaImp_K5a) + EC_Dev05*AreaImp_K5a
+Load_ECM_BR5K5a = EC_Undev*(Area_K5a - AreaImp_K5a) + EC_Dev*AreaImp_K5a
+Load_ECM_BR5K5a95 = EC_Undev95*(Area_K5a - AreaImp_K5a) + EC_Dev95*AreaImp_K5a
+Load_ECM_BR5K5a_QLQ05 = EC_Undev05*(Area_K5a - AreaImp_K5a) + EC_DevQLQ05*AreaImp_K5a
+Load_ECM_BR5K5a_QLQ = EC_Undev*(Area_K5a - AreaImp_K5a) + EC_DevQLQ*AreaImp_K5a
+Load_ECM_BR5K5a_QLQ95 = EC_Undev95*(Area_K5a - AreaImp_K5a) + EC_DevQLQ95*AreaImp_K5a
+
+plot(as.Date(Dates_BARN), Load_ECM_BR5K5a, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
+par(new = TRUE)
+plot(as.Date(Dates_BR5K5a), BR5K5a_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
+
+plot(as.Date(Dates_BARN), Load_ECM_BR5K5a_QLQ, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
+par(new = TRUE)
+plot(as.Date(Dates_BR5K5a), BR5K5a_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
+
+png('ECMBR5K5a.png', res = 300, units = 'in', width = 5, height = 5)
+plot(x = BR5K5a_TrueLoad[as.Date(Dates_BR5K5a) %in% as.Date(Dates_BARN)], y = Load_ECM_BR5K5a[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5a)], 
+     xlim = c(0,20), ylim = c(0,20), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR5 K5a')
+arrows(BR5K5a_TrueLoad[as.Date(Dates_BR5K5a) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5a[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5a)] - Load_ECM_BR5K5a05[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5a)]), BR5K5a_TrueLoad[as.Date(Dates_BR5K5a) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5a[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5a)] + Load_ECM_BR5K5a95[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5a)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col = 'red')
+dev.off()
+
+png('ECMBR5K5a_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
+plot(BR5K5a_TrueLoad[as.Date(Dates_BR5K5a) %in% as.Date(Dates_BARN)], Load_ECM_BR5K5a_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5a)], 
+     xlim = c(0,20), ylim = c(0,20), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR5 K5a')
+arrows(BR5K5a_TrueLoad[as.Date(Dates_BR5K5a) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5a_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5a)] - Load_ECM_BR5K5a_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5a)]), BR5K5a_TrueLoad[as.Date(Dates_BR5K5a) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5a95[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5a)] + Load_ECM_BR5K5a_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5a)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col ='red')
+dev.off()
+
+#    BR6 K6----
+#Get the impervious surface area contributing to this location
+AreaImp_K6 = 0
+Area_K6 = length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_4 == 1))*res^2
+for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_4 == 1))){
+  AreaImp_K6 = AreaImp_K6 + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$GK_4 == 1)[i]]*res^2
+}
+rm(i)
+#Observed data for this site
+BR6K6_TN = K_TN[K_TN$Site == K_Sites@data$NAME[5],]
+BR6K6_Q = K_Q[K_Q$Site == K_Sites@data$NAME[5],]
+#Check for NAs and remove
+IndRm = which((is.na(BR6K6_TN)) | (is.na(BR6K6_Q)))
+BR6K6_Q = BR6K6_Q[-IndRm]
+BR6K6_TN = BR6K6_TN[-IndRm]
+rm(IndRm)
+Dates_BR6K6 = vector('character', ncol(BR6K6_Q)-1)
+for (i in 1:(ncol(BR6K6_Q)-1)){
+  temp = strsplit(colnames(BR6K6_Q)[i+1], split = '.', fixed = TRUE)[[1]]
+  Dates_BR6K6[i] = paste(temp[2], temp[3], temp[4], sep = '-')
+}
+Dates_BR6K6 = as.Date(Dates_BR6K6)
+
+#mg/s unit
+BR6K6_TrueLoad = as.numeric(BR6K6_TN[-1]*1000*BR6K6_Q[-1])
+
+Load_ECM_BR6K605 = EC_Undev05*(Area_K6 - AreaImp_K6) + EC_Dev05*AreaImp_K6
+Load_ECM_BR6K6 = EC_Undev*(Area_K6 - AreaImp_K6) + EC_Dev*AreaImp_K6
+Load_ECM_BR6K695 = EC_Undev95*(Area_K6 - AreaImp_K6) + EC_Dev95*AreaImp_K6
+Load_ECM_BR6K6_QLQ05 = EC_Undev05*(Area_K6 - AreaImp_K6) + EC_DevQLQ05*AreaImp_K6
+Load_ECM_BR6K6_QLQ = EC_Undev*(Area_K6 - AreaImp_K6) + EC_DevQLQ*AreaImp_K6
+Load_ECM_BR6K6_QLQ95 = EC_Undev95*(Area_K6 - AreaImp_K6) + EC_DevQLQ95*AreaImp_K6
+
+plot(as.Date(Dates_BARN), Load_ECM_BR6K6, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
+par(new = TRUE)
+plot(as.Date(Dates_BR6K6), BR6K6_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
+
+plot(as.Date(Dates_BARN), Load_ECM_BR6K6_QLQ, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
+par(new = TRUE)
+plot(as.Date(Dates_BR6K6), BR6K6_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
+
+png('ECMBR6K6.png', res = 300, units = 'in', width = 5, height = 5)
+plot(x = BR6K6_TrueLoad[as.Date(Dates_BR6K6) %in% as.Date(Dates_BARN)], y = Load_ECM_BR6K6[as.Date(Dates_BARN) %in% as.Date(Dates_BR6K6)], 
+    xlim = c(0,15), ylim = c(0,15), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR6 K6')
+arrows(BR6K6_TrueLoad[as.Date(Dates_BR6K6) %in% as.Date(Dates_BARN)], (Load_ECM_BR6K6[as.Date(Dates_BARN) %in% as.Date(Dates_BR6K6)] - Load_ECM_BR6K605[as.Date(Dates_BARN) %in% as.Date(Dates_BR6K6)]), BR6K6_TrueLoad[as.Date(Dates_BR6K6) %in% as.Date(Dates_BARN)], (Load_ECM_BR6K6[as.Date(Dates_BARN) %in% as.Date(Dates_BR6K6)] + Load_ECM_BR6K695[as.Date(Dates_BARN) %in% as.Date(Dates_BR6K6)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col = 'red')
+dev.off()
+
+png('ECMBR6K6_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
+plot(BR6K6_TrueLoad[as.Date(Dates_BR6K6) %in% as.Date(Dates_BARN)], Load_ECM_BR6K6_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR6K6)], 
+     xlim = c(0,15), ylim = c(0,15), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR6 K6')
+arrows(BR6K6_TrueLoad[as.Date(Dates_BR6K6) %in% as.Date(Dates_BARN)], (Load_ECM_BR6K6_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR6K6)] - Load_ECM_BR6K6_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR6K6)]), BR6K6_TrueLoad[as.Date(Dates_BR6K6) %in% as.Date(Dates_BARN)], (Load_ECM_BR6K695[as.Date(Dates_BARN) %in% as.Date(Dates_BR6K6)] + Load_ECM_BR6K6_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR6K6)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col ='red')
+dev.off()
+
+#    BR7 K7 - poor fit might result from Arc method----
+#Get the impervious surface area contributing to this location
+AreaImp_K7 = 0
+Area_K7 = length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_0 == 1))*res^2
+for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_0 == 1))){
+  AreaImp_K7 = AreaImp_K7 + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$GK_0 == 1)[i]]*res^2
+}
+rm(i)
+#Observed data for this site
+BR7K7_TN = K_TN[K_TN$Site == K_Sites@data$NAME[1],]
+BR7K7_Q = K_Q[K_Q$Site == K_Sites@data$NAME[1],]
+#Check for NAs and remove
+IndRm = which((is.na(BR7K7_TN)) | (is.na(BR7K7_Q)))
+BR7K7_Q = BR7K7_Q[-IndRm]
+BR7K7_TN = BR7K7_TN[-IndRm]
+rm(IndRm)
+Dates_BR7K7 = vector('character', ncol(BR7K7_Q)-1)
+for (i in 1:(ncol(BR7K7_Q)-1)){
+  temp = strsplit(colnames(BR7K7_Q)[i+1], split = '.', fixed = TRUE)[[1]]
+  Dates_BR7K7[i] = paste(temp[2], temp[3], temp[4], sep = '-')
+}
+Dates_BR7K7 = as.Date(Dates_BR7K7)
+
+#mg/s unit
+BR7K7_TrueLoad = as.numeric(BR7K7_TN[-1]*1000*BR7K7_Q[-1])
+
+Load_ECM_BR7K705 = EC_Undev05*(Area_K7 - AreaImp_K7) + EC_Dev05*AreaImp_K7
+Load_ECM_BR7K7 = EC_Undev*(Area_K7 - AreaImp_K7) + EC_Dev*AreaImp_K7
+Load_ECM_BR7K795 = EC_Undev95*(Area_K7 - AreaImp_K7) + EC_Dev95*AreaImp_K7
+Load_ECM_BR7K7_QLQ05 = EC_Undev05*(Area_K7 - AreaImp_K7) + EC_DevQLQ05*AreaImp_K7
+Load_ECM_BR7K7_QLQ = EC_Undev*(Area_K7 - AreaImp_K7) + EC_DevQLQ*AreaImp_K7
+Load_ECM_BR7K7_QLQ95 = EC_Undev95*(Area_K7 - AreaImp_K7) + EC_DevQLQ95*AreaImp_K7
+
+plot(as.Date(Dates_BARN), Load_ECM_BR7K7, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
+par(new = TRUE)
+plot(as.Date(Dates_BR7K7), BR7K7_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
+
+plot(as.Date(Dates_BARN), Load_ECM_BR7K7_QLQ, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
+par(new = TRUE)
+plot(as.Date(Dates_BR7K7), BR7K7_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
+
+png('ECMBR7K7.png', res = 300, units = 'in', width = 5, height = 5)
+plot(x = BR7K7_TrueLoad[as.Date(Dates_BR7K7) %in% as.Date(Dates_BARN)], y = Load_ECM_BR7K7[as.Date(Dates_BARN) %in% as.Date(Dates_BR7K7)], 
+     xlim = c(0,50), ylim = c(0,50), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR7 K7')
+arrows(BR7K7_TrueLoad[as.Date(Dates_BR7K7) %in% as.Date(Dates_BARN)], (Load_ECM_BR7K7[as.Date(Dates_BARN) %in% as.Date(Dates_BR7K7)] - Load_ECM_BR7K705[as.Date(Dates_BARN) %in% as.Date(Dates_BR7K7)]), BR7K7_TrueLoad[as.Date(Dates_BR7K7) %in% as.Date(Dates_BARN)], (Load_ECM_BR7K7[as.Date(Dates_BARN) %in% as.Date(Dates_BR7K7)] + Load_ECM_BR7K795[as.Date(Dates_BARN) %in% as.Date(Dates_BR7K7)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col = 'red')
+dev.off()
+
+png('ECMBR7K7_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
+plot(BR7K7_TrueLoad[as.Date(Dates_BR7K7) %in% as.Date(Dates_BARN)], Load_ECM_BR7K7_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR7K7)], 
+     xlim = c(0,50), ylim = c(0,50), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR7 K7')
+arrows(BR7K7_TrueLoad[as.Date(Dates_BR7K7) %in% as.Date(Dates_BARN)], (Load_ECM_BR7K7_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR7K7)] - Load_ECM_BR7K7_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR7K7)]), BR7K7_TrueLoad[as.Date(Dates_BR7K7) %in% as.Date(Dates_BARN)], (Load_ECM_BR7K795[as.Date(Dates_BARN) %in% as.Date(Dates_BR7K7)] + Load_ECM_BR7K7_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR7K7)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col ='red')
+dev.off()
+
+#   Make maps of the contributing areas for these sampling locations----
 
 # Evaluate adding flow information and other normalizers to the ECM models----
 # Convert back to concentration by subtracting flow that resulted from covered catchments. Then make a model for urban and a model for forest at basin outlet and make sure that forest is same as POBR and that devekoped matches the sampling site data well.
