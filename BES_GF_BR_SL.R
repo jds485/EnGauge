@@ -3610,7 +3610,7 @@ TabCosYear_QLQ[IndReplace] = RepVal[,5]
 TabLogErr_QLQ[IndReplace] = RepVal[,6]
 TabLogQ2_QLQ[IndReplace] = RepVal[,7]
 
-rm(ir, TempTabInt, TempTabCosYear, TempColInd, TempRowInd, TempTabLogErr, TempTabLogQ, TempTabSinYear, TempTabYear)
+rm(ir, TempTabInt, TempTabCosYear, TempColInd, TempRowInd, TempTabLogErr, TempTabLogQ, TempTabSinYear, TempTabYear, TempTabLogQ2)
 rm(Row2, Row1, Col1, Col2, count, Col2Exists, Row2Exists, RepVal, IndReplace)
 
 #  Write the tables----
@@ -4063,13 +4063,13 @@ POBR_PredTN$Load95QLQ = POBR_PredTN$`95QLQ`*1000*Flows_POBR*.3048^3
 
 png('POBR_TrueTNLoadvsWRTDSLoad.png', res = 300, units = 'in', height = 5, width = 5)
 plot(POBR_PredTN$TrueLoad, POBR_PredTN$MedLoad, ylim=range(c(POBR_PredTN$MedLoad-POBR_PredTN$Load05, POBR_PredTN$MedLoad+POBR_PredTN$Load95)), xlim = c(0, 50), xlab = 'True Pond Branch TN Load (mg N/s)', ylab = 'WRTDS Predicted Load of Pond Branch TN (mg N/s)')
-arrows(POBR_PredTN$TrueLoad, POBR_PredTN$MedLoad-POBR_PredTN$Load05, POBR_PredTN$TrueLoad, POBR_PredTN$MedLoad+POBR_PredTN$Load95, length=0.05, angle=90, code=3)
+arrows(POBR_PredTN$TrueLoad, POBR_PredTN$Load05, POBR_PredTN$TrueLoad, POBR_PredTN$Load95, length=0.05, angle=90, code=3)
 lines(c(-10,50), c(-10,50))
 dev.off()
 
 png('POBR_TrueTNLoadvsWRTDSLoad_log.png', res = 300, units = 'in', height = 5, width = 5)
 plot(POBR_PredTN$TrueLoad, POBR_PredTN$MedLoad, ylim=range(c(POBR_PredTN$MedLoad-POBR_PredTN$Load05, POBR_PredTN$MedLoad+POBR_PredTN$Load95)), xlab = 'True Pond Branch TN Load (mg N/s)', ylab = 'WRTDS Predicted Load of Pond Branch TN (mg N/s)', log = 'xy')
-arrows(POBR_PredTN$TrueLoad, POBR_PredTN$MedLoad-POBR_PredTN$Load05, POBR_PredTN$TrueLoad, POBR_PredTN$MedLoad+POBR_PredTN$Load95, length=0.05, angle=90, code=3)
+arrows(POBR_PredTN$TrueLoad, POBR_PredTN$Load05, POBR_PredTN$TrueLoad, POBR_PredTN$Load95, length=0.05, angle=90, code=3)
 lines(c(1e-7,1e7), c(1e-7,1e7))
 dev.off()
 
@@ -4087,20 +4087,20 @@ plot(POBR_PredTN$TrueLoad[POBR_PredTN$LowTNLim == 2], POBR_PredTN$MedLoad[POBR_P
      xlim=range(POBR_PredTN$TrueLoad),
      ylim=range(c(POBR_PredTN$MedLoad-POBR_PredTN$Load05, POBR_PredTN$MedLoad+POBR_PredTN$Load95)), xlab = '', ylab = '', 
      log = 'xy', col = 'red', axes = FALSE)
-#arrows(POBR_PredTN$TrueLoad, POBR_PredTN$MedLoad-POBR_PredTN$Load05, POBR_PredTN$TrueLoad, POBR_PredTN$MedLoad+POBR_PredTN$Load95, length=0.05, angle=90, code=3)
+#arrows(POBR_PredTN$TrueLoad, POBR_PredTN$Load05, POBR_PredTN$TrueLoad, POBR_PredTN$Load95, length=0.05, angle=90, code=3)
 lines(c(1e-7,1e7), c(1e-7,1e7))
 legend('bottomright', title = 'Detection Limits (mg N/L)', legend = c('0.01', '0.05'), pch = 1, col = c('blue', 'red'))
 dev.off()
 
 png('POBR_TrueTNLoadvsWRTDSLoad_QLQ.png', res = 300, units = 'in', height = 5, width = 5)
 plot(POBR_PredTN$TrueLoad, POBR_PredTN$MedLoadQLQ, ylim=range(c(POBR_PredTN$MedLoadQLQ-POBR_PredTN$Load05QLQ, POBR_PredTN$MedLoadQLQ+POBR_PredTN$Load95QLQ)), xlim = c(0, 50), xlab = 'True Pond Branch TN Load (mg N/s)', ylab = 'WRTDS Predicted Load of Pond Branch TN (mg N/s)')
-arrows(POBR_PredTN$TrueLoad, POBR_PredTN$MedLoadQLQ-POBR_PredTN$Load05QLQ, POBR_PredTN$TrueLoad, POBR_PredTN$MedLoadQLQ+POBR_PredTN$Load95QLQ, length=0.05, angle=90, code=3)
+arrows(POBR_PredTN$TrueLoad, POBR_PredTN$Load05QLQ, POBR_PredTN$TrueLoad, POBR_PredTN$Load95QLQ, length=0.05, angle=90, code=3)
 lines(c(-10,50), c(-10,50))
 dev.off()
 
 png('POBR_TrueTNLoadvsWRTDSLoad_QLQ_log.png', res = 300, units = 'in', height = 5, width = 5)
 plot(POBR_PredTN$TrueLoad, POBR_PredTN$MedLoadQLQ, ylim=range(c(POBR_PredTN$MedLoadQLQ-POBR_PredTN$Load05QLQ, POBR_PredTN$MedLoadQLQ+POBR_PredTN$Load95QLQ)), xlab = 'True Pond Branch TN Load (mg N/s)', ylab = 'WRTDS Predicted Load of Pond Branch TN (mg N/s)', log = 'xy')
-arrows(POBR_PredTN$TrueLoad, POBR_PredTN$MedLoadQLQ-POBR_PredTN$Load05QLQ, POBR_PredTN$TrueLoad, POBR_PredTN$MedLoadQLQ+POBR_PredTN$Load95QLQ, length=0.05, angle=90, code=3)
+arrows(POBR_PredTN$TrueLoad, POBR_PredTN$Load05QLQ, POBR_PredTN$TrueLoad, POBR_PredTN$Load95QLQ, length=0.05, angle=90, code=3)
 lines(c(1e-7,1e7), c(1e-7,1e7))
 dev.off()
 
@@ -4118,7 +4118,6 @@ plot(POBR_PredTN$TrueLoad[POBR_PredTN$LowTNLim == 2], POBR_PredTN$MedLoadQLQ[POB
      xlim=range(POBR_PredTN$TrueLoad),
      ylim=range(c(POBR_PredTN$MedLoadQLQ-POBR_PredTN$Load05QLQ, POBR_PredTN$MedLoadQLQ+POBR_PredTN$Load95QLQ)), xlab = '', ylab = '', 
      log = 'xy', col = 'red', axes = FALSE)
-#arrows(POBR_PredTN$TrueLoad, POBR_PredTN$MedLoad-POBR_PredTN$Load05, POBR_PredTN$TrueLoad, POBR_PredTN$MedLoad+POBR_PredTN$Load95, length=0.05, angle=90, code=3)
 lines(c(1e-7,1e7), c(1e-7,1e7))
 legend('bottomright', title = 'Detection Limits (mg N/L)', legend = c('0.01', '0.05'), pch = 1, col = c('blue', 'red'))
 dev.off()
@@ -4203,8 +4202,8 @@ png('BR3_TrueTNLoadvsWRTDSLoad.png', res = 300, units = 'in', height = 5, width 
 plot(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1], 
      ylim=range(c(BR3_PredTN$MedLoad[BR3_PredTN$True > 1]-BR3_PredTN$Load05[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1]+BR3_PredTN$Load95[BR3_PredTN$True > 1])), 
      xlab = 'True BR3 TN Load (mg N/s)', ylab = 'WRTDS Predicted Load of BR3 TN (mg N/s)')
-arrows(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1]-BR3_PredTN$Load05[BR3_PredTN$True > 1], 
-       BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1]+BR3_PredTN$Load95[BR3_PredTN$True > 1], 
+arrows(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$Load05[BR3_PredTN$True > 1], 
+       BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$Load95[BR3_PredTN$True > 1], 
        length=0.05, angle=90, code=3)
 lines(c(-100,100), c(-100,100))
 dev.off()
@@ -4213,8 +4212,8 @@ png('BR3_TrueTNLoadvsWRTDSLoad_log.png', res = 300, units = 'in', height = 5, wi
 plot(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1], 
      ylim=range(c(BR3_PredTN$MedLoad[BR3_PredTN$True > 1]-BR3_PredTN$Load05[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1]+BR3_PredTN$Load95[BR3_PredTN$True > 1])), 
      xlab = expression(paste('log'[10] ~ 'True BR3 TN Load (mg N/s)')), ylab = expression(paste('log'[10] ~ 'WRTDS Predicted Load of BR3 TN (mg N/s)')), log='xy')
-arrows(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1]-BR3_PredTN$Load05[BR3_PredTN$True > 1], 
-       BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoad[BR3_PredTN$True > 1]+BR3_PredTN$Load95[BR3_PredTN$True > 1], 
+arrows(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$Load05[BR3_PredTN$True > 1], 
+       BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$Load95[BR3_PredTN$True > 1], 
        length=0.05, angle=90, code=3)
 lines(c(1e-7,100), c(1e-7,100))
 dev.off()
@@ -4223,8 +4222,8 @@ png('BR3_TrueTNLoadvsWRTDSLoad_QLQ.png', res = 300, units = 'in', height = 5, wi
 plot(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoadQLQ[BR3_PredTN$True > 1], 
      ylim=range(c(BR3_PredTN$MedLoadQLQ[BR3_PredTN$True > 1]-BR3_PredTN$Load05QLQ[BR3_PredTN$True > 1], BR3_PredTN$MedLoadQLQ[BR3_PredTN$True > 1]+BR3_PredTN$Load95QLQ[BR3_PredTN$True > 1])), 
      xlab = 'True BR3 TN Load (mg N/s)', ylab = 'WRTDS Predicted Load of BR3 TN (mg N/s)')
-arrows(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoadQLQ[BR3_PredTN$True > 1]-BR3_PredTN$Load05QLQ[BR3_PredTN$True > 1], 
-       BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoadQLQ[BR3_PredTN$True > 1]+BR3_PredTN$Load95QLQ[BR3_PredTN$True > 1], 
+arrows(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$Load05QLQ[BR3_PredTN$True > 1], 
+       BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$Load95QLQ[BR3_PredTN$True > 1], 
        length=0.05, angle=90, code=3)
 lines(c(-100,100), c(-100,100))
 dev.off()
@@ -4233,8 +4232,8 @@ png('BR3_TrueTNLoadvsWRTDSLoad_QLQ_log.png', res = 300, units = 'in', height = 5
 plot(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoadQLQ[BR3_PredTN$True > 1], 
      ylim=range(c(BR3_PredTN$MedLoadQLQ[BR3_PredTN$True > 1]-BR3_PredTN$Load05QLQ[BR3_PredTN$True > 1], BR3_PredTN$MedLoadQLQ[BR3_PredTN$True > 1]+BR3_PredTN$Load95QLQ[BR3_PredTN$True > 1])), 
      xlab = expression(paste('log'[10] ~ 'True BR3 TN Load (mg N/s)')), ylab = expression(paste('log'[10] ~ 'WRTDS Predicted Load of BR3 TN (mg N/s)')), log='xy')
-arrows(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoadQLQ[BR3_PredTN$True > 1]-BR3_PredTN$Load05QLQ[BR3_PredTN$True > 1], 
-       BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$MedLoadQLQ[BR3_PredTN$True > 1]+BR3_PredTN$Load95QLQ[BR3_PredTN$True > 1], 
+arrows(BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$Load05QLQ[BR3_PredTN$True > 1], 
+       BR3_PredTN$TrueLoad[BR3_PredTN$True > 1], BR3_PredTN$Load95QLQ[BR3_PredTN$True > 1], 
        length=0.05, angle=90, code=3)
 lines(c(1e-7,100), c(1e-7,100))
 dev.off()
@@ -4304,7 +4303,7 @@ BR5_PredTN$Load95QLQ = BR5_PredTN$`95QLQ`*1000*Flows_BR5
 
 png('BR5_TrueTNLoadvsWRTDSLoad.png', res = 300, units = 'in', height = 5, width = 5)
 plot(BR5_PredTN$TrueLoad, BR5_PredTN$MedLoad, ylim=range(c(BR5_PredTN$MedLoad-BR5_PredTN$Load05, BR5_PredTN$MedLoad+BR5_PredTN$Load95)), xlab = 'True BR5 TN Load (mg N/s)', ylab = 'WRTDS Predicted Load of BR5 TN (mg N/s)')
-arrows(BR5_PredTN$TrueLoad, BR5_PredTN$MedLoad-BR5_PredTN$Load05, BR5_PredTN$TrueLoad, BR5_PredTN$MedLoad+BR5_PredTN$Load95, length=0.05, angle=90, code=3)
+arrows(BR5_PredTN$TrueLoad, BR5_PredTN$Load05, BR5_PredTN$TrueLoad, BR5_PredTN$Load95, length=0.05, angle=90, code=3)
 lines(c(-10,100), c(-10,100))
 dev.off()
 
@@ -4312,15 +4311,15 @@ png('BR5_TrueTNLoadvsWRTDSLoad_log.png', res = 300, units = 'in', height = 5, wi
 plot(BR5_PredTN$TrueLoad[BR5_PredTN$True > 1], BR5_PredTN$MedLoad[BR5_PredTN$True > 1], 
      ylim=range(c(BR5_PredTN$MedLoad[BR5_PredTN$True > 1]-BR5_PredTN$Load05[BR5_PredTN$True > 1], BR5_PredTN$MedLoad[BR5_PredTN$True > 1]+BR5_PredTN$Load95[BR5_PredTN$True > 1])), 
      xlab = expression(paste('log'[10] ~ 'True BR5 TN Load (mg N/s)')), ylab = expression(paste('log'[10] ~ 'WRTDS Predicted Load of BR5 TN (mg N/s)')), log='xy')
-arrows(BR5_PredTN$TrueLoad[BR5_PredTN$True > 1], BR5_PredTN$MedLoad[BR5_PredTN$True > 1]-BR5_PredTN$Load05[BR5_PredTN$True > 1], 
-       BR5_PredTN$TrueLoad[BR5_PredTN$True > 1], BR5_PredTN$MedLoad[BR5_PredTN$True > 1]+BR5_PredTN$Load95[BR5_PredTN$True > 1], 
+arrows(BR5_PredTN$TrueLoad[BR5_PredTN$True > 1], BR5_PredTN$Load05[BR5_PredTN$True > 1], 
+       BR5_PredTN$TrueLoad[BR5_PredTN$True > 1], BR5_PredTN$Load95[BR5_PredTN$True > 1], 
        length=0.05, angle=90, code=3)
 lines(c(1e-7,100), c(1e-7,100))
 dev.off()
 
 png('BR5_TrueTNLoadvsWRTDSLoad_QLQ.png', res = 300, units = 'in', height = 5, width = 5)
 plot(BR5_PredTN$TrueLoad, BR5_PredTN$MedLoadQLQ, ylim=range(c(BR5_PredTN$MedLoadQLQ-BR5_PredTN$Load05QLQ, BR5_PredTN$MedLoadQLQ+BR5_PredTN$Load95QLQ)), xlab = 'True BR5 TN Load (mg N/s)', ylab = 'WRTDS Predicted Load of BR5 TN (mg N/s)')
-arrows(BR5_PredTN$TrueLoad, BR5_PredTN$MedLoadQLQ-BR5_PredTN$Load05QLQ, BR5_PredTN$TrueLoad, BR5_PredTN$MedLoadQLQ+BR5_PredTN$Load95QLQ, length=0.05, angle=90, code=3)
+arrows(BR5_PredTN$TrueLoad, BR5_PredTN$Load05QLQ, BR5_PredTN$TrueLoad, BR5_PredTN$Load95QLQ, length=0.05, angle=90, code=3)
 lines(c(-10,100), c(-10,100))
 dev.off()
 
@@ -4328,8 +4327,8 @@ png('BR5_TrueTNLoadvsWRTDSLoad_QLQ_log.png', res = 300, units = 'in', height = 5
 plot(BR5_PredTN$TrueLoad[BR5_PredTN$True > 1], BR5_PredTN$MedLoadQLQ[BR5_PredTN$True > 1], 
      ylim=range(c(BR5_PredTN$MedLoadQLQ[BR5_PredTN$True > 1]-BR5_PredTN$Load05QLQ[BR5_PredTN$True > 1], BR5_PredTN$MedLoadQLQ[BR5_PredTN$True > 1]+BR5_PredTN$Load95QLQ[BR5_PredTN$True > 1])), 
      xlab = expression(paste('log'[10] ~ 'True BR5 TN Load (mg N/s)')), ylab = expression(paste('log'[10] ~ 'WRTDS Predicted Load of BR5 TN (mg N/s)')), log='xy')
-arrows(BR5_PredTN$TrueLoad[BR5_PredTN$True > 1], BR5_PredTN$MedLoadQLQ[BR5_PredTN$True > 1]-BR5_PredTN$Load05QLQ[BR5_PredTN$True > 1], 
-       BR5_PredTN$TrueLoad[BR5_PredTN$True > 1], BR5_PredTN$MedLoadQLQ[BR5_PredTN$True > 1]+BR5_PredTN$Load95QLQ[BR5_PredTN$True > 1], 
+arrows(BR5_PredTN$TrueLoad[BR5_PredTN$True > 1], BR5_PredTN$Load05QLQ[BR5_PredTN$True > 1], 
+       BR5_PredTN$TrueLoad[BR5_PredTN$True > 1], BR5_PredTN$Load95QLQ[BR5_PredTN$True > 1], 
        length=0.05, angle=90, code=3)
 lines(c(1e-7,100), c(1e-7,100))
 dev.off()
@@ -5199,11 +5198,11 @@ POBR_PredTN_POBRWRTDS$DiffMed = POBR_PredTN_POBRWRTDS$True - POBR_PredTN_POBRWRT
 png('POBR_TrueTNvsPOBRWRTDS.png', res = 300, units = 'in', height = 5, width = 10)
 layout(rbind(c(1,2)))
 plot(POBR_PredTN$True, POBR_PredTN$Med, ylim = c(0,9), xlim = c(0,9), xlab = 'True Pond Branch TN (mg N/L)', ylab = 'WRTDS Predicted Pond Branch TN (mg N/L)', main = 'Basin WRTDS Model')
-arrows(POBR_PredTN$True, POBR_PredTN$Med - POBR_PredTN$`05`, POBR_PredTN$True, POBR_PredTN$Med + POBR_PredTN$`95`, length=0.05, angle=90, code=3)
+arrows(POBR_PredTN$True, POBR_PredTN$`05`, POBR_PredTN$True, POBR_PredTN$`95`, length=0.05, angle=90, code=3)
 lines(c(-10,10), c(-10,10))
 
 plot(POBR_PredTN_POBRWRTDS$True, POBR_PredTN_POBRWRTDS$Med, ylim = c(0,9), xlim = c(0,9), xlab = 'True Pond Branch TN (mg N/L)', ylab = 'WRTDS Predicted Pond Branch TN (mg N/L)', main = 'Pond Branch WRTDS Model')
-arrows(POBR_PredTN_POBRWRTDS$True, POBR_PredTN_POBRWRTDS$Med - POBR_PredTN_POBRWRTDS$`05`, POBR_PredTN_POBRWRTDS$True, POBR_PredTN_POBRWRTDS$Med + POBR_PredTN_POBRWRTDS$`95`, length=0.05, angle=90, code=3)
+arrows(POBR_PredTN_POBRWRTDS$True, POBR_PredTN_POBRWRTDS$`05`, POBR_PredTN_POBRWRTDS$True, POBR_PredTN_POBRWRTDS$`95`, length=0.05, angle=90, code=3)
 lines(c(-10,10), c(-10,10))
 dev.off()
 
@@ -5241,13 +5240,13 @@ POBR_PredTN_POBRWRTDS$Load95 = POBR_PredTN_POBRWRTDS$`95`*1000*Flows_POBR*.3048^
 
 png('POBR_TrueTNLoadvsPOBRWRTDSLoad.png', res = 300, units = 'in', height = 5, width = 5)
 plot(POBR_PredTN_POBRWRTDS$TrueLoad, POBR_PredTN_POBRWRTDS$MedLoad, ylim=range(c(POBR_PredTN_POBRWRTDS$MedLoad-POBR_PredTN_POBRWRTDS$Load05, POBR_PredTN_POBRWRTDS$MedLoad+POBR_PredTN_POBRWRTDS$Load95)), xlab = 'True Pond Branch TN Load (mg N/s)', ylab = 'WRTDS Predicted Load of Pond Branch TN (mg N/s)')
-arrows(POBR_PredTN_POBRWRTDS$TrueLoad, POBR_PredTN_POBRWRTDS$MedLoad-POBR_PredTN_POBRWRTDS$Load05, POBR_PredTN_POBRWRTDS$TrueLoad, POBR_PredTN_POBRWRTDS$MedLoad+POBR_PredTN_POBRWRTDS$Load95, length=0.05, angle=90, code=3)
+arrows(POBR_PredTN_POBRWRTDS$TrueLoad, POBR_PredTN_POBRWRTDS$Load05, POBR_PredTN_POBRWRTDS$TrueLoad, POBR_PredTN_POBRWRTDS$Load95, length=0.05, angle=90, code=3)
 lines(c(-10,100), c(-10,100))
 dev.off()
 
 png('POBR_TrueTNLoadvsPOBRWRTDSLoad_log.png', res = 300, units = 'in', height = 5, width = 5)
 plot(POBR_PredTN_POBRWRTDS$TrueLoad, POBR_PredTN_POBRWRTDS$MedLoad, ylim=range(c(POBR_PredTN_POBRWRTDS$MedLoad-POBR_PredTN_POBRWRTDS$Load05, POBR_PredTN_POBRWRTDS$MedLoad+POBR_PredTN_POBRWRTDS$Load95)), xlab = 'True Pond Branch TN Load (mg N/s)', ylab = 'WRTDS Predicted Load of Pond Branch TN (mg N/s)', log = 'xy')
-arrows(POBR_PredTN_POBRWRTDS$TrueLoad, POBR_PredTN_POBRWRTDS$MedLoad-POBR_PredTN_POBRWRTDS$Load05, POBR_PredTN_POBRWRTDS$TrueLoad, POBR_PredTN_POBRWRTDS$MedLoad+POBR_PredTN_POBRWRTDS$Load95, length=0.05, angle=90, code=3)
+arrows(POBR_PredTN_POBRWRTDS$TrueLoad, POBR_PredTN_POBRWRTDS$Load05, POBR_PredTN_POBRWRTDS$TrueLoad, POBR_PredTN_POBRWRTDS$Load95, length=0.05, angle=90, code=3)
 lines(c(1e-7,1e7), c(1e-7,1e7))
 dev.off()
 
@@ -5297,7 +5296,6 @@ par(new = TRUE)
 plot(POBR_PredTN$TrueLoad[POBR_PredTN$LowTNLim == 2], POBR_PredTN$ModeledTNLoad[POBR_PredTN$LowTNLim == 2], 
      ylim = c(1e-4, 1e+2), xlim = c(1e-4, 1e+2), xlab = '', ylab = '', 
      log = 'xy', col = 'red', axes = FALSE)
-#arrows(POBR_PredTN_POBRWRTDS$TrueLoad, POBR_PredTN_POBRWRTDS$MedLoad-POBR_PredTN_POBRWRTDS$Load05, POBR_PredTN_POBRWRTDS$TrueLoad, POBR_PredTN_POBRWRTDS$MedLoad+POBR_PredTN_POBRWRTDS$Load95, length=0.05, angle=90, code=3)
 lines(c(1e-7,1e7), c(1e-7,1e7))
 legend('topleft', title = 'Detection Limits (mg N/L)', legend = c('0.01', '0.05'), pch = 1, col = c('blue', 'red'))
 dev.off()
@@ -5543,12 +5541,25 @@ impFrac = projectRaster(impFrac, crs = CRS(pCRS))
 #Add impervious fraction to worldfile information
 world$ImpFrac = raster::extract(x = impFrac, y = world)
 
+#Compute impervious area for Pond Branch upstream of water quality site
+AreaImp_K2S = 0
+Area_K2S = length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_6 == 1))*res^2
+for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_6 == 1))){
+  AreaImp_K2S = AreaImp_K2S + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$GK_6 == 1)[i]]*res^2
+}
+rm(i)
+#Will treat this as all undeveloped land because fraction impervious is 7e-5.
+AreaImp_K2S = 0
+
 #Compute the impervious area of each hillslope and for the basin
 Area.basin_imp = 0
 for (i in 1:length(unique(world$patchID))){
   Area.basin_imp = Area.basin_imp + world$ImpFrac[which(duplicated(world$patchID) == FALSE)[i]]*res^2
 }
+#Correct for Pond Branch impervious correction
+Area.basin_imp = Area.basin_imp - 28
 Area.basin_imp/Area.basin #5.1% impervious
+
 Area.Hills = cbind(Area.Hills, rep(0, nrow(Area.Hills)))
 for (h in 1:length(uhills)){
   #Get the impervious surface area in this hillslope
@@ -5556,24 +5567,88 @@ for (h in 1:length(uhills)){
     Area.Hills[h,3] = Area.Hills[h,3] + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$hillID == h)[i]]*res^2
   }
 }
+#Correct for Pond Branch in Hillslope 4
+Area.Hills[4,3] = Area.Hills[4,3] - 28
 
 #Add fraction of impervious surface to the dataset
 Area.Hills = cbind(Area.Hills, Area.Hills[,3]/Area.Hills[,2])
 
 #Estimate the Pond Branch "Undeveloped" model
-#Fixme: neglecting the component of Pond Branch that is developed here.
-EC_Undev05 = POBR_AllDates_PredTN$Load05/sum(Area.Hills[c(3,4),2])
-EC_Undev = POBR_AllDates_PredTN$MedLoad/sum(Area.Hills[c(3,4),2])
-EC_Undev95 = POBR_AllDates_PredTN$Load95/sum(Area.Hills[c(3,4),2])
+#Fixme: neglecting the 28 m^2 of Pond Branch Hillslope 4 that is developed here.
+# Also neglecting that the streamflow was measured slightly upstream of water quality.
+EC_Undev05 = POBR_AllDates_PredTN$Load05/Area_K2S
+EC_Undev = POBR_AllDates_PredTN$MedLoad/Area_K2S
+EC_Undev95 = POBR_AllDates_PredTN$Load95/Area_K2S
 
 #Export coefficient for developed = (Baisman load - undeveloped load)/(developed land area)
-#Fixme: developed Pond Branch is being subtracted to developed. Added to undeveloped.
-EC_Dev05 = (BARN_PredTN$Load05 - EC_Undev05*sum(Area.Hills[,2] - Area.Hills[,3], 116))/sum(Area.Hills[,3], -116)
-EC_Dev = (BARN_PredTN$MedLoad - EC_Undev*sum(Area.Hills[,2] - Area.Hills[,3], 116))/sum(Area.Hills[,3], -116)
-EC_Dev95 = (BARN_PredTN$Load95 - EC_Undev95*sum(Area.Hills[,2] - Area.Hills[,3], 116))/sum(Area.Hills[,3], -116)
-EC_DevQLQ05 = (BARN_PredTN$Load05QLQ - EC_Undev05*sum(Area.Hills[,2] - Area.Hills[,3], 116))/sum(Area.Hills[,3], -116)
-EC_DevQLQ = (BARN_PredTN$MedLoadQLQ - EC_Undev*sum(Area.Hills[,2] - Area.Hills[,3], 116))/sum(Area.Hills[,3], -116)
-EC_DevQLQ95 = (BARN_PredTN$Load95QLQ - EC_Undev95*sum(Area.Hills[,2] - Area.Hills[,3], 116))/sum(Area.Hills[,3], -116)
+EC_Dev05 = (BARN_PredTN$Load05 - EC_Undev05*sum(Area.Hills[,2] - Area.Hills[,3]))/sum(Area.Hills[,3])
+EC_Dev = (BARN_PredTN$MedLoad - EC_Undev*sum(Area.Hills[,2] - Area.Hills[,3]))/sum(Area.Hills[,3])
+EC_Dev95 = (BARN_PredTN$Load95 - EC_Undev95*sum(Area.Hills[,2] - Area.Hills[,3]))/sum(Area.Hills[,3])
+EC_DevQLQ05 = (BARN_PredTN$Load05QLQ - EC_Undev05*sum(Area.Hills[,2] - Area.Hills[,3]))/sum(Area.Hills[,3])
+EC_DevQLQ = (BARN_PredTN$MedLoadQLQ - EC_Undev*sum(Area.Hills[,2] - Area.Hills[,3]))/sum(Area.Hills[,3])
+EC_DevQLQ95 = (BARN_PredTN$Load95QLQ - EC_Undev95*sum(Area.Hills[,2] - Area.Hills[,3]))/sum(Area.Hills[,3])
+
+#Trying new approach that uses simulation to get quantiles:
+set.seed(3220)
+MCreps = 10000
+EC_UndevMat = EC_DevMat = EC_UndevMatQLQ = EC_DevMatQLQ = matrix(NA, nrow = length(Dates_POBR_AllDates), ncol = MCreps)
+for (i in 1:nrow(EC_UndevMat)){
+  #Get pond branch error for this day
+  if ((POBR_AllDates_PredTN$Med[i] == 0) & (POBR_AllDates_PredTN$`05`[i] == 0) & (POBR_AllDates_PredTN$`95`[i] == 0)){
+    EC_UndevMat[i, ] = 0
+  }else{
+    e_temp = abs(log(POBR_AllDates_PredTN$Med[i]) - log(POBR_AllDates_PredTN$`05`[i]))*.5
+    #Assume this is a standard deviation from a normal distribution of error and simulate possible values, and convert to a load normalized by area
+    EC_UndevMat[i, ] = exp(rnorm(n = MCreps, mean = log(POBR_AllDates_PredTN$Med[i]), sd = e_temp))*1000*Flows_POBR_AllDates[i]*.3048^3/Area_K2S
+  }
+  
+  #Now get the developed portion.
+  if ((BARN_PredTN$Med[i] == 0) & (BARN_PredTN$`05`[i] == 0) & (BARN_PredTN$`95`[i] == 0)){
+    EC_DevMat[i, ] =  -1*EC_UndevMat[i, ]*sum(Area.Hills[,2] - Area.Hills[,3])/sum(Area.Hills[,3])
+    
+    #Fixme: Not feasible to use rejection sampling here. Should some other method be used?
+  }else{
+    e_temp_bais = abs(log(BARN_PredTN$Med[i]) - log(BARN_PredTN$`05`[i]))*.5
+    EC_DevMat[i, ] = (exp(rnorm(n = MCreps, mean = log(BARN_PredTN$Med[i]), sd = e_temp_bais))*1000*Flows_BARN[i]*.3048^3 - EC_UndevMat[i, ]*sum(Area.Hills[,2] - Area.Hills[,3]))/sum(Area.Hills[,3])
+    
+    #Rejection sampling for the export coefficients that are less than 0. These are physically impossible.
+    while(any(EC_DevMat[i,] < 0)){
+      IndL0 = which(EC_DevMat[i,] < 0)
+      EC_UndevMat[i, IndL0] = exp(rnorm(n = length(IndL0), mean = log(POBR_AllDates_PredTN$Med[i]), sd = e_temp))*1000*Flows_POBR_AllDates[i]*.3048^3/Area_K2S
+      EC_DevMat[i, IndL0] = (exp(rnorm(n = length(IndL0), mean = log(BARN_PredTN$Med[i]), sd = e_temp_bais))*1000*Flows_BARN[i]*.3048^3 - EC_UndevMat[i, IndL0]*sum(Area.Hills[,2] - Area.Hills[,3]))/sum(Area.Hills[,3])
+    }
+  }
+}
+rm(e_temp, e_temp_bais, i, IndL0)
+
+for (i in 1:nrow(EC_UndevMatQLQ)){
+  #Get pond branch error for this day
+  if ((POBR_AllDates_PredTN$Med[i] == 0) & (POBR_AllDates_PredTN$`05`[i] == 0) & (POBR_AllDates_PredTN$`95`[i] == 0)){
+    EC_UndevMatQLQ[i, ] = 0
+  }else{
+    e_temp = abs(log(POBR_AllDates_PredTN$Med[i]) - log(POBR_AllDates_PredTN$`05`[i]))*.5
+    #Assume this is a standard deviation from a normal distribution of error and simulate possible values, and convert to a load normalized by area
+    EC_UndevMatQLQ[i, ] = exp(rnorm(n = MCreps, mean = log(POBR_AllDates_PredTN$Med[i]), sd = e_temp))*1000*Flows_POBR_AllDates[i]*.3048^3/Area_K2S
+  }
+  
+  #Now get the developed portion.
+  if ((BARN_PredTN$MedQLQ[i] == 0) & (BARN_PredTN$`05QLQ`[i] == 0) & (BARN_PredTN$`95QLQ`[i] == 0)){
+    EC_DevMatQLQ[i, ] =  -1*EC_UndevMatQLQ[i, ]*sum(Area.Hills[,2] - Area.Hills[,3])/sum(Area.Hills[,3])
+    
+    #Fixme: Not feasible to use rejection sampling here. Should some other method be used?
+  }else{
+    e_temp_bais = abs(log(BARN_PredTN$MedQLQ[i]) - log(BARN_PredTN$`05QLQ`[i]))*.5
+    EC_DevMatQLQ[i, ] = (exp(rnorm(n = MCreps, mean = log(BARN_PredTN$MedQLQ[i]), sd = e_temp_bais))*1000*Flows_BARN[i]*.3048^3 - EC_UndevMatQLQ[i, ]*sum(Area.Hills[,2] - Area.Hills[,3]))/sum(Area.Hills[,3])
+    
+    #Rejection sampling for the export coefficients that are less than 0. These are physically impossible.
+    while(any(EC_DevMatQLQ[i,] < 0)){
+      IndL0 = which(EC_DevMatQLQ[i,] < 0)
+      EC_UndevMatQLQ[i, IndL0] = exp(rnorm(n = length(IndL0), mean = log(POBR_AllDates_PredTN$Med[i]), sd = e_temp))*1000*Flows_POBR_AllDates[i]*.3048^3/Area_K2S
+      EC_DevMatQLQ[i, IndL0] = (exp(rnorm(n = length(IndL0), mean = log(BARN_PredTN$MedQLQ[i]), sd = e_temp_bais))*1000*Flows_BARN[i]*.3048^3 - EC_UndevMatQLQ[i, IndL0]*sum(Area.Hills[,2] - Area.Hills[,3]))/sum(Area.Hills[,3])
+    }
+  }
+}
+rm(e_temp, e_temp_bais, i, IndL0)
 
 #There are some negative values, so maybe this can be attributed to the in-stream losses. Plot dates that these happen
 plot(y = EC_Dev05, x = Dates_POBR_AllDates, ylim = c(-0.0005, .007), xlim = c(10500, 16500))
@@ -5626,12 +5701,24 @@ EC_DevQLQ[EC_DevQLQ < 0] = 0
 EC_DevQLQ95[EC_DevQLQ95 < 0] = 0
 
 #Look at fit of model to Pond Branch and Baisman
-Load_ECM_Pond05 = EC_Undev05*sum(Area.Hills[c(3,4),2]-Area.Hills[c(3,4),3], 116) + EC_Dev05*sum(Area.Hills[c(3,4),3], -116)
-Load_ECM_Pond = EC_Undev*sum(Area.Hills[c(3,4),2]-Area.Hills[c(3,4),3], 116) + EC_Dev*sum(Area.Hills[c(3,4),3], -116)
-Load_ECM_Pond95 = EC_Undev95*sum(Area.Hills[c(3,4),2]-Area.Hills[c(3,4),3], 116) + EC_Dev95*sum(Area.Hills[c(3,4),3], -116)
-Load_ECM_Pond_QLQ05 = EC_Undev05*sum(Area.Hills[c(3,4),2]-Area.Hills[c(3,4),3], 116) + EC_DevQLQ05*sum(Area.Hills[c(3,4),3], -116)
-Load_ECM_Pond_QLQ = EC_Undev*sum(Area.Hills[c(3,4),2]-Area.Hills[c(3,4),3], 116) + EC_DevQLQ*sum(Area.Hills[c(3,4),3], -116)
-Load_ECM_Pond_QLQ95 = EC_Undev95*sum(Area.Hills[c(3,4),2]-Area.Hills[c(3,4),3], 116) + EC_DevQLQ95*sum(Area.Hills[c(3,4),3], -116)
+Load_ECM_Pond05 = EC_Undev05*Area_K2S + EC_Dev05*AreaImp_K2S
+Load_ECM_Pond = EC_Undev*Area_K2S + EC_Dev*AreaImp_K2S
+Load_ECM_Pond95 = EC_Undev95*Area_K2S + EC_Dev95*AreaImp_K2S
+Load_ECM_Pond_QLQ05 = EC_Undev05*Area_K2S + EC_DevQLQ05*AreaImp_K2S
+Load_ECM_Pond_QLQ = EC_Undev*Area_K2S + EC_DevQLQ*AreaImp_K2S
+Load_ECM_Pond_QLQ95 = EC_Undev95*Area_K2S + EC_DevQLQ95*AreaImp_K2S
+
+Load_ECM_Pond_Mat = EC_UndevMat*Area_K2S + EC_DevMat*AreaImp_K2S
+#Get mean and 5th, 95th percentiles
+Load_ECM_Pond_MatMean = apply(Load_ECM_Pond_Mat, MARGIN = 1, FUN = mean)
+Load_ECM_Pond_Mat05 = apply(Load_ECM_Pond_Mat, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_Pond_Mat95 = apply(Load_ECM_Pond_Mat, MARGIN = 1, FUN = quantile, probs = 0.95)
+
+Load_ECM_Pond_MatQLQ = EC_UndevMatQLQ*Area_K2S + EC_DevMatQLQ*AreaImp_K2S
+#Get mean and 5th, 95th percentiles
+Load_ECM_Pond_MatQLQMean = apply(Load_ECM_Pond_MatQLQ, MARGIN = 1, FUN = mean)
+Load_ECM_Pond_MatQLQ05 = apply(Load_ECM_Pond_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_Pond_MatQLQ95 = apply(Load_ECM_Pond_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
 
 plot(as.Date(Dates_POBR_AllDates), POBR_AllDates_PredTN$MedLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,50))
 par(new = TRUE)
@@ -5641,11 +5728,11 @@ plot(as.Date(Dates_POBR_AllDates), POBR_AllDates_PredTN$MedLoad, xlim = c(as.Dat
 par(new = TRUE)
 plot(as.Date(Dates_POBR_AllDates), Load_ECM_Pond, col = 'red', xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,50))
 
-#Check on method
-if(cor(Load_ECM_Pond, POBR_AllDates_PredTN$MedLoad) != 1){
+#Check on method - essentially all 0, but correlation says != 1
+if(round(cor(Load_ECM_Pond, POBR_AllDates_PredTN$MedLoad),10) != 1){
   print('method producing correlation != 1')
 }
-if(cor(Load_ECM_Pond_QLQ, POBR_AllDates_PredTN$MedLoad) != 1){
+if(round(cor(Load_ECM_Pond_QLQ, POBR_AllDates_PredTN$MedLoad),10) != 1){
   print('method producing correlation != 1')
 }
 
@@ -5658,16 +5745,30 @@ plot(as.Date(Dates_POBR_AllDates), POBR_AllDates_PredTN$TrueLoad/1000000*3600*24
 par(new = TRUE)
 plot(as.Date(Dates_POBR_AllDates), Load_ECM_Pond/1000000*3600*24, col = 'red', xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,5))
 
-plot(POBR_AllDates_PredTN$TrueLoad, Load_ECM_Pond,
-     ylim = c(0.001,100), xlim = c(0.001,100), 
+plot(POBR_AllDates_PredTN$TrueLoad/1000000*3600*24, Load_ECM_Pond/1000000*3600*24,
+     ylim = c(0.000001,10), xlim = c(0.000001,10), 
      xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'Pond Branch Outlet', log = 'xy')
-arrows(POBR_AllDates_PredTN$TrueLoad, Load_ECM_Pond - Load_ECM_Pond05, POBR_AllDates_PredTN$TrueLoad, Load_ECM_Pond + Load_ECM_Pond95, length=0.05, angle=90, code=3)
+arrows(POBR_AllDates_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Pond05)/1000000*3600*24, POBR_AllDates_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Pond95)/1000000*3600*24, length=0.05, angle=90, code=3)
 lines(c(0.000001,100), c(0.000001,100), col = 'red')
 
-plot(POBR_AllDates_PredTN$TrueLoad, Load_ECM_Pond_QLQ,
-     ylim = c(0.001,100), xlim = c(0.001,100), 
+plot(POBR_AllDates_PredTN$TrueLoad/1000000*3600*24, Load_ECM_Pond_QLQ/1000000*3600*24,
+     ylim = c(0.000001,10), xlim = c(0.000001,10), 
      xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'Pond Branch Outlet', log = 'xy')
-arrows(POBR_AllDates_PredTN$TrueLoad, Load_ECM_Pond_QLQ - Load_ECM_Pond_QLQ05, POBR_AllDates_PredTN$TrueLoad, Load_ECM_Pond_QLQ + Load_ECM_Pond_QLQ95, length=0.05, angle=90, code=3)
+arrows(POBR_AllDates_PredTN$TrueLoad/1000000*3600*24, Load_ECM_Pond_QLQ05/1000000*3600*24, POBR_AllDates_PredTN$TrueLoad/1000000*3600*24, Load_ECM_Pond_QLQ95/1000000*3600*24, length=0.05, angle=90, code=3)
+lines(c(0.000001,100), c(0.000001,100), col = 'red')
+
+#With correct error distribution
+plot(POBR_AllDates_PredTN$TrueLoad/1000000*3600*24, Load_ECM_Pond_MatMean/1000000*3600*24,
+     ylim = c(0.000001,10), xlim = c(0.000001,10), 
+     xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'Pond Branch Outlet', log = 'xy')
+arrows(POBR_AllDates_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Pond_Mat05)/1000000*3600*24, POBR_AllDates_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Pond_Mat95)/1000000*3600*24, length=0.05, angle=90, code=3)
+lines(c(0.000001,100), c(0.000001,100), col = 'red')
+
+#With correct error distribution
+plot(POBR_AllDates_PredTN$TrueLoad/1000000*3600*24, Load_ECM_Pond_MatQLQMean/1000000*3600*24,
+     ylim = c(0.000001,10), xlim = c(0.000001,10), 
+     xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'Pond Branch Outlet', log = 'xy')
+arrows(POBR_AllDates_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Pond_MatQLQ05)/1000000*3600*24, POBR_AllDates_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Pond_MatQLQ95)/1000000*3600*24, length=0.05, angle=90, code=3)
 lines(c(0.000001,100), c(0.000001,100), col = 'red')
 
 Load_ECM_Baisman05 = EC_Undev05*(Area.basin - Area.basin_imp) + EC_Dev05*(Area.basin_imp)
@@ -5676,6 +5777,16 @@ Load_ECM_Baisman95 = EC_Undev95*(Area.basin - Area.basin_imp) + EC_Dev95*(Area.b
 Load_ECM_Baisman_QLQ05 = EC_Undev05*(Area.basin - Area.basin_imp) + EC_DevQLQ05*(Area.basin_imp)
 Load_ECM_Baisman_QLQ = EC_Undev*(Area.basin - Area.basin_imp) + EC_DevQLQ*(Area.basin_imp)
 Load_ECM_Baisman_QLQ95 = EC_Undev95*(Area.basin - Area.basin_imp) + EC_DevQLQ95*(Area.basin_imp)
+
+Load_ECM_Baisman_Mat = EC_UndevMat*(Area.basin - Area.basin_imp) + EC_DevMat*Area.basin_imp
+Load_ECM_Baisman_MatMean = apply(Load_ECM_Baisman_Mat, MARGIN = 1, FUN = mean)
+Load_ECM_Baisman_Mat05 = apply(Load_ECM_Baisman_Mat, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_Baisman_Mat95 = apply(Load_ECM_Baisman_Mat, MARGIN = 1, FUN = quantile, probs = 0.95)
+
+Load_ECM_Baisman_MatQLQ = EC_UndevMatQLQ*(Area.basin - Area.basin_imp) + EC_DevMatQLQ*Area.basin_imp
+Load_ECM_Baisman_MatQLQMean = apply(Load_ECM_Baisman_MatQLQ, MARGIN = 1, FUN = mean)
+Load_ECM_Baisman_MatQLQ05 = apply(Load_ECM_Baisman_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_Baisman_MatQLQ95 = apply(Load_ECM_Baisman_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
 
 plot(as.Date(Dates_BARN), BARN_PredTN$TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,1100))
 par(new = TRUE)
@@ -5694,15 +5805,29 @@ plot(BARN_PredTN$TrueLoad/1000000*3600*24, Load_ECM_Baisman/1000000*3600*24,
      ylim = c(0,100), xlim = c(0,100), xlab = 'True TN Load (kg N/d)', ylab = 'ECM Predicted TN Load (kg N/d)', main = 'Baisman Outlet')
 lines(c(0,90), c(0,90), col = 'red')
 
+#With correct error distribution
+plot(BARN_PredTN$TrueLoad/1000000*3600*24, Load_ECM_Baisman_MatMean/1000000*3600*24,
+     ylim = c(0,100), xlim = c(0,100), 
+     xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'Baisman Outlet')
+arrows(BARN_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Baisman_Mat05)/1000000*3600*24, BARN_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Baisman_Mat95)/1000000*3600*24, length=0.05, angle=90, code=3)
+lines(c(0.000001,100), c(0.000001,100), col = 'red')
+
 #Load in kg/d
 plot(as.Date(Dates_BARN), BARN_PredTN$TrueLoad/1000000*3600*24, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,100))
 par(new = TRUE)
 plot(as.Date(Dates_BARN), Load_ECM_Baisman_QLQ/1000000*3600*24, col = 'red', xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,100))
 
-plot(BARN_PredTN$TrueLoad/1000000*3600*24, Load_ECM_Baisman_QLQ/1000000*3600*24,
-     ylim = c(0,100), xlim = c(0,100), xlab = 'True TN Load (kg N/d)', ylab = 'ECM Predicted TN Load (kg N/d)', main = 'Baisman Outlet')
-arrows(BARN_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Baisman_QLQ - Load_ECM_Baisman_QLQ05)/1000000*3600*24, BARN_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Baisman_QLQ + Load_ECM_Baisman_QLQ95)/1000000*3600*24, length=0.05, angle=90, code=3)
-lines(c(0,90), c(0,90), col = 'red')
+plot(BARN_PredTN$TrueLoad/1000000*3600*24, Load_ECM_Baisman_QLQ/1000000*3600*24, log='xy',
+     ylim = c(0.001,100), xlim = c(0.001,100), xlab = 'True TN Load (kg N/d)', ylab = 'ECM Predicted TN Load (kg N/d)', main = 'Baisman Outlet')
+arrows(BARN_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Baisman_QLQ05)/1000000*3600*24, BARN_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Baisman_QLQ95)/1000000*3600*24, length=0.05, angle=90, code=3)
+lines(c(0.001,90), c(0.001,90), col = 'red')
+
+#With correct error distribution
+plot(BARN_PredTN$TrueLoad/1000000*3600*24, Load_ECM_Baisman_MatQLQMean/1000000*3600*24,
+     ylim = c(0,100), xlim = c(0,100), 
+     xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'Baisman Outlet')
+arrows(BARN_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Baisman_MatQLQ05)/1000000*3600*24, BARN_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Baisman_MatQLQ95)/1000000*3600*24, length=0.05, angle=90, code=3)
+lines(c(0.000001,100), c(0.000001,100), col = 'red')
 
 
 #cor(BARN_PredTN$TrueLoad, Load_ECM_Baisman)
@@ -5720,7 +5845,7 @@ plot(BARN_PredTN$MedLoadQLQ, Load_ECM_Baisman_QLQ,
 lines(c(0,1.3), c(0,1.3))
 
 #Check on method - some sites set to 0, so this will fail.
-if(cor(Load_ECM_Baisman, BARN_PredTN$MedLoad) != 1){
+if(cor(round(Load_ECM_Baisman,7), round(BARN_PredTN$MedLoad,7)) != 1){
   print('method producing correlation != 1')
 }
 
@@ -5750,6 +5875,16 @@ Load_ECM_BR3_QLQ05 = EC_Undev05*sum(Area.Hills[c(13,14),2]-Area.Hills[c(13,14),3
 Load_ECM_BR3_QLQ = EC_Undev*sum(Area.Hills[c(13,14),2]-Area.Hills[c(13,14),3]) + EC_DevQLQ*sum(Area.Hills[c(13,14),3])
 Load_ECM_BR3_QLQ95 = EC_Undev95*sum(Area.Hills[c(13,14),2]-Area.Hills[c(13,14),3]) + EC_DevQLQ95*sum(Area.Hills[c(13,14),3])
 
+Load_ECM_BR3_Mat = EC_UndevMat*sum(Area.Hills[c(13,14),2]-Area.Hills[c(13,14),3]) + EC_DevMat*sum(Area.Hills[c(13,14),3])
+Load_ECM_BR3_MatMean = apply(Load_ECM_BR3_Mat, MARGIN = 1, FUN = mean)
+Load_ECM_BR3_Mat05 = apply(Load_ECM_BR3_Mat, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR3_Mat95 = apply(Load_ECM_BR3_Mat, MARGIN = 1, FUN = quantile, probs = 0.95)
+
+Load_ECM_BR3_MatQLQ = EC_UndevMatQLQ*sum(Area.Hills[c(13,14),2]-Area.Hills[c(13,14),3]) + EC_DevMatQLQ*sum(Area.Hills[c(13,14),3])
+Load_ECM_BR3_MatQLQMean = apply(Load_ECM_BR3_MatQLQ, MARGIN = 1, FUN = mean)
+Load_ECM_BR3_MatQLQ05 = apply(Load_ECM_BR3_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR3_MatQLQ95 = apply(Load_ECM_BR3_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
+
 plot(as.Date(Dates_BARN), Load_ECM_BR3, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
 par(new = TRUE)
 plot(as.Date(Dates_BR3), BR3_PredTN$TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
@@ -5760,13 +5895,25 @@ plot(as.Date(Dates_BR3), BR3_PredTN$TrueLoad, xlim = c(as.Date('1999-01-01'), as
 
 plot(BR3_PredTN$TrueLoad[as.Date(Dates_BR3) %in% as.Date(Dates_BARN)], Load_ECM_BR3[as.Date(Dates_BARN) %in% as.Date(Dates_BR3)], 
      xlim = c(0,200), ylim = c(0,200), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'Hillslope 3')
-arrows(BR3_PredTN$TrueLoad[as.Date(Dates_BR3) %in% as.Date(Dates_BARN)], (Load_ECM_BR3[as.Date(Dates_BARN) %in% as.Date(Dates_BR3)] - Load_ECM_BR305[as.Date(Dates_BARN) %in% as.Date(Dates_BR3)]), BR3_PredTN$TrueLoad[as.Date(Dates_BR3) %in% as.Date(Dates_BARN)], (Load_ECM_BR3[as.Date(Dates_BARN) %in% as.Date(Dates_BR3)] + Load_ECM_BR395[as.Date(Dates_BARN) %in% as.Date(Dates_BR3)]), length=0.05, angle=90, code=3)
+arrows(BR3_PredTN$TrueLoad[as.Date(Dates_BR3) %in% as.Date(Dates_BARN)], (Load_ECM_BR305[as.Date(Dates_BARN) %in% as.Date(Dates_BR3)]), BR3_PredTN$TrueLoad[as.Date(Dates_BR3) %in% as.Date(Dates_BARN)], (Load_ECM_BR395[as.Date(Dates_BARN) %in% as.Date(Dates_BR3)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col = 'red')
+
+#With correct error bars
+plot(BR3_PredTN$TrueLoad[as.Date(Dates_BR3) %in% as.Date(Dates_BARN)], Load_ECM_BR3_MatMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR3)], 
+     xlim = c(0,200), ylim = c(0,200), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'Hillslope 3')
+arrows(BR3_PredTN$TrueLoad[as.Date(Dates_BR3) %in% as.Date(Dates_BARN)], (Load_ECM_BR3_Mat05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3)]), BR3_PredTN$TrueLoad[as.Date(Dates_BR3) %in% as.Date(Dates_BARN)], (Load_ECM_BR3_Mat95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col = 'red')
 
 plot(BR3_PredTN$TrueLoad[as.Date(Dates_BR3) %in% as.Date(Dates_BARN)], Load_ECM_BR3_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3)], 
      xlim = c(0,200), ylim = c(0,200), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'Hillslope 3')
-arrows(BR3_PredTN$TrueLoad[as.Date(Dates_BR3) %in% as.Date(Dates_BARN)], (Load_ECM_BR3_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3)] - Load_ECM_BR3_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3)]), BR3_PredTN$TrueLoad[as.Date(Dates_BR3) %in% as.Date(Dates_BARN)], (Load_ECM_BR395[as.Date(Dates_BARN) %in% as.Date(Dates_BR3)] + Load_ECM_BR3_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3)]), length=0.05, angle=90, code=3)
+arrows(BR3_PredTN$TrueLoad[as.Date(Dates_BR3) %in% as.Date(Dates_BARN)], (Load_ECM_BR3_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3)]), BR3_PredTN$TrueLoad[as.Date(Dates_BR3) %in% as.Date(Dates_BARN)], (Load_ECM_BR3_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col ='red')
+
+#With correct error bars
+plot(BR3_PredTN$TrueLoad[as.Date(Dates_BR3) %in% as.Date(Dates_BARN)], Load_ECM_BR3_MatQLQMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR3)], 
+     xlim = c(0,200), ylim = c(0,200), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'Hillslope 3')
+arrows(BR3_PredTN$TrueLoad[as.Date(Dates_BR3) %in% as.Date(Dates_BARN)], (Load_ECM_BR3_MatQLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3)]), BR3_PredTN$TrueLoad[as.Date(Dates_BR3) %in% as.Date(Dates_BARN)], (Load_ECM_BR3_MatQLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col = 'red')
 
 plot(BR3_PredTN$TrueLoad[as.Date(Dates_BR3) %in% as.Date(Dates_BARN)], Load_ECM_BR3[as.Date(Dates_BARN) %in% as.Date(Dates_BR3)], 
      xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'Hillslope 3', xlim = c(0,100), ylim = c(0,100))
@@ -5776,7 +5923,6 @@ plot(BR3_PredTN$TrueLoad[as.Date(Dates_BR3) %in% as.Date(Dates_BARN)], Load_ECM_
      xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'Hillslope 3', xlim = c(0,100), ylim = c(0,100))
 lines(c(0,100), c(0,100))
 
-#   BR5 as collected from above analysis----
 #   Other Smith Sampling Gauges----
 #    BR3 S1----
 #Get the impervious surface area contributing to this location
@@ -5799,6 +5945,7 @@ for (i in 1:(ncol(BR3S1_Q)-1)){
   temp = strsplit(colnames(BR3S1_Q)[i+1], split = '.', fixed = TRUE)[[1]]
   Dates_BR3S1[i] = paste(temp[2], temp[3], temp[4], sep = '-')
 }
+rm(temp)
 Dates_BR3S1 = as.Date(Dates_BR3S1)
 
 #mg/s unit
@@ -5811,6 +5958,15 @@ Load_ECM_BR3S1_QLQ05 = EC_Undev05*(Area_S1 - AreaImp_S1) + EC_DevQLQ05*AreaImp_S
 Load_ECM_BR3S1_QLQ = EC_Undev*(Area_S1 - AreaImp_S1) + EC_DevQLQ*AreaImp_S1
 Load_ECM_BR3S1_QLQ95 = EC_Undev95*(Area_S1 - AreaImp_S1) + EC_DevQLQ95*AreaImp_S1
 
+Load_ECM_BR3S1_Mat = EC_UndevMat*(Area_S1 - AreaImp_S1) + EC_DevMat*AreaImp_S1
+Load_ECM_BR3S1_MatMean = apply(Load_ECM_BR3S1_Mat, MARGIN = 1, FUN = mean)
+Load_ECM_BR3S1_Mat05 = apply(Load_ECM_BR3S1_Mat, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR3S1_Mat95 = apply(Load_ECM_BR3S1_Mat, MARGIN = 1, FUN = quantile, probs = 0.95)
+Load_ECM_BR3S1_MatQLQ = EC_UndevMatQLQ*(Area_S1 - AreaImp_S1) + EC_DevMatQLQ*AreaImp_S1
+Load_ECM_BR3S1_MatQLQMean = apply(Load_ECM_BR3S1_MatQLQ, MARGIN = 1, FUN = mean)
+Load_ECM_BR3S1_MatQLQ05 = apply(Load_ECM_BR3S1_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR3S1_MatQLQ95 = apply(Load_ECM_BR3S1_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
+
 plot(as.Date(Dates_BARN), Load_ECM_BR3S1, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
 par(new = TRUE)
 plot(as.Date(Dates_BR3S1), BR3S1_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
@@ -5820,16 +5976,16 @@ par(new = TRUE)
 plot(as.Date(Dates_BR3S1), BR3S1_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
 
 png('ECMBR3S1.png', res = 300, units = 'in', width = 5, height = 5)
-plot(x = BR3S1_TrueLoad[as.Date(Dates_BR3S1) %in% as.Date(Dates_BARN)], y = Load_ECM_BR3S1[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)], 
+plot(x = BR3S1_TrueLoad[as.Date(Dates_BR3S1) %in% as.Date(Dates_BARN)], y = Load_ECM_BR3S1_MatMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)], 
      xlim = c(0,30), ylim = c(0,30), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S1')
-arrows(BR3S1_TrueLoad[as.Date(Dates_BR3S1) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S1[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)] - Load_ECM_BR3S105[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)]), BR3S1_TrueLoad[as.Date(Dates_BR3S1) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S1[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)] + Load_ECM_BR3S195[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)]), length=0.05, angle=90, code=3)
+arrows(BR3S1_TrueLoad[as.Date(Dates_BR3S1) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S1_Mat05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)]), BR3S1_TrueLoad[as.Date(Dates_BR3S1) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S1_Mat95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col = 'red')
 dev.off()
 
 png('ECMBR3S1_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
-plot(BR3S1_TrueLoad[as.Date(Dates_BR3S1) %in% as.Date(Dates_BARN)], Load_ECM_BR3S1_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)], 
+plot(BR3S1_TrueLoad[as.Date(Dates_BR3S1) %in% as.Date(Dates_BARN)], Load_ECM_BR3S1_MatQLQMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)], 
      xlim = c(0,30), ylim = c(0,30), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S1')
-arrows(BR3S1_TrueLoad[as.Date(Dates_BR3S1) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S1_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)] - Load_ECM_BR3S1_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)]), BR3S1_TrueLoad[as.Date(Dates_BR3S1) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S195[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)] + Load_ECM_BR3S1_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)]), length=0.05, angle=90, code=3)
+arrows(BR3S1_TrueLoad[as.Date(Dates_BR3S1) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S1_MatQLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)]), BR3S1_TrueLoad[as.Date(Dates_BR3S1) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S1_MatQLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col ='red')
 dev.off()
 
@@ -5854,6 +6010,7 @@ for (i in 1:(ncol(BR3S2_Q)-1)){
   temp = strsplit(colnames(BR3S2_Q)[i+1], split = '.', fixed = TRUE)[[1]]
   Dates_BR3S2[i] = paste(temp[2], temp[3], temp[4], sep = '-')
 }
+rm(temp)
 Dates_BR3S2 = as.Date(Dates_BR3S2)
 
 #mg/s unit
@@ -5866,6 +6023,15 @@ Load_ECM_BR3S2_QLQ05 = EC_Undev05*(Area_S2 - AreaImp_S2) + EC_DevQLQ05*AreaImp_S
 Load_ECM_BR3S2_QLQ = EC_Undev*(Area_S2 - AreaImp_S2) + EC_DevQLQ*AreaImp_S2
 Load_ECM_BR3S2_QLQ95 = EC_Undev95*(Area_S2 - AreaImp_S2) + EC_DevQLQ95*AreaImp_S2
 
+Load_ECM_BR3S2_Mat = EC_UndevMat*(Area_S2 - AreaImp_S2) + EC_DevMat*AreaImp_S2
+Load_ECM_BR3S2_MatMean = apply(Load_ECM_BR3S2_Mat, MARGIN = 1, FUN = mean)
+Load_ECM_BR3S2_Mat05 = apply(Load_ECM_BR3S2_Mat, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR3S2_Mat95 = apply(Load_ECM_BR3S2_Mat, MARGIN = 1, FUN = quantile, probs = 0.95)
+Load_ECM_BR3S2_MatQLQ = EC_UndevMatQLQ*(Area_S2 - AreaImp_S2) + EC_DevMatQLQ*AreaImp_S2
+Load_ECM_BR3S2_MatQLQMean = apply(Load_ECM_BR3S2_MatQLQ, MARGIN = 1, FUN = mean)
+Load_ECM_BR3S2_MatQLQ05 = apply(Load_ECM_BR3S2_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR3S2_MatQLQ95 = apply(Load_ECM_BR3S2_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
+
 plot(as.Date(Dates_BARN), Load_ECM_BR3S2, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
 par(new = TRUE)
 plot(as.Date(Dates_BR3S2), BR3S2_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
@@ -5875,16 +6041,16 @@ par(new = TRUE)
 plot(as.Date(Dates_BR3S2), BR3S2_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
 
 png('ECMBR3S2.png', res = 300, units = 'in', width = 5, height = 5)
-plot(x = BR3S2_TrueLoad[as.Date(Dates_BR3S2) %in% as.Date(Dates_BARN)], y = Load_ECM_BR3S2[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S2)], 
+plot(x = BR3S2_TrueLoad[as.Date(Dates_BR3S2) %in% as.Date(Dates_BARN)], y = Load_ECM_BR3S2_MatMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S2)], 
      xlim = c(0,40), ylim = c(0,40), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S2')
-arrows(BR3S2_TrueLoad[as.Date(Dates_BR3S2) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S2[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S2)] - Load_ECM_BR3S205[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S2)]), BR3S2_TrueLoad[as.Date(Dates_BR3S2) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S2[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S2)] + Load_ECM_BR3S295[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S2)]), length=0.05, angle=90, code=3)
+arrows(BR3S2_TrueLoad[as.Date(Dates_BR3S2) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S2_Mat05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S2)]), BR3S2_TrueLoad[as.Date(Dates_BR3S2) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S2_Mat95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S2)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col = 'red')
 dev.off()
 
 png('ECMBR3S2_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
-plot(BR3S2_TrueLoad[as.Date(Dates_BR3S2) %in% as.Date(Dates_BARN)], Load_ECM_BR3S2_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S2)], 
+plot(BR3S2_TrueLoad[as.Date(Dates_BR3S2) %in% as.Date(Dates_BARN)], Load_ECM_BR3S2_MatQLQMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S2)], 
      xlim = c(0,40), ylim = c(0,40), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S2')
-arrows(BR3S2_TrueLoad[as.Date(Dates_BR3S2) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S2_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S2)] - Load_ECM_BR3S2_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S2)]), BR3S2_TrueLoad[as.Date(Dates_BR3S2) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S295[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S2)] + Load_ECM_BR3S2_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S2)]), length=0.05, angle=90, code=3)
+arrows(BR3S2_TrueLoad[as.Date(Dates_BR3S2) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S2_MatQLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S2)]), BR3S2_TrueLoad[as.Date(Dates_BR3S2) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S2_MatQLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S2)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col ='red')
 dev.off()
 
@@ -5909,6 +6075,7 @@ for (i in 1:(ncol(BR3S3_Q)-1)){
   temp = strsplit(colnames(BR3S3_Q)[i+1], split = '.', fixed = TRUE)[[1]]
   Dates_BR3S3[i] = paste(temp[2], temp[3], temp[4], sep = '-')
 }
+rm(temp)
 Dates_BR3S3 = as.Date(Dates_BR3S3)
 
 #mg/s unit
@@ -5921,6 +6088,15 @@ Load_ECM_BR3S3_QLQ05 = EC_Undev05*(Area_S3 - AreaImp_S3) + EC_DevQLQ05*AreaImp_S
 Load_ECM_BR3S3_QLQ = EC_Undev*(Area_S3 - AreaImp_S3) + EC_DevQLQ*AreaImp_S3
 Load_ECM_BR3S3_QLQ95 = EC_Undev95*(Area_S3 - AreaImp_S3) + EC_DevQLQ95*AreaImp_S3
 
+Load_ECM_BR3S3_Mat = EC_UndevMat*(Area_S3 - AreaImp_S3) + EC_DevMat*AreaImp_S3
+Load_ECM_BR3S3_MatMean = apply(Load_ECM_BR3S3_Mat, MARGIN = 1, FUN = mean)
+Load_ECM_BR3S3_Mat05 = apply(Load_ECM_BR3S3_Mat, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR3S3_Mat95 = apply(Load_ECM_BR3S3_Mat, MARGIN = 1, FUN = quantile, probs = 0.95)
+Load_ECM_BR3S3_MatQLQ = EC_UndevMatQLQ*(Area_S3 - AreaImp_S3) + EC_DevMatQLQ*AreaImp_S3
+Load_ECM_BR3S3_MatQLQMean = apply(Load_ECM_BR3S3_MatQLQ, MARGIN = 1, FUN = mean)
+Load_ECM_BR3S3_MatQLQ05 = apply(Load_ECM_BR3S3_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR3S3_MatQLQ95 = apply(Load_ECM_BR3S3_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
+
 plot(as.Date(Dates_BARN), Load_ECM_BR3S3, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
 par(new = TRUE)
 plot(as.Date(Dates_BR3S3), BR3S3_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
@@ -5930,16 +6106,16 @@ par(new = TRUE)
 plot(as.Date(Dates_BR3S3), BR3S3_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
 
 png('ECMBR3S3.png', res = 300, units = 'in', width = 5, height = 5)
-plot(x = BR3S3_TrueLoad[as.Date(Dates_BR3S3) %in% as.Date(Dates_BARN)], y = Load_ECM_BR3S3[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S3)], 
+plot(x = BR3S3_TrueLoad[as.Date(Dates_BR3S3) %in% as.Date(Dates_BARN)], y = Load_ECM_BR3S3_MatMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S3)], 
      xlim = c(0,30), ylim = c(0,30), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S3')
-arrows(BR3S3_TrueLoad[as.Date(Dates_BR3S3) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S3[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S3)] - Load_ECM_BR3S305[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S3)]), BR3S3_TrueLoad[as.Date(Dates_BR3S3) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S3[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S3)] + Load_ECM_BR3S395[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S3)]), length=0.05, angle=90, code=3)
+arrows(BR3S3_TrueLoad[as.Date(Dates_BR3S3) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S3_Mat05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S3)]), BR3S3_TrueLoad[as.Date(Dates_BR3S3) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S3_Mat95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S3)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col = 'red')
 dev.off()
 
 png('ECMBR3S3_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
-plot(BR3S3_TrueLoad[as.Date(Dates_BR3S3) %in% as.Date(Dates_BARN)], Load_ECM_BR3S3_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S3)], 
+plot(BR3S3_TrueLoad[as.Date(Dates_BR3S3) %in% as.Date(Dates_BARN)], Load_ECM_BR3S3_MatQLQMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S3)], 
      xlim = c(0,30), ylim = c(0,30), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S3')
-arrows(BR3S3_TrueLoad[as.Date(Dates_BR3S3) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S3_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S3)] - Load_ECM_BR3S3_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S3)]), BR3S3_TrueLoad[as.Date(Dates_BR3S3) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S395[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S3)] + Load_ECM_BR3S3_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S3)]), length=0.05, angle=90, code=3)
+arrows(BR3S3_TrueLoad[as.Date(Dates_BR3S3) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S3_MatQLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S3)]), BR3S3_TrueLoad[as.Date(Dates_BR3S3) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S3_MatQLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S3)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col ='red')
 dev.off()
 
@@ -5976,6 +6152,15 @@ Load_ECM_BR3S4_QLQ05 = EC_Undev05*(Area_S4 - AreaImp_S4) + EC_DevQLQ05*AreaImp_S
 Load_ECM_BR3S4_QLQ = EC_Undev*(Area_S4 - AreaImp_S4) + EC_DevQLQ*AreaImp_S4
 Load_ECM_BR3S4_QLQ95 = EC_Undev95*(Area_S4 - AreaImp_S4) + EC_DevQLQ95*AreaImp_S4
 
+Load_ECM_BR3S4_Mat = EC_UndevMat*(Area_S4 - AreaImp_S4) + EC_DevMat*AreaImp_S4
+Load_ECM_BR3S4_MatMean = apply(Load_ECM_BR3S4_Mat, MARGIN = 1, FUN = mean)
+Load_ECM_BR3S4_Mat05 = apply(Load_ECM_BR3S4_Mat, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR3S4_Mat95 = apply(Load_ECM_BR3S4_Mat, MARGIN = 1, FUN = quantile, probs = 0.95)
+Load_ECM_BR3S4_MatQLQ = EC_UndevMatQLQ*(Area_S4 - AreaImp_S4) + EC_DevMatQLQ*AreaImp_S4
+Load_ECM_BR3S4_MatQLQMean = apply(Load_ECM_BR3S4_MatQLQ, MARGIN = 1, FUN = mean)
+Load_ECM_BR3S4_MatQLQ05 = apply(Load_ECM_BR3S4_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR3S4_MatQLQ95 = apply(Load_ECM_BR3S4_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
+
 plot(as.Date(Dates_BARN), Load_ECM_BR3S4, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
 par(new = TRUE)
 plot(as.Date(Dates_BR3S4), BR3S4_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
@@ -5985,16 +6170,16 @@ par(new = TRUE)
 plot(as.Date(Dates_BR3S4), BR3S4_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
 
 png('ECMBR3S4.png', res = 300, units = 'in', width = 5, height = 5)
-plot(x = BR3S4_TrueLoad[as.Date(Dates_BR3S4) %in% as.Date(Dates_BARN)], y = Load_ECM_BR3S4[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S4)], 
+plot(x = BR3S4_TrueLoad[as.Date(Dates_BR3S4) %in% as.Date(Dates_BARN)], y = Load_ECM_BR3S4_MatMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S4)], 
      xlim = c(0,30), ylim = c(0,30), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S4')
-arrows(BR3S4_TrueLoad[as.Date(Dates_BR3S4) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S4[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S4)] - Load_ECM_BR3S405[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S4)]), BR3S4_TrueLoad[as.Date(Dates_BR3S4) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S4[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S4)] + Load_ECM_BR3S495[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S4)]), length=0.05, angle=90, code=3)
+arrows(BR3S4_TrueLoad[as.Date(Dates_BR3S4) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S4_Mat05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S4)]), BR3S4_TrueLoad[as.Date(Dates_BR3S4) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S4_Mat95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S4)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col = 'red')
 dev.off()
 
 png('ECMBR3S4_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
-plot(BR3S4_TrueLoad[as.Date(Dates_BR3S4) %in% as.Date(Dates_BARN)], Load_ECM_BR3S4_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S4)], 
+plot(BR3S4_TrueLoad[as.Date(Dates_BR3S4) %in% as.Date(Dates_BARN)], Load_ECM_BR3S4_MatQLQMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S4)], 
      xlim = c(0,30), ylim = c(0,30), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S4')
-arrows(BR3S4_TrueLoad[as.Date(Dates_BR3S4) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S4_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S4)] - Load_ECM_BR3S4_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S4)]), BR3S4_TrueLoad[as.Date(Dates_BR3S4) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S495[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S4)] + Load_ECM_BR3S4_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S4)]), length=0.05, angle=90, code=3)
+arrows(BR3S4_TrueLoad[as.Date(Dates_BR3S4) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S4_MatQLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S4)]), BR3S4_TrueLoad[as.Date(Dates_BR3S4) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S4_MatQLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S4)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col ='red')
 dev.off()
 
@@ -6031,6 +6216,15 @@ Load_ECM_BR3S5_QLQ05 = EC_Undev05*(Area_S5 - AreaImp_S5) + EC_DevQLQ05*AreaImp_S
 Load_ECM_BR3S5_QLQ = EC_Undev*(Area_S5 - AreaImp_S5) + EC_DevQLQ*AreaImp_S5
 Load_ECM_BR3S5_QLQ95 = EC_Undev95*(Area_S5 - AreaImp_S5) + EC_DevQLQ95*AreaImp_S5
 
+Load_ECM_BR3S5_Mat = EC_UndevMat*(Area_S5 - AreaImp_S5) + EC_DevMat*AreaImp_S5
+Load_ECM_BR3S5_MatMean = apply(Load_ECM_BR3S5_Mat, MARGIN = 1, FUN = mean)
+Load_ECM_BR3S5_Mat05 = apply(Load_ECM_BR3S5_Mat, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR3S5_Mat95 = apply(Load_ECM_BR3S5_Mat, MARGIN = 1, FUN = quantile, probs = 0.95)
+Load_ECM_BR3S5_MatQLQ = EC_UndevMatQLQ*(Area_S5 - AreaImp_S5) + EC_DevMatQLQ*AreaImp_S5
+Load_ECM_BR3S5_MatQLQMean = apply(Load_ECM_BR3S5_MatQLQ, MARGIN = 1, FUN = mean)
+Load_ECM_BR3S5_MatQLQ05 = apply(Load_ECM_BR3S5_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR3S5_MatQLQ95 = apply(Load_ECM_BR3S5_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
+
 plot(as.Date(Dates_BARN), Load_ECM_BR3S5, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40))
 par(new = TRUE)
 plot(as.Date(Dates_BR3S5), BR3S5_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
@@ -6040,16 +6234,16 @@ par(new = TRUE)
 plot(as.Date(Dates_BR3S5), BR3S5_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
 
 png('ECMBR3S5.png', res = 300, units = 'in', width = 5, height = 5)
-plot(x = BR3S5_TrueLoad[as.Date(Dates_BR3S5) %in% as.Date(Dates_BARN)], y = Load_ECM_BR3S5[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S5)], 
+plot(x = BR3S5_TrueLoad[as.Date(Dates_BR3S5) %in% as.Date(Dates_BARN)], y = Load_ECM_BR3S5_MatMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S5)], 
      xlim = c(0,30), ylim = c(0,30), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S5')
-arrows(BR3S5_TrueLoad[as.Date(Dates_BR3S5) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S5[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S5)] - Load_ECM_BR3S505[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S5)]), BR3S5_TrueLoad[as.Date(Dates_BR3S5) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S5[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S5)] + Load_ECM_BR3S595[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S5)]), length=0.05, angle=90, code=3)
+arrows(BR3S5_TrueLoad[as.Date(Dates_BR3S5) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S5_Mat05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S5)]), BR3S5_TrueLoad[as.Date(Dates_BR3S5) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S5_Mat95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S5)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col = 'red')
 dev.off()
 
 png('ECMBR3S5_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
-plot(BR3S5_TrueLoad[as.Date(Dates_BR3S5) %in% as.Date(Dates_BARN)], Load_ECM_BR3S5_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S5)], 
+plot(BR3S5_TrueLoad[as.Date(Dates_BR3S5) %in% as.Date(Dates_BARN)], Load_ECM_BR3S5_MatQLQMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S5)], 
      xlim = c(0,30), ylim = c(0,30), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S5')
-arrows(BR3S5_TrueLoad[as.Date(Dates_BR3S5) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S5_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S5)] - Load_ECM_BR3S5_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S5)]), BR3S5_TrueLoad[as.Date(Dates_BR3S5) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S595[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S5)] + Load_ECM_BR3S5_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S5)]), length=0.05, angle=90, code=3)
+arrows(BR3S5_TrueLoad[as.Date(Dates_BR3S5) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S5_MatQLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S5)]), BR3S5_TrueLoad[as.Date(Dates_BR3S5) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S5_MatQLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S5)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col ='red')
 dev.off()
 
@@ -6086,6 +6280,15 @@ Load_ECM_BR3S6_QLQ05 = EC_Undev05*(Area_S6 - AreaImp_S6) + EC_DevQLQ05*AreaImp_S
 Load_ECM_BR3S6_QLQ = EC_Undev*(Area_S6 - AreaImp_S6) + EC_DevQLQ*AreaImp_S6
 Load_ECM_BR3S6_QLQ95 = EC_Undev95*(Area_S6 - AreaImp_S6) + EC_DevQLQ95*AreaImp_S6
 
+Load_ECM_BR3S6_Mat = EC_UndevMat*(Area_S6 - AreaImp_S6) + EC_DevMat*AreaImp_S6
+Load_ECM_BR3S6_MatMean = apply(Load_ECM_BR3S6_Mat, MARGIN = 1, FUN = mean)
+Load_ECM_BR3S6_Mat05 = apply(Load_ECM_BR3S6_Mat, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR3S6_Mat95 = apply(Load_ECM_BR3S6_Mat, MARGIN = 1, FUN = quantile, probs = 0.95)
+Load_ECM_BR3S6_MatQLQ = EC_UndevMatQLQ*(Area_S6 - AreaImp_S6) + EC_DevMatQLQ*AreaImp_S6
+Load_ECM_BR3S6_MatQLQMean = apply(Load_ECM_BR3S6_MatQLQ, MARGIN = 1, FUN = mean)
+Load_ECM_BR3S6_MatQLQ05 = apply(Load_ECM_BR3S6_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR3S6_MatQLQ95 = apply(Load_ECM_BR3S6_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
+
 plot(as.Date(Dates_BARN), Load_ECM_BR3S6, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
 par(new = TRUE)
 plot(as.Date(Dates_BR3S6), BR3S6_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
@@ -6095,16 +6298,16 @@ par(new = TRUE)
 plot(as.Date(Dates_BR3S6), BR3S6_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
 
 png('ECMBR3S6.png', res = 300, units = 'in', width = 5, height = 5)
-plot(x = BR3S6_TrueLoad[as.Date(Dates_BR3S6) %in% as.Date(Dates_BARN)], y = Load_ECM_BR3S6[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S6)], 
+plot(x = BR3S6_TrueLoad[as.Date(Dates_BR3S6) %in% as.Date(Dates_BARN)], y = Load_ECM_BR3S6_MatMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S6)], 
      xlim = c(0,30), ylim = c(0,30), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S6')
-arrows(BR3S6_TrueLoad[as.Date(Dates_BR3S6) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S6[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S6)] - Load_ECM_BR3S605[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S6)]), BR3S6_TrueLoad[as.Date(Dates_BR3S6) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S6[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S6)] + Load_ECM_BR3S695[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S6)]), length=0.05, angle=90, code=3)
+arrows(BR3S6_TrueLoad[as.Date(Dates_BR3S6) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S6_Mat05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S6)]), BR3S6_TrueLoad[as.Date(Dates_BR3S6) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S6_Mat95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S6)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col = 'red')
 dev.off()
 
 png('ECMBR3S6_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
-plot(BR3S6_TrueLoad[as.Date(Dates_BR3S6) %in% as.Date(Dates_BARN)], Load_ECM_BR3S6_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S6)], 
+plot(BR3S6_TrueLoad[as.Date(Dates_BR3S6) %in% as.Date(Dates_BARN)], Load_ECM_BR3S6_MatQLQMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S6)], 
      xlim = c(0,30), ylim = c(0,30), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S6')
-arrows(BR3S6_TrueLoad[as.Date(Dates_BR3S6) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S6_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S6)] - Load_ECM_BR3S6_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S6)]), BR3S6_TrueLoad[as.Date(Dates_BR3S6) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S695[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S6)] + Load_ECM_BR3S6_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S6)]), length=0.05, angle=90, code=3)
+arrows(BR3S6_TrueLoad[as.Date(Dates_BR3S6) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S6_MatQLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S6)]), BR3S6_TrueLoad[as.Date(Dates_BR3S6) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S6_MatQLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S6)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col ='red')
 dev.off()
 
@@ -6142,6 +6345,15 @@ Load_ECM_BR3S8_QLQ05 = EC_Undev05*(Area_S8 - AreaImp_S8) + EC_DevQLQ05*AreaImp_S
 Load_ECM_BR3S8_QLQ = EC_Undev*(Area_S8 - AreaImp_S8) + EC_DevQLQ*AreaImp_S8
 Load_ECM_BR3S8_QLQ95 = EC_Undev95*(Area_S8 - AreaImp_S8) + EC_DevQLQ95*AreaImp_S8
 
+Load_ECM_BR3S8_Mat = EC_UndevMat*(Area_S8 - AreaImp_S8) + EC_DevMat*AreaImp_S8
+Load_ECM_BR3S8_MatMean = apply(Load_ECM_BR3S8_Mat, MARGIN = 1, FUN = mean)
+Load_ECM_BR3S8_Mat05 = apply(Load_ECM_BR3S8_Mat, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR3S8_Mat95 = apply(Load_ECM_BR3S8_Mat, MARGIN = 1, FUN = quantile, probs = 0.95)
+Load_ECM_BR3S8_MatQLQ = EC_UndevMatQLQ*(Area_S8 - AreaImp_S8) + EC_DevMatQLQ*AreaImp_S8
+Load_ECM_BR3S8_MatQLQMean = apply(Load_ECM_BR3S8_MatQLQ, MARGIN = 1, FUN = mean)
+Load_ECM_BR3S8_MatQLQ05 = apply(Load_ECM_BR3S8_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR3S8_MatQLQ95 = apply(Load_ECM_BR3S8_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
+
 plot(as.Date(Dates_BARN), Load_ECM_BR3S8, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
 par(new = TRUE)
 plot(as.Date(Dates_BR3S8), BR3S8_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
@@ -6151,16 +6363,16 @@ par(new = TRUE)
 plot(as.Date(Dates_BR3S8), BR3S8_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
 
 png('ECMBR3S8.png', res = 300, units = 'in', width = 5, height = 5)
-plot(x = BR3S8_TrueLoad[as.Date(Dates_BR3S8) %in% as.Date(Dates_BARN)], y = Load_ECM_BR3S8[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S8)], 
+plot(x = BR3S8_TrueLoad[as.Date(Dates_BR3S8) %in% as.Date(Dates_BARN)], y = Load_ECM_BR3S8_MatMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S8)], 
      xlim = c(0,30), ylim = c(0,30), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S8')
-arrows(BR3S8_TrueLoad[as.Date(Dates_BR3S8) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S8[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S8)] - Load_ECM_BR3S805[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S8)]), BR3S8_TrueLoad[as.Date(Dates_BR3S8) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S8[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S8)] + Load_ECM_BR3S895[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S8)]), length=0.05, angle=90, code=3)
+arrows(BR3S8_TrueLoad[as.Date(Dates_BR3S8) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S8_Mat05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S8)]), BR3S8_TrueLoad[as.Date(Dates_BR3S8) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S8_Mat95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S8)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col = 'red')
 dev.off()
 
 png('ECMBR3S8_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
-plot(BR3S8_TrueLoad[as.Date(Dates_BR3S8) %in% as.Date(Dates_BARN)], Load_ECM_BR3S8_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S8)], 
+plot(BR3S8_TrueLoad[as.Date(Dates_BR3S8) %in% as.Date(Dates_BARN)], Load_ECM_BR3S8_MatQLQMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S8)], 
      xlim = c(0,30), ylim = c(0,30), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S8')
-arrows(BR3S8_TrueLoad[as.Date(Dates_BR3S8) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S8_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S8)] - Load_ECM_BR3S8_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S8)]), BR3S8_TrueLoad[as.Date(Dates_BR3S8) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S895[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S8)] + Load_ECM_BR3S8_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S8)]), length=0.05, angle=90, code=3)
+arrows(BR3S8_TrueLoad[as.Date(Dates_BR3S8) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S8_MatQLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S8)]), BR3S8_TrueLoad[as.Date(Dates_BR3S8) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S8_MatQLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S8)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col ='red')
 dev.off()
 
@@ -6197,6 +6409,15 @@ Load_ECM_BR5S10_QLQ05 = EC_Undev05*(Area_S10 - AreaImp_S10) + EC_DevQLQ05*AreaIm
 Load_ECM_BR5S10_QLQ = EC_Undev*(Area_S10 - AreaImp_S10) + EC_DevQLQ*AreaImp_S10
 Load_ECM_BR5S10_QLQ95 = EC_Undev95*(Area_S10 - AreaImp_S10) + EC_DevQLQ95*AreaImp_S10
 
+Load_ECM_BR5S10_Mat = EC_UndevMat*(Area_S10 - AreaImp_S10) + EC_DevMat*AreaImp_S10
+Load_ECM_BR5S10_MatMean = apply(Load_ECM_BR5S10_Mat, MARGIN = 1, FUN = mean)
+Load_ECM_BR5S10_Mat05 = apply(Load_ECM_BR5S10_Mat, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR5S10_Mat95 = apply(Load_ECM_BR5S10_Mat, MARGIN = 1, FUN = quantile, probs = 0.95)
+Load_ECM_BR5S10_MatQLQ = EC_UndevMatQLQ*(Area_S10 - AreaImp_S10) + EC_DevMatQLQ*AreaImp_S10
+Load_ECM_BR5S10_MatQLQMean = apply(Load_ECM_BR5S10_MatQLQ, MARGIN = 1, FUN = mean)
+Load_ECM_BR5S10_MatQLQ05 = apply(Load_ECM_BR5S10_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR5S10_MatQLQ95 = apply(Load_ECM_BR5S10_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
+
 plot(as.Date(Dates_BARN), Load_ECM_BR5S10, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
 par(new = TRUE)
 plot(as.Date(Dates_BR5S10), BR5S10_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
@@ -6206,16 +6427,16 @@ par(new = TRUE)
 plot(as.Date(Dates_BR5S10), BR5S10_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
 
 png('ECMBR5aS10.png', res = 300, units = 'in', width = 5, height = 5)
-plot(x = BR5S10_TrueLoad[as.Date(Dates_BR5S10) %in% as.Date(Dates_BARN)], y = Load_ECM_BR5S10[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S10)], 
+plot(x = BR5S10_TrueLoad[as.Date(Dates_BR5S10) %in% as.Date(Dates_BARN)], y = Load_ECM_BR5S10_MatMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S10)], 
      xlim = c(0,35), ylim = c(0,35), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR5 S10')
-arrows(BR5S10_TrueLoad[as.Date(Dates_BR5S10) %in% as.Date(Dates_BARN)], (Load_ECM_BR5S10[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S10)] - Load_ECM_BR5S1005[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S10)]), BR5S10_TrueLoad[as.Date(Dates_BR5S10) %in% as.Date(Dates_BARN)], (Load_ECM_BR5S10[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S10)] + Load_ECM_BR5S1095[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S10)]), length=0.05, angle=90, code=3)
+arrows(BR5S10_TrueLoad[as.Date(Dates_BR5S10) %in% as.Date(Dates_BARN)], (Load_ECM_BR5S10_Mat05[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S10)]), BR5S10_TrueLoad[as.Date(Dates_BR5S10) %in% as.Date(Dates_BARN)], (Load_ECM_BR5S10_Mat95[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S10)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col = 'red')
 dev.off()
 
 png('ECMBR5aS10_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
-plot(BR5S10_TrueLoad[as.Date(Dates_BR5S10) %in% as.Date(Dates_BARN)], Load_ECM_BR5S10_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S10)], 
+plot(BR5S10_TrueLoad[as.Date(Dates_BR5S10) %in% as.Date(Dates_BARN)], Load_ECM_BR5S10_MatQLQMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S10)], 
      xlim = c(0,35), ylim = c(0,35), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR5 S10')
-arrows(BR5S10_TrueLoad[as.Date(Dates_BR5S10) %in% as.Date(Dates_BARN)], (Load_ECM_BR5S10_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S10)] - Load_ECM_BR5S10_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S10)]), BR5S10_TrueLoad[as.Date(Dates_BR5S10) %in% as.Date(Dates_BARN)], (Load_ECM_BR5S1095[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S10)] + Load_ECM_BR5S10_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S10)]), length=0.05, angle=90, code=3)
+arrows(BR5S10_TrueLoad[as.Date(Dates_BR5S10) %in% as.Date(Dates_BARN)], (Load_ECM_BR5S10_MatQLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S10)]), BR5S10_TrueLoad[as.Date(Dates_BR5S10) %in% as.Date(Dates_BARN)], (Load_ECM_BR5S10_MatQLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S10)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col ='red')
 dev.off()
 
@@ -6253,6 +6474,15 @@ Load_ECM_BR5S11_QLQ05 = EC_Undev05*(Area_S11 - AreaImp_S11) + EC_DevQLQ05*AreaIm
 Load_ECM_BR5S11_QLQ = EC_Undev*(Area_S11 - AreaImp_S11) + EC_DevQLQ*AreaImp_S11
 Load_ECM_BR5S11_QLQ95 = EC_Undev95*(Area_S11 - AreaImp_S11) + EC_DevQLQ95*AreaImp_S11
 
+Load_ECM_BR5S11_Mat = EC_UndevMat*(Area_S11 - AreaImp_S11) + EC_DevMat*AreaImp_S11
+Load_ECM_BR5S11_MatMean = apply(Load_ECM_BR5S11_Mat, MARGIN = 1, FUN = mean)
+Load_ECM_BR5S11_Mat05 = apply(Load_ECM_BR5S11_Mat, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR5S11_Mat95 = apply(Load_ECM_BR5S11_Mat, MARGIN = 1, FUN = quantile, probs = 0.95)
+Load_ECM_BR5S11_MatQLQ = EC_UndevMatQLQ*(Area_S11 - AreaImp_S11) + EC_DevMatQLQ*AreaImp_S11
+Load_ECM_BR5S11_MatQLQMean = apply(Load_ECM_BR5S11_MatQLQ, MARGIN = 1, FUN = mean)
+Load_ECM_BR5S11_MatQLQ05 = apply(Load_ECM_BR5S11_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR5S11_MatQLQ95 = apply(Load_ECM_BR5S11_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
+
 plot(as.Date(Dates_BARN), Load_ECM_BR5S11, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
 par(new = TRUE)
 plot(as.Date(Dates_BR5S11), BR5S11_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
@@ -6262,27 +6492,31 @@ par(new = TRUE)
 plot(as.Date(Dates_BR5S11), BR5S11_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
 
 png('ECMBR5aS11.png', res = 300, units = 'in', width = 5, height = 5)
-plot(x = BR5S11_TrueLoad[as.Date(Dates_BR5S11) %in% as.Date(Dates_BARN)], y = Load_ECM_BR5S11[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S11)], 
+plot(x = BR5S11_TrueLoad[as.Date(Dates_BR5S11) %in% as.Date(Dates_BARN)], y = Load_ECM_BR5S11_MatMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S11)], 
      xlim = c(0,80), ylim = c(0,80), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR5 S11')
-arrows(BR5S11_TrueLoad[as.Date(Dates_BR5S11) %in% as.Date(Dates_BARN)], (Load_ECM_BR5S11[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S11)] - Load_ECM_BR5S1105[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S11)]), BR5S11_TrueLoad[as.Date(Dates_BR5S11) %in% as.Date(Dates_BARN)], (Load_ECM_BR5S11[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S11)] + Load_ECM_BR5S1195[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S11)]), length=0.05, angle=90, code=3)
+arrows(BR5S11_TrueLoad[as.Date(Dates_BR5S11) %in% as.Date(Dates_BARN)], (Load_ECM_BR5S11_Mat05[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S11)]), BR5S11_TrueLoad[as.Date(Dates_BR5S11) %in% as.Date(Dates_BARN)], (Load_ECM_BR5S11_Mat95[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S11)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col = 'red')
 dev.off()
 
 png('ECMBR5aS11_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
-plot(BR5S11_TrueLoad[as.Date(Dates_BR5S11) %in% as.Date(Dates_BARN)], Load_ECM_BR5S11_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S11)], 
+plot(BR5S11_TrueLoad[as.Date(Dates_BR5S11) %in% as.Date(Dates_BARN)], Load_ECM_BR5S11_MatQLQMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S11)], 
      xlim = c(0,80), ylim = c(0,80), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR5 S11')
-arrows(BR5S11_TrueLoad[as.Date(Dates_BR5S11) %in% as.Date(Dates_BARN)], (Load_ECM_BR5S11_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S11)] - Load_ECM_BR5S11_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S11)]), BR5S11_TrueLoad[as.Date(Dates_BR5S11) %in% as.Date(Dates_BARN)], (Load_ECM_BR5S1195[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S11)] + Load_ECM_BR5S11_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S11)]), length=0.05, angle=90, code=3)
+arrows(BR5S11_TrueLoad[as.Date(Dates_BR5S11) %in% as.Date(Dates_BARN)], (Load_ECM_BR5S11_MatQLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S11)]), BR5S11_TrueLoad[as.Date(Dates_BR5S11) %in% as.Date(Dates_BARN)], (Load_ECM_BR5S11_MatQLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR5S11)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col ='red')
 dev.off()
 
 #    BARN K1 Synoptic - poor fit because of an Arc problem - should be whole watershed contributing, but it's only a small portion----
-#Get the impervious surface area contributing to this location
-AreaImp_K1S = 0
-Area_K1S = length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_7 == 1))*res^2
-for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_7 == 1))){
-  AreaImp_K1S = AreaImp_K1S + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$GK_7 == 1)[i]]*res^2
-}
-rm(i)
+#Fixme: Get the impervious surface area contributing to this location
+#AreaImp_K1S = 0
+#Area_K1S = length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_7 == 1))*res^2
+#for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_7 == 1))){
+#  AreaImp_K1S = AreaImp_K1S + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$GK_7 == 1)[i]]*res^2
+#}
+
+#Using basin impervious for now
+Area_K1S = Area.basin
+AreaImp_K1S = Area.basin_imp
+
 #Observed data for this site
 BARNK1S_TN = K_TN[K_TN$Site == K_Sites@data$NAME[8],]
 BARNK1S_Q = K_Q[K_Q$Site == K_Sites@data$NAME[8],]
@@ -6308,6 +6542,15 @@ Load_ECM_BARNK1S_QLQ05 = EC_Undev05*(Area_K1S - AreaImp_K1S) + EC_DevQLQ05*AreaI
 Load_ECM_BARNK1S_QLQ = EC_Undev*(Area_K1S - AreaImp_K1S) + EC_DevQLQ*AreaImp_K1S
 Load_ECM_BARNK1S_QLQ95 = EC_Undev95*(Area_K1S - AreaImp_K1S) + EC_DevQLQ95*AreaImp_K1S
 
+Load_ECM_BARNK1S_Mat = EC_UndevMat*(Area_K1S - AreaImp_K1S) + EC_DevMat*AreaImp_K1S
+Load_ECM_BARNK1S_MatMean = apply(Load_ECM_BARNK1S_Mat, MARGIN = 1, FUN = mean)
+Load_ECM_BARNK1S_Mat05 = apply(Load_ECM_BARNK1S_Mat, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BARNK1S_Mat95 = apply(Load_ECM_BARNK1S_Mat, MARGIN = 1, FUN = quantile, probs = 0.95)
+Load_ECM_BARNK1S_MatQLQ = EC_UndevMatQLQ*(Area_K1S - AreaImp_K1S) + EC_DevMatQLQ*AreaImp_K1S
+Load_ECM_BARNK1S_MatQLQMean = apply(Load_ECM_BARNK1S_MatQLQ, MARGIN = 1, FUN = mean)
+Load_ECM_BARNK1S_MatQLQ05 = apply(Load_ECM_BARNK1S_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BARNK1S_MatQLQ95 = apply(Load_ECM_BARNK1S_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
+
 plot(as.Date(Dates_BARN), Load_ECM_BARNK1S, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40))
 par(new = TRUE)
 plot(as.Date(Dates_BARNK1S), BARNK1S_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
@@ -6317,16 +6560,16 @@ par(new = TRUE)
 plot(as.Date(Dates_BARNK1S), BARNK1S_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
 
 png('ECMBARNK1s.png', res = 300, units = 'in', width = 5, height = 5)
-plot(x = BARNK1S_TrueLoad[as.Date(Dates_BARNK1S) %in% as.Date(Dates_BARN)], y = Load_ECM_BARNK1S[as.Date(Dates_BARN) %in% as.Date(Dates_BARNK1S)], 
+plot(x = BARNK1S_TrueLoad[as.Date(Dates_BARNK1S) %in% as.Date(Dates_BARN)], y = Load_ECM_BARNK1S_MatMean[as.Date(Dates_BARN) %in% as.Date(Dates_BARNK1S)], 
      xlim = c(0,50), ylim = c(0,50), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BARN K1S')
-arrows(BARNK1S_TrueLoad[as.Date(Dates_BARNK1S) %in% as.Date(Dates_BARN)], (Load_ECM_BARNK1S[as.Date(Dates_BARN) %in% as.Date(Dates_BARNK1S)] - Load_ECM_BARNK1S05[as.Date(Dates_BARN) %in% as.Date(Dates_BARNK1S)]), BARNK1S_TrueLoad[as.Date(Dates_BARNK1S) %in% as.Date(Dates_BARN)], (Load_ECM_BARNK1S[as.Date(Dates_BARN) %in% as.Date(Dates_BARNK1S)] + Load_ECM_BARNK1S95[as.Date(Dates_BARN) %in% as.Date(Dates_BARNK1S)]), length=0.05, angle=90, code=3)
+arrows(BARNK1S_TrueLoad[as.Date(Dates_BARNK1S) %in% as.Date(Dates_BARN)], (Load_ECM_BARNK1S_Mat05[as.Date(Dates_BARN) %in% as.Date(Dates_BARNK1S)]), BARNK1S_TrueLoad[as.Date(Dates_BARNK1S) %in% as.Date(Dates_BARN)], (Load_ECM_BARNK1S_Mat95[as.Date(Dates_BARN) %in% as.Date(Dates_BARNK1S)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col = 'red')
 dev.off()
 
 png('ECMBARNK1s_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
-plot(BARNK1S_TrueLoad[as.Date(Dates_BARNK1S) %in% as.Date(Dates_BARN)], Load_ECM_BARNK1S_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BARNK1S)], 
+plot(BARNK1S_TrueLoad[as.Date(Dates_BARNK1S) %in% as.Date(Dates_BARN)], Load_ECM_BARNK1S_MatQLQMean[as.Date(Dates_BARN) %in% as.Date(Dates_BARNK1S)], 
      xlim = c(0,50), ylim = c(0,50), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BARN K1S')
-arrows(BARNK1S_TrueLoad[as.Date(Dates_BARNK1S) %in% as.Date(Dates_BARN)], (Load_ECM_BARNK1S_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BARNK1S)] - Load_ECM_BARNK1S_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BARNK1S)]), BARNK1S_TrueLoad[as.Date(Dates_BARNK1S) %in% as.Date(Dates_BARN)], (Load_ECM_BARNK1S95[as.Date(Dates_BARN) %in% as.Date(Dates_BARNK1S)] + Load_ECM_BARNK1S_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BARNK1S)]), length=0.05, angle=90, code=3)
+arrows(BARNK1S_TrueLoad[as.Date(Dates_BARNK1S) %in% as.Date(Dates_BARN)], (Load_ECM_BARNK1S_MatQLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BARNK1S)]), BARNK1S_TrueLoad[as.Date(Dates_BARNK1S) %in% as.Date(Dates_BARN)], (Load_ECM_BARNK1S_MatQLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BARNK1S)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col ='red')
 dev.off()
 
@@ -6363,6 +6606,15 @@ Load_ECM_POBRK2_QLQ05 = EC_Undev05*(Area_K2 - AreaImp_K2) + EC_DevQLQ05*AreaImp_
 Load_ECM_POBRK2_QLQ = EC_Undev*(Area_K2 - AreaImp_K2) + EC_DevQLQ*AreaImp_K2
 Load_ECM_POBRK2_QLQ95 = EC_Undev95*(Area_K2 - AreaImp_K2) + EC_DevQLQ95*AreaImp_K2
 
+Load_ECM_POBRK2_Mat = EC_UndevMat*(Area_K2 - AreaImp_K2) + EC_DevMat*AreaImp_K2
+Load_ECM_POBRK2_MatMean = apply(Load_ECM_POBRK2_Mat, MARGIN = 1, FUN = mean)
+Load_ECM_POBRK2_Mat05 = apply(Load_ECM_POBRK2_Mat, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_POBRK2_Mat95 = apply(Load_ECM_POBRK2_Mat, MARGIN = 1, FUN = quantile, probs = 0.95)
+Load_ECM_POBRK2_MatQLQ = EC_UndevMatQLQ*(Area_K2 - AreaImp_K2) + EC_DevMatQLQ*AreaImp_K2
+Load_ECM_POBRK2_MatQLQMean = apply(Load_ECM_POBRK2_MatQLQ, MARGIN = 1, FUN = mean)
+Load_ECM_POBRK2_MatQLQ05 = apply(Load_ECM_POBRK2_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_POBRK2_MatQLQ95 = apply(Load_ECM_POBRK2_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
+
 plot(as.Date(Dates_BARN), Load_ECM_POBRK2, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40))
 par(new = TRUE)
 plot(as.Date(Dates_POBRK2), POBRK2_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
@@ -6372,16 +6624,16 @@ par(new = TRUE)
 plot(as.Date(Dates_POBRK2), POBRK2_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
 
 png('ECMPOBRK2.png', res = 300, units = 'in', width = 5, height = 5)
-plot(x = POBRK2_TrueLoad[as.Date(Dates_POBRK2) %in% as.Date(Dates_BARN)], y = Load_ECM_POBRK2[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2)], 
+plot(x = POBRK2_TrueLoad[as.Date(Dates_POBRK2) %in% as.Date(Dates_BARN)], y = Load_ECM_POBRK2_MatMean[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2)], 
      xlim = c(0,5), ylim = c(0,5), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'POBR K2')
-arrows(POBRK2_TrueLoad[as.Date(Dates_POBRK2) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK2[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2)] - Load_ECM_POBRK205[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2)]), POBRK2_TrueLoad[as.Date(Dates_POBRK2) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK2[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2)] + Load_ECM_POBRK295[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2)]), length=0.05, angle=90, code=3)
+arrows(POBRK2_TrueLoad[as.Date(Dates_POBRK2) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK2_Mat05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2)]), POBRK2_TrueLoad[as.Date(Dates_POBRK2) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK2_Mat95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col = 'red')
 dev.off()
 
 png('ECMPOBRK2_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
-plot(POBRK2_TrueLoad[as.Date(Dates_POBRK2) %in% as.Date(Dates_BARN)], Load_ECM_POBRK2_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2)], 
+plot(POBRK2_TrueLoad[as.Date(Dates_POBRK2) %in% as.Date(Dates_BARN)], Load_ECM_POBRK2_MatQLQMean[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2)], 
      xlim = c(0,5), ylim = c(0,5), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'POBR K2')
-arrows(POBRK2_TrueLoad[as.Date(Dates_POBRK2) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK2_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2)] - Load_ECM_POBRK2_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2)]), POBRK2_TrueLoad[as.Date(Dates_POBRK2) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK295[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2)] + Load_ECM_POBRK2_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2)]), length=0.05, angle=90, code=3)
+arrows(POBRK2_TrueLoad[as.Date(Dates_POBRK2) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK2_MatQLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2)]), POBRK2_TrueLoad[as.Date(Dates_POBRK2) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK2_MatQLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col ='red')
 dev.off()
 
@@ -6393,6 +6645,9 @@ for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_6 
   AreaImp_K2S = AreaImp_K2S + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$GK_6 == 1)[i]]*res^2
 }
 rm(i)
+#Will treat this as all undeveloped land because fraction impervious is 7e-5.
+AreaImp_K2S = 0
+
 #Observed data for this site
 POBRK2S_TN = K_TN[K_TN$Site == K_Sites@data$NAME[7],]
 POBRK2S_Q = K_Q[K_Q$Site == K_Sites@data$NAME[7],]
@@ -6418,6 +6673,15 @@ Load_ECM_POBRK2S_QLQ05 = EC_Undev05*(Area_K2S - AreaImp_K2S) + EC_DevQLQ05*AreaI
 Load_ECM_POBRK2S_QLQ = EC_Undev*(Area_K2S - AreaImp_K2S) + EC_DevQLQ*AreaImp_K2S
 Load_ECM_POBRK2S_QLQ95 = EC_Undev95*(Area_K2S - AreaImp_K2S) + EC_DevQLQ95*AreaImp_K2S
 
+Load_ECM_POBRK2S_Mat = EC_UndevMat*(Area_K2S - AreaImp_K2S) + EC_DevMat*AreaImp_K2S
+Load_ECM_POBRK2S_MatMean = apply(Load_ECM_POBRK2S_Mat, MARGIN = 1, FUN = mean)
+Load_ECM_POBRK2S_Mat05 = apply(Load_ECM_POBRK2S_Mat, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_POBRK2S_Mat95 = apply(Load_ECM_POBRK2S_Mat, MARGIN = 1, FUN = quantile, probs = 0.95)
+Load_ECM_POBRK2S_MatQLQ = EC_UndevMatQLQ*(Area_K2S - AreaImp_K2S) + EC_DevMatQLQ*AreaImp_K2S
+Load_ECM_POBRK2S_MatQLQMean = apply(Load_ECM_POBRK2S_MatQLQ, MARGIN = 1, FUN = mean)
+Load_ECM_POBRK2S_MatQLQ05 = apply(Load_ECM_POBRK2S_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_POBRK2S_MatQLQ95 = apply(Load_ECM_POBRK2S_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
+
 plot(as.Date(Dates_BARN), Load_ECM_POBRK2S, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40))
 par(new = TRUE)
 plot(as.Date(Dates_POBRK2S), POBRK2S_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
@@ -6427,16 +6691,16 @@ par(new = TRUE)
 plot(as.Date(Dates_POBRK2S), POBRK2S_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
 
 png('ECMPOBRK2s.png', res = 300, units = 'in', width = 5, height = 5)
-plot(x = POBRK2S_TrueLoad[as.Date(Dates_POBRK2S) %in% as.Date(Dates_BARN)], y = Load_ECM_POBRK2S[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2S)], 
+plot(x = POBRK2S_TrueLoad[as.Date(Dates_POBRK2S) %in% as.Date(Dates_BARN)], y = Load_ECM_POBRK2S_MatMean[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2S)], 
      xlim = c(0,5), ylim = c(0,5), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'POBR K2S')
-arrows(POBRK2S_TrueLoad[as.Date(Dates_POBRK2S) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK2S[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2S)] - Load_ECM_POBRK2S05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2S)]), POBRK2S_TrueLoad[as.Date(Dates_POBRK2S) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK2S[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2S)] + Load_ECM_POBRK2S95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2S)]), length=0.05, angle=90, code=3)
+arrows(POBRK2S_TrueLoad[as.Date(Dates_POBRK2S) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK2S_Mat05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2S)]), POBRK2S_TrueLoad[as.Date(Dates_POBRK2S) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK2S_Mat95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2S)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col = 'red')
 dev.off()
 
 png('ECMPOBRK2s_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
-plot(POBRK2S_TrueLoad[as.Date(Dates_POBRK2S) %in% as.Date(Dates_BARN)], Load_ECM_POBRK2S_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2S)], 
+plot(POBRK2S_TrueLoad[as.Date(Dates_POBRK2S) %in% as.Date(Dates_BARN)], Load_ECM_POBRK2S_MatQLQMean[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2S)], 
      xlim = c(0,5), ylim = c(0,5), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'POBR K2S')
-arrows(POBRK2S_TrueLoad[as.Date(Dates_POBRK2S) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK2S_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2S)] - Load_ECM_POBRK2S_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2S)]), POBRK2S_TrueLoad[as.Date(Dates_POBRK2S) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK2S95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2S)] + Load_ECM_POBRK2S_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2S)]), length=0.05, angle=90, code=3)
+arrows(POBRK2S_TrueLoad[as.Date(Dates_POBRK2S) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK2S_MatQLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2S)]), POBRK2S_TrueLoad[as.Date(Dates_POBRK2S) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK2S_MatQLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK2S)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col ='red')
 dev.off()
 
@@ -6473,6 +6737,15 @@ Load_ECM_POBRK3a_QLQ05 = EC_Undev05*(Area_K3a - AreaImp_K3a) + EC_DevQLQ05*AreaI
 Load_ECM_POBRK3a_QLQ = EC_Undev*(Area_K3a - AreaImp_K3a) + EC_DevQLQ*AreaImp_K3a
 Load_ECM_POBRK3a_QLQ95 = EC_Undev95*(Area_K3a - AreaImp_K3a) + EC_DevQLQ95*AreaImp_K3a
 
+Load_ECM_POBRK3a_Mat = EC_UndevMat*(Area_K3a - AreaImp_K3a) + EC_DevMat*AreaImp_K3a
+Load_ECM_POBRK3a_MatMean = apply(Load_ECM_POBRK3a_Mat, MARGIN = 1, FUN = mean)
+Load_ECM_POBRK3a_Mat05 = apply(Load_ECM_POBRK3a_Mat, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_POBRK3a_Mat95 = apply(Load_ECM_POBRK3a_Mat, MARGIN = 1, FUN = quantile, probs = 0.95)
+Load_ECM_POBRK3a_MatQLQ = EC_UndevMatQLQ*(Area_K3a - AreaImp_K3a) + EC_DevMatQLQ*AreaImp_K3a
+Load_ECM_POBRK3a_MatQLQMean = apply(Load_ECM_POBRK3a_MatQLQ, MARGIN = 1, FUN = mean)
+Load_ECM_POBRK3a_MatQLQ05 = apply(Load_ECM_POBRK3a_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_POBRK3a_MatQLQ95 = apply(Load_ECM_POBRK3a_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
+
 plot(as.Date(Dates_BARN), Load_ECM_POBRK3a, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40))
 par(new = TRUE)
 plot(as.Date(Dates_POBRK3a), POBRK3a_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
@@ -6482,16 +6755,16 @@ par(new = TRUE)
 plot(as.Date(Dates_POBRK3a), POBRK3a_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
 
 png('ECMPOBRK3a.png', res = 300, units = 'in', width = 5, height = 5)
-plot(x = POBRK3a_TrueLoad[as.Date(Dates_POBRK3a) %in% as.Date(Dates_BARN)], y = Load_ECM_POBRK3a[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3a)], 
+plot(x = POBRK3a_TrueLoad[as.Date(Dates_POBRK3a) %in% as.Date(Dates_BARN)], y = Load_ECM_POBRK3a_MatMean[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3a)], 
      xlim = c(0,1), ylim = c(0,1), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'POBR K3a')
-arrows(POBRK3a_TrueLoad[as.Date(Dates_POBRK3a) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK3a[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3a)] - Load_ECM_POBRK3a05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3a)]), POBRK3a_TrueLoad[as.Date(Dates_POBRK3a) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK3a[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3a)] + Load_ECM_POBRK3a95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3a)]), length=0.05, angle=90, code=3)
+arrows(POBRK3a_TrueLoad[as.Date(Dates_POBRK3a) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK3a_Mat05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3a)]), POBRK3a_TrueLoad[as.Date(Dates_POBRK3a) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK3a_Mat95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3a)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col = 'red')
 dev.off()
 
 png('ECMPOBRK3a_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
-plot(POBRK3a_TrueLoad[as.Date(Dates_POBRK3a) %in% as.Date(Dates_BARN)], Load_ECM_POBRK3a_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3a)], 
+plot(POBRK3a_TrueLoad[as.Date(Dates_POBRK3a) %in% as.Date(Dates_BARN)], Load_ECM_POBRK3a_MatQLQMean[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3a)], 
      xlim = c(0,1), ylim = c(0,1), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'POBR K3a')
-arrows(POBRK3a_TrueLoad[as.Date(Dates_POBRK3a) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK3a_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3a)] - Load_ECM_POBRK3a_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3a)]), POBRK3a_TrueLoad[as.Date(Dates_POBRK3a) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK3a95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3a)] + Load_ECM_POBRK3a_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3a)]), length=0.05, angle=90, code=3)
+arrows(POBRK3a_TrueLoad[as.Date(Dates_POBRK3a) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK3a_MatQLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3a)]), POBRK3a_TrueLoad[as.Date(Dates_POBRK3a) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK3a_MatQLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3a)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col ='red')
 dev.off()
 
@@ -6528,6 +6801,15 @@ Load_ECM_POBRK3_QLQ05 = EC_Undev05*(Area_K3 - AreaImp_K3) + EC_DevQLQ05*AreaImp_
 Load_ECM_POBRK3_QLQ = EC_Undev*(Area_K3 - AreaImp_K3) + EC_DevQLQ*AreaImp_K3
 Load_ECM_POBRK3_QLQ95 = EC_Undev95*(Area_K3 - AreaImp_K3) + EC_DevQLQ95*AreaImp_K3
 
+Load_ECM_POBRK3_Mat = EC_UndevMat*(Area_K3 - AreaImp_K3) + EC_DevMat*AreaImp_K3
+Load_ECM_POBRK3_MatMean = apply(Load_ECM_POBRK3_Mat, MARGIN = 1, FUN = mean)
+Load_ECM_POBRK3_Mat05 = apply(Load_ECM_POBRK3_Mat, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_POBRK3_Mat95 = apply(Load_ECM_POBRK3_Mat, MARGIN = 1, FUN = quantile, probs = 0.95)
+Load_ECM_POBRK3_MatQLQ = EC_UndevMatQLQ*(Area_K3 - AreaImp_K3) + EC_DevMatQLQ*AreaImp_K3
+Load_ECM_POBRK3_MatQLQMean = apply(Load_ECM_POBRK3_MatQLQ, MARGIN = 1, FUN = mean)
+Load_ECM_POBRK3_MatQLQ05 = apply(Load_ECM_POBRK3_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_POBRK3_MatQLQ95 = apply(Load_ECM_POBRK3_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
+
 plot(as.Date(Dates_BARN), Load_ECM_POBRK3, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40))
 par(new = TRUE)
 plot(as.Date(Dates_POBRK3), POBRK3_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
@@ -6537,16 +6819,16 @@ par(new = TRUE)
 plot(as.Date(Dates_POBRK3), POBRK3_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
 
 png('ECMPOBRK3.png', res = 300, units = 'in', width = 5, height = 5)
-plot(x = POBRK3_TrueLoad[as.Date(Dates_POBRK3) %in% as.Date(Dates_BARN)], y = Load_ECM_POBRK3[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3)], 
+plot(x = POBRK3_TrueLoad[as.Date(Dates_POBRK3) %in% as.Date(Dates_BARN)], y = Load_ECM_POBRK3_MatMean[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3)], 
      xlim = c(0,1), ylim = c(0,1), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'POBR K3')
-arrows(POBRK3_TrueLoad[as.Date(Dates_POBRK3) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK3[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3)] - Load_ECM_POBRK305[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3)]), POBRK3_TrueLoad[as.Date(Dates_POBRK3) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK3[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3)] + Load_ECM_POBRK395[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3)]), length=0.05, angle=90, code=3)
+arrows(POBRK3_TrueLoad[as.Date(Dates_POBRK3) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK3_Mat05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3)]), POBRK3_TrueLoad[as.Date(Dates_POBRK3) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK3_Mat95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col = 'red')
 dev.off()
 
 png('ECMPOBRK3_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
-plot(POBRK3_TrueLoad[as.Date(Dates_POBRK3) %in% as.Date(Dates_BARN)], Load_ECM_POBRK3_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3)], 
+plot(POBRK3_TrueLoad[as.Date(Dates_POBRK3) %in% as.Date(Dates_BARN)], Load_ECM_POBRK3_MatQLQMean[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3)], 
      xlim = c(0,1), ylim = c(0,1), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'POBR K3')
-arrows(POBRK3_TrueLoad[as.Date(Dates_POBRK3) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK3_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3)] - Load_ECM_POBRK3_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3)]), POBRK3_TrueLoad[as.Date(Dates_POBRK3) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK395[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3)] + Load_ECM_POBRK3_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3)]), length=0.05, angle=90, code=3)
+arrows(POBRK3_TrueLoad[as.Date(Dates_POBRK3) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK3_MatQLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3)]), POBRK3_TrueLoad[as.Date(Dates_POBRK3) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK3_MatQLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK3)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col ='red')
 dev.off()
 
@@ -6583,6 +6865,15 @@ Load_ECM_POBRK11_QLQ05 = EC_Undev05*(Area_K11 - AreaImp_K11) + EC_DevQLQ05*AreaI
 Load_ECM_POBRK11_QLQ = EC_Undev*(Area_K11 - AreaImp_K11) + EC_DevQLQ*AreaImp_K11
 Load_ECM_POBRK11_QLQ95 = EC_Undev95*(Area_K11 - AreaImp_K11) + EC_DevQLQ95*AreaImp_K11
 
+Load_ECM_POBRK11_Mat = EC_UndevMat*(Area_K11 - AreaImp_K11) + EC_DevMat*AreaImp_K11
+Load_ECM_POBRK11_MatMean = apply(Load_ECM_POBRK11_Mat, MARGIN = 1, FUN = mean)
+Load_ECM_POBRK11_Mat05 = apply(Load_ECM_POBRK11_Mat, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_POBRK11_Mat95 = apply(Load_ECM_POBRK11_Mat, MARGIN = 1, FUN = quantile, probs = 0.95)
+Load_ECM_POBRK11_MatQLQ = EC_UndevMatQLQ*(Area_K11 - AreaImp_K11) + EC_DevMatQLQ*AreaImp_K11
+Load_ECM_POBRK11_MatQLQMean = apply(Load_ECM_POBRK11_MatQLQ, MARGIN = 1, FUN = mean)
+Load_ECM_POBRK11_MatQLQ05 = apply(Load_ECM_POBRK11_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_POBRK11_MatQLQ95 = apply(Load_ECM_POBRK11_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
+
 plot(as.Date(Dates_BARN), Load_ECM_POBRK11, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40))
 par(new = TRUE)
 plot(as.Date(Dates_POBRK11), POBRK11_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
@@ -6592,16 +6883,16 @@ par(new = TRUE)
 plot(as.Date(Dates_POBRK11), POBRK11_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
 
 png('ECMPOBRK11.png', res = 300, units = 'in', width = 5, height = 5)
-plot(x = POBRK11_TrueLoad[as.Date(Dates_POBRK11) %in% as.Date(Dates_BARN)], y = Load_ECM_POBRK11[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK11)], 
+plot(x = POBRK11_TrueLoad[as.Date(Dates_POBRK11) %in% as.Date(Dates_BARN)], y = Load_ECM_POBRK11_MatMean[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK11)], 
      xlim = c(0,1), ylim = c(0,1), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'POBR K11')
-arrows(POBRK11_TrueLoad[as.Date(Dates_POBRK11) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK11[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK11)] - Load_ECM_POBRK1105[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK11)]), POBRK11_TrueLoad[as.Date(Dates_POBRK11) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK11[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK11)] + Load_ECM_POBRK1195[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK11)]), length=0.05, angle=90, code=3)
+arrows(POBRK11_TrueLoad[as.Date(Dates_POBRK11) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK11_Mat05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK11)]), POBRK11_TrueLoad[as.Date(Dates_POBRK11) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK11_Mat95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK11)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col = 'red')
 dev.off()
 
 png('ECMPOBRK11_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
-plot(POBRK11_TrueLoad[as.Date(Dates_POBRK11) %in% as.Date(Dates_BARN)], Load_ECM_POBRK11_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK11)], 
+plot(POBRK11_TrueLoad[as.Date(Dates_POBRK11) %in% as.Date(Dates_BARN)], Load_ECM_POBRK11_MatQLQMean[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK11)], 
      xlim = c(0,1), ylim = c(0,1), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'POBR K11')
-arrows(POBRK11_TrueLoad[as.Date(Dates_POBRK11) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK11_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK11)] - Load_ECM_POBRK11_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK11)]), POBRK11_TrueLoad[as.Date(Dates_POBRK11) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK1195[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK11)] + Load_ECM_POBRK11_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK11)]), length=0.05, angle=90, code=3)
+arrows(POBRK11_TrueLoad[as.Date(Dates_POBRK11) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK11_MatQLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK11)]), POBRK11_TrueLoad[as.Date(Dates_POBRK11) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK11_MatQLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK11)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col ='red')
 dev.off()
 
@@ -6638,6 +6929,15 @@ Load_ECM_POBRK8_QLQ05 = EC_Undev05*(Area_K8 - AreaImp_K8) + EC_DevQLQ05*AreaImp_
 Load_ECM_POBRK8_QLQ = EC_Undev*(Area_K8 - AreaImp_K8) + EC_DevQLQ*AreaImp_K8
 Load_ECM_POBRK8_QLQ95 = EC_Undev95*(Area_K8 - AreaImp_K8) + EC_DevQLQ95*AreaImp_K8
 
+Load_ECM_POBRK8_Mat = EC_UndevMat*(Area_K8 - AreaImp_K8) + EC_DevMat*AreaImp_K8
+Load_ECM_POBRK8_MatMean = apply(Load_ECM_POBRK8_Mat, MARGIN = 1, FUN = mean)
+Load_ECM_POBRK8_Mat05 = apply(Load_ECM_POBRK8_Mat, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_POBRK8_Mat95 = apply(Load_ECM_POBRK8_Mat, MARGIN = 1, FUN = quantile, probs = 0.95)
+Load_ECM_POBRK8_MatQLQ = EC_UndevMatQLQ*(Area_K8 - AreaImp_K8) + EC_DevMatQLQ*AreaImp_K8
+Load_ECM_POBRK8_MatQLQMean = apply(Load_ECM_POBRK8_MatQLQ, MARGIN = 1, FUN = mean)
+Load_ECM_POBRK8_MatQLQ05 = apply(Load_ECM_POBRK8_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_POBRK8_MatQLQ95 = apply(Load_ECM_POBRK8_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
+
 plot(as.Date(Dates_BARN), Load_ECM_POBRK8, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40))
 par(new = TRUE)
 plot(as.Date(Dates_POBRK8), POBRK8_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
@@ -6647,16 +6947,16 @@ par(new = TRUE)
 plot(as.Date(Dates_POBRK8), POBRK8_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,40), col = 'red')
 
 png('ECMPOBRK8.png', res = 300, units = 'in', width = 5, height = 5)
-plot(x = POBRK8_TrueLoad[as.Date(Dates_POBRK8) %in% as.Date(Dates_BARN)], y = Load_ECM_POBRK8[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK8)], 
+plot(x = POBRK8_TrueLoad[as.Date(Dates_POBRK8) %in% as.Date(Dates_BARN)], y = Load_ECM_POBRK8_MatMean[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK8)], 
      xlim = c(0,1), ylim = c(0,1), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'POBR K8')
-arrows(POBRK8_TrueLoad[as.Date(Dates_POBRK8) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK8[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK8)] - Load_ECM_POBRK805[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK8)]), POBRK8_TrueLoad[as.Date(Dates_POBRK8) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK8[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK8)] + Load_ECM_POBRK895[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK8)]), length=0.05, angle=90, code=3)
+arrows(POBRK8_TrueLoad[as.Date(Dates_POBRK8) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK8_Mat05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK8)]), POBRK8_TrueLoad[as.Date(Dates_POBRK8) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK8_Mat95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK8)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col = 'red')
 dev.off()
 
 png('ECMPOBRK8_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
-plot(POBRK8_TrueLoad[as.Date(Dates_POBRK8) %in% as.Date(Dates_BARN)], Load_ECM_POBRK8_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK8)], 
+plot(POBRK8_TrueLoad[as.Date(Dates_POBRK8) %in% as.Date(Dates_BARN)], Load_ECM_POBRK8_MatQLQMean[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK8)], 
      xlim = c(0,1), ylim = c(0,1), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'POBR K8')
-arrows(POBRK8_TrueLoad[as.Date(Dates_POBRK8) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK8_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK8)] - Load_ECM_POBRK8_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK8)]), POBRK8_TrueLoad[as.Date(Dates_POBRK8) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK895[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK8)] + Load_ECM_POBRK8_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK8)]), length=0.05, angle=90, code=3)
+arrows(POBRK8_TrueLoad[as.Date(Dates_POBRK8) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK8_MatQLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK8)]), POBRK8_TrueLoad[as.Date(Dates_POBRK8) %in% as.Date(Dates_BARN)], (Load_ECM_POBRK8_MatQLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_POBRK8)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col ='red')
 dev.off()
 
@@ -6693,6 +6993,15 @@ Load_ECM_BR4K4_QLQ05 = EC_Undev05*(Area_K4 - AreaImp_K4) + EC_DevQLQ05*AreaImp_K
 Load_ECM_BR4K4_QLQ = EC_Undev*(Area_K4 - AreaImp_K4) + EC_DevQLQ*AreaImp_K4
 Load_ECM_BR4K4_QLQ95 = EC_Undev95*(Area_K4 - AreaImp_K4) + EC_DevQLQ95*AreaImp_K4
 
+Load_ECM_BR4K4_Mat = EC_UndevMat*(Area_K4 - AreaImp_K4) + EC_DevMat*AreaImp_K4
+Load_ECM_BR4K4_MatMean = apply(Load_ECM_BR4K4_Mat, MARGIN = 1, FUN = mean)
+Load_ECM_BR4K4_Mat05 = apply(Load_ECM_BR4K4_Mat, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR4K4_Mat95 = apply(Load_ECM_BR4K4_Mat, MARGIN = 1, FUN = quantile, probs = 0.95)
+Load_ECM_BR4K4_MatQLQ = EC_UndevMatQLQ*(Area_K4 - AreaImp_K4) + EC_DevMatQLQ*AreaImp_K4
+Load_ECM_BR4K4_MatQLQMean = apply(Load_ECM_BR4K4_MatQLQ, MARGIN = 1, FUN = mean)
+Load_ECM_BR4K4_MatQLQ05 = apply(Load_ECM_BR4K4_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR4K4_MatQLQ95 = apply(Load_ECM_BR4K4_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
+
 plot(as.Date(Dates_BARN), Load_ECM_BR4K4, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
 par(new = TRUE)
 plot(as.Date(Dates_BR4K4), BR4K4_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
@@ -6702,16 +7011,16 @@ par(new = TRUE)
 plot(as.Date(Dates_BR4K4), BR4K4_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
 
 png('ECMBR4K4.png', res = 300, units = 'in', width = 5, height = 5)
-plot(x = BR4K4_TrueLoad[as.Date(Dates_BR4K4) %in% as.Date(Dates_BARN)], y = Load_ECM_BR4K4[as.Date(Dates_BARN) %in% as.Date(Dates_BR4K4)], 
+plot(x = BR4K4_TrueLoad[as.Date(Dates_BR4K4) %in% as.Date(Dates_BARN)], y = Load_ECM_BR4K4_MatMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR4K4)], 
      xlim = c(0,5), ylim = c(0,5), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR4 K4')
-arrows(BR4K4_TrueLoad[as.Date(Dates_BR4K4) %in% as.Date(Dates_BARN)], (Load_ECM_BR4K4[as.Date(Dates_BARN) %in% as.Date(Dates_BR4K4)] - Load_ECM_BR4K405[as.Date(Dates_BARN) %in% as.Date(Dates_BR4K4)]), BR4K4_TrueLoad[as.Date(Dates_BR4K4) %in% as.Date(Dates_BARN)], (Load_ECM_BR4K4[as.Date(Dates_BARN) %in% as.Date(Dates_BR4K4)] + Load_ECM_BR4K495[as.Date(Dates_BARN) %in% as.Date(Dates_BR4K4)]), length=0.05, angle=90, code=3)
+arrows(BR4K4_TrueLoad[as.Date(Dates_BR4K4) %in% as.Date(Dates_BARN)], (Load_ECM_BR4K4_Mat05[as.Date(Dates_BARN) %in% as.Date(Dates_BR4K4)]), BR4K4_TrueLoad[as.Date(Dates_BR4K4) %in% as.Date(Dates_BARN)], (Load_ECM_BR4K4_Mat95[as.Date(Dates_BARN) %in% as.Date(Dates_BR4K4)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col = 'red')
 dev.off()
 
 png('ECMBR4K4_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
-plot(BR4K4_TrueLoad[as.Date(Dates_BR4K4) %in% as.Date(Dates_BARN)], Load_ECM_BR4K4_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR4K4)], 
+plot(BR4K4_TrueLoad[as.Date(Dates_BR4K4) %in% as.Date(Dates_BARN)], Load_ECM_BR4K4_MatQLQMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR4K4)], 
      xlim = c(0,5), ylim = c(0,5), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR4 K4')
-arrows(BR4K4_TrueLoad[as.Date(Dates_BR4K4) %in% as.Date(Dates_BARN)], (Load_ECM_BR4K4_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR4K4)] - Load_ECM_BR4K4_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR4K4)]), BR4K4_TrueLoad[as.Date(Dates_BR4K4) %in% as.Date(Dates_BARN)], (Load_ECM_BR4K495[as.Date(Dates_BARN) %in% as.Date(Dates_BR4K4)] + Load_ECM_BR4K4_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR4K4)]), length=0.05, angle=90, code=3)
+arrows(BR4K4_TrueLoad[as.Date(Dates_BR4K4) %in% as.Date(Dates_BARN)], (Load_ECM_BR4K4_MatQLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR4K4)]), BR4K4_TrueLoad[as.Date(Dates_BR4K4) %in% as.Date(Dates_BARN)], (Load_ECM_BR4K4_MatQLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR4K4)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col ='red')
 dev.off()
 
@@ -6748,6 +7057,15 @@ Load_ECM_BR5K5_QLQ05 = EC_Undev05*(Area_K5 - AreaImp_K5) + EC_DevQLQ05*AreaImp_K
 Load_ECM_BR5K5_QLQ = EC_Undev*(Area_K5 - AreaImp_K5) + EC_DevQLQ*AreaImp_K5
 Load_ECM_BR5K5_QLQ95 = EC_Undev95*(Area_K5 - AreaImp_K5) + EC_DevQLQ95*AreaImp_K5
 
+Load_ECM_BR5K5_Mat = EC_UndevMat*(Area_K5 - AreaImp_K5) + EC_DevMat*AreaImp_K5
+Load_ECM_BR5K5_MatMean = apply(Load_ECM_BR5K5_Mat, MARGIN = 1, FUN = mean)
+Load_ECM_BR5K5_Mat05 = apply(Load_ECM_BR5K5_Mat, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR5K5_Mat95 = apply(Load_ECM_BR5K5_Mat, MARGIN = 1, FUN = quantile, probs = 0.95)
+Load_ECM_BR5K5_MatQLQ = EC_UndevMatQLQ*(Area_K5 - AreaImp_K5) + EC_DevMatQLQ*AreaImp_K5
+Load_ECM_BR5K5_MatQLQMean = apply(Load_ECM_BR5K5_MatQLQ, MARGIN = 1, FUN = mean)
+Load_ECM_BR5K5_MatQLQ05 = apply(Load_ECM_BR5K5_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR5K5_MatQLQ95 = apply(Load_ECM_BR5K5_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
+
 plot(as.Date(Dates_BARN), Load_ECM_BR5K5, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
 par(new = TRUE)
 plot(as.Date(Dates_BR5K5), BR5K5_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
@@ -6757,16 +7075,16 @@ par(new = TRUE)
 plot(as.Date(Dates_BR5K5), BR5K5_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
 
 png('ECMBR5K5.png', res = 300, units = 'in', width = 5, height = 5)
-plot(x = BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], y = Load_ECM_BR5K5[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)], 
+plot(x = BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], y = Load_ECM_BR5K5_MatMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)], 
      xlim = c(0,20), ylim = c(0,20), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR5 K5')
-arrows(BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)] - Load_ECM_BR5K505[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)]), BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)] + Load_ECM_BR5K595[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)]), length=0.05, angle=90, code=3)
+arrows(BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5_Mat05[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)]), BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5_Mat95[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col = 'red')
 dev.off()
 
 png('ECMBR5K5_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
-plot(BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], Load_ECM_BR5K5_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)], 
+plot(BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], Load_ECM_BR5K5_MatQLQMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)], 
      xlim = c(0,20), ylim = c(0,20), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR5 K5')
-arrows(BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)] - Load_ECM_BR5K5_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)]), BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K595[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)] + Load_ECM_BR5K5_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)]), length=0.05, angle=90, code=3)
+arrows(BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5_MatQLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)]), BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5_MatQLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col ='red')
 dev.off()
 
@@ -6803,6 +7121,15 @@ Load_ECM_BR5K5a_QLQ05 = EC_Undev05*(Area_K5a - AreaImp_K5a) + EC_DevQLQ05*AreaIm
 Load_ECM_BR5K5a_QLQ = EC_Undev*(Area_K5a - AreaImp_K5a) + EC_DevQLQ*AreaImp_K5a
 Load_ECM_BR5K5a_QLQ95 = EC_Undev95*(Area_K5a - AreaImp_K5a) + EC_DevQLQ95*AreaImp_K5a
 
+Load_ECM_BR5K5a_Mat = EC_UndevMat*(Area_K5a - AreaImp_K5a) + EC_DevMat*AreaImp_K5a
+Load_ECM_BR5K5a_MatMean = apply(Load_ECM_BR5K5a_Mat, MARGIN = 1, FUN = mean)
+Load_ECM_BR5K5a_Mat05 = apply(Load_ECM_BR5K5a_Mat, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR5K5a_Mat95 = apply(Load_ECM_BR5K5a_Mat, MARGIN = 1, FUN = quantile, probs = 0.95)
+Load_ECM_BR5K5a_MatQLQ = EC_UndevMatQLQ*(Area_K5a - AreaImp_K5a) + EC_DevMatQLQ*AreaImp_K5a
+Load_ECM_BR5K5a_MatQLQMean = apply(Load_ECM_BR5K5a_MatQLQ, MARGIN = 1, FUN = mean)
+Load_ECM_BR5K5a_MatQLQ05 = apply(Load_ECM_BR5K5a_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR5K5a_MatQLQ95 = apply(Load_ECM_BR5K5a_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
+
 plot(as.Date(Dates_BARN), Load_ECM_BR5K5a, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
 par(new = TRUE)
 plot(as.Date(Dates_BR5K5a), BR5K5a_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
@@ -6812,16 +7139,16 @@ par(new = TRUE)
 plot(as.Date(Dates_BR5K5a), BR5K5a_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
 
 png('ECMBR5K5a.png', res = 300, units = 'in', width = 5, height = 5)
-plot(x = BR5K5a_TrueLoad[as.Date(Dates_BR5K5a) %in% as.Date(Dates_BARN)], y = Load_ECM_BR5K5a[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5a)], 
+plot(x = BR5K5a_TrueLoad[as.Date(Dates_BR5K5a) %in% as.Date(Dates_BARN)], y = Load_ECM_BR5K5a_MatMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5a)], 
      xlim = c(0,20), ylim = c(0,20), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR5 K5a')
-arrows(BR5K5a_TrueLoad[as.Date(Dates_BR5K5a) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5a[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5a)] - Load_ECM_BR5K5a05[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5a)]), BR5K5a_TrueLoad[as.Date(Dates_BR5K5a) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5a[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5a)] + Load_ECM_BR5K5a95[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5a)]), length=0.05, angle=90, code=3)
+arrows(BR5K5a_TrueLoad[as.Date(Dates_BR5K5a) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5a_Mat05[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5a)]), BR5K5a_TrueLoad[as.Date(Dates_BR5K5a) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5a_Mat95[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5a)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col = 'red')
 dev.off()
 
 png('ECMBR5K5a_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
-plot(BR5K5a_TrueLoad[as.Date(Dates_BR5K5a) %in% as.Date(Dates_BARN)], Load_ECM_BR5K5a_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5a)], 
+plot(BR5K5a_TrueLoad[as.Date(Dates_BR5K5a) %in% as.Date(Dates_BARN)], Load_ECM_BR5K5a_MatQLQMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5a)], 
      xlim = c(0,20), ylim = c(0,20), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR5 K5a')
-arrows(BR5K5a_TrueLoad[as.Date(Dates_BR5K5a) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5a_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5a)] - Load_ECM_BR5K5a_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5a)]), BR5K5a_TrueLoad[as.Date(Dates_BR5K5a) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5a95[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5a)] + Load_ECM_BR5K5a_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5a)]), length=0.05, angle=90, code=3)
+arrows(BR5K5a_TrueLoad[as.Date(Dates_BR5K5a) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5a_MatQLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5a)]), BR5K5a_TrueLoad[as.Date(Dates_BR5K5a) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5a_MatQLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5a)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col ='red')
 dev.off()
 
@@ -6858,6 +7185,15 @@ Load_ECM_BR6K6_QLQ05 = EC_Undev05*(Area_K6 - AreaImp_K6) + EC_DevQLQ05*AreaImp_K
 Load_ECM_BR6K6_QLQ = EC_Undev*(Area_K6 - AreaImp_K6) + EC_DevQLQ*AreaImp_K6
 Load_ECM_BR6K6_QLQ95 = EC_Undev95*(Area_K6 - AreaImp_K6) + EC_DevQLQ95*AreaImp_K6
 
+Load_ECM_BR6K6_Mat = EC_UndevMat*(Area_K6 - AreaImp_K6) + EC_DevMat*AreaImp_K6
+Load_ECM_BR6K6_MatMean = apply(Load_ECM_BR6K6_Mat, MARGIN = 1, FUN = mean)
+Load_ECM_BR6K6_Mat05 = apply(Load_ECM_BR6K6_Mat, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR6K6_Mat95 = apply(Load_ECM_BR6K6_Mat, MARGIN = 1, FUN = quantile, probs = 0.95)
+Load_ECM_BR6K6_MatQLQ = EC_UndevMatQLQ*(Area_K6 - AreaImp_K6) + EC_DevMatQLQ*AreaImp_K6
+Load_ECM_BR6K6_MatQLQMean = apply(Load_ECM_BR6K6_MatQLQ, MARGIN = 1, FUN = mean)
+Load_ECM_BR6K6_MatQLQ05 = apply(Load_ECM_BR6K6_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR6K6_MatQLQ95 = apply(Load_ECM_BR6K6_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
+
 plot(as.Date(Dates_BARN), Load_ECM_BR6K6, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
 par(new = TRUE)
 plot(as.Date(Dates_BR6K6), BR6K6_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
@@ -6867,16 +7203,16 @@ par(new = TRUE)
 plot(as.Date(Dates_BR6K6), BR6K6_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
 
 png('ECMBR6K6.png', res = 300, units = 'in', width = 5, height = 5)
-plot(x = BR6K6_TrueLoad[as.Date(Dates_BR6K6) %in% as.Date(Dates_BARN)], y = Load_ECM_BR6K6[as.Date(Dates_BARN) %in% as.Date(Dates_BR6K6)], 
+plot(x = BR6K6_TrueLoad[as.Date(Dates_BR6K6) %in% as.Date(Dates_BARN)], y = Load_ECM_BR6K6_MatMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR6K6)], 
     xlim = c(0,15), ylim = c(0,15), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR6 K6')
-arrows(BR6K6_TrueLoad[as.Date(Dates_BR6K6) %in% as.Date(Dates_BARN)], (Load_ECM_BR6K6[as.Date(Dates_BARN) %in% as.Date(Dates_BR6K6)] - Load_ECM_BR6K605[as.Date(Dates_BARN) %in% as.Date(Dates_BR6K6)]), BR6K6_TrueLoad[as.Date(Dates_BR6K6) %in% as.Date(Dates_BARN)], (Load_ECM_BR6K6[as.Date(Dates_BARN) %in% as.Date(Dates_BR6K6)] + Load_ECM_BR6K695[as.Date(Dates_BARN) %in% as.Date(Dates_BR6K6)]), length=0.05, angle=90, code=3)
+arrows(BR6K6_TrueLoad[as.Date(Dates_BR6K6) %in% as.Date(Dates_BARN)], (Load_ECM_BR6K6_Mat05[as.Date(Dates_BARN) %in% as.Date(Dates_BR6K6)]), BR6K6_TrueLoad[as.Date(Dates_BR6K6) %in% as.Date(Dates_BARN)], (Load_ECM_BR6K6_Mat95[as.Date(Dates_BARN) %in% as.Date(Dates_BR6K6)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col = 'red')
 dev.off()
 
 png('ECMBR6K6_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
-plot(BR6K6_TrueLoad[as.Date(Dates_BR6K6) %in% as.Date(Dates_BARN)], Load_ECM_BR6K6_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR6K6)], 
+plot(BR6K6_TrueLoad[as.Date(Dates_BR6K6) %in% as.Date(Dates_BARN)], Load_ECM_BR6K6_MatQLQMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR6K6)], 
      xlim = c(0,15), ylim = c(0,15), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR6 K6')
-arrows(BR6K6_TrueLoad[as.Date(Dates_BR6K6) %in% as.Date(Dates_BARN)], (Load_ECM_BR6K6_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR6K6)] - Load_ECM_BR6K6_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR6K6)]), BR6K6_TrueLoad[as.Date(Dates_BR6K6) %in% as.Date(Dates_BARN)], (Load_ECM_BR6K695[as.Date(Dates_BARN) %in% as.Date(Dates_BR6K6)] + Load_ECM_BR6K6_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR6K6)]), length=0.05, angle=90, code=3)
+arrows(BR6K6_TrueLoad[as.Date(Dates_BR6K6) %in% as.Date(Dates_BARN)], (Load_ECM_BR6K6_MatQLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR6K6)]), BR6K6_TrueLoad[as.Date(Dates_BR6K6) %in% as.Date(Dates_BARN)], (Load_ECM_BR6K6_MatQLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR6K6)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col ='red')
 dev.off()
 
@@ -6913,6 +7249,15 @@ Load_ECM_BR7K7_QLQ05 = EC_Undev05*(Area_K7 - AreaImp_K7) + EC_DevQLQ05*AreaImp_K
 Load_ECM_BR7K7_QLQ = EC_Undev*(Area_K7 - AreaImp_K7) + EC_DevQLQ*AreaImp_K7
 Load_ECM_BR7K7_QLQ95 = EC_Undev95*(Area_K7 - AreaImp_K7) + EC_DevQLQ95*AreaImp_K7
 
+Load_ECM_BR7K7_Mat = EC_UndevMat*(Area_K7 - AreaImp_K7) + EC_DevMat*AreaImp_K7
+Load_ECM_BR7K7_MatMean = apply(Load_ECM_BR7K7_Mat, MARGIN = 1, FUN = mean)
+Load_ECM_BR7K7_Mat05 = apply(Load_ECM_BR7K7_Mat, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR7K7_Mat95 = apply(Load_ECM_BR7K7_Mat, MARGIN = 1, FUN = quantile, probs = 0.95)
+Load_ECM_BR7K7_MatQLQ = EC_UndevMatQLQ*(Area_K7 - AreaImp_K7) + EC_DevMatQLQ*AreaImp_K7
+Load_ECM_BR7K7_MatQLQMean = apply(Load_ECM_BR7K7_MatQLQ, MARGIN = 1, FUN = mean)
+Load_ECM_BR7K7_MatQLQ05 = apply(Load_ECM_BR7K7_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR7K7_MatQLQ95 = apply(Load_ECM_BR7K7_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
+
 plot(as.Date(Dates_BARN), Load_ECM_BR7K7, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400))
 par(new = TRUE)
 plot(as.Date(Dates_BR7K7), BR7K7_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
@@ -6922,20 +7267,40 @@ par(new = TRUE)
 plot(as.Date(Dates_BR7K7), BR7K7_TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,400), col = 'red')
 
 png('ECMBR7K7.png', res = 300, units = 'in', width = 5, height = 5)
-plot(x = BR7K7_TrueLoad[as.Date(Dates_BR7K7) %in% as.Date(Dates_BARN)], y = Load_ECM_BR7K7[as.Date(Dates_BARN) %in% as.Date(Dates_BR7K7)], 
+plot(x = BR7K7_TrueLoad[as.Date(Dates_BR7K7) %in% as.Date(Dates_BARN)], y = Load_ECM_BR7K7_MatMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR7K7)], 
      xlim = c(0,50), ylim = c(0,50), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR7 K7')
-arrows(BR7K7_TrueLoad[as.Date(Dates_BR7K7) %in% as.Date(Dates_BARN)], (Load_ECM_BR7K7[as.Date(Dates_BARN) %in% as.Date(Dates_BR7K7)] - Load_ECM_BR7K705[as.Date(Dates_BARN) %in% as.Date(Dates_BR7K7)]), BR7K7_TrueLoad[as.Date(Dates_BR7K7) %in% as.Date(Dates_BARN)], (Load_ECM_BR7K7[as.Date(Dates_BARN) %in% as.Date(Dates_BR7K7)] + Load_ECM_BR7K795[as.Date(Dates_BARN) %in% as.Date(Dates_BR7K7)]), length=0.05, angle=90, code=3)
+arrows(BR7K7_TrueLoad[as.Date(Dates_BR7K7) %in% as.Date(Dates_BARN)], (Load_ECM_BR7K7_Mat05[as.Date(Dates_BARN) %in% as.Date(Dates_BR7K7)]), BR7K7_TrueLoad[as.Date(Dates_BR7K7) %in% as.Date(Dates_BARN)], (Load_ECM_BR7K7_Mat95[as.Date(Dates_BARN) %in% as.Date(Dates_BR7K7)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col = 'red')
 dev.off()
 
 png('ECMBR7K7_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
-plot(BR7K7_TrueLoad[as.Date(Dates_BR7K7) %in% as.Date(Dates_BARN)], Load_ECM_BR7K7_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR7K7)], 
+plot(BR7K7_TrueLoad[as.Date(Dates_BR7K7) %in% as.Date(Dates_BARN)], Load_ECM_BR7K7_MatQLQMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR7K7)], 
      xlim = c(0,50), ylim = c(0,50), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR7 K7')
-arrows(BR7K7_TrueLoad[as.Date(Dates_BR7K7) %in% as.Date(Dates_BARN)], (Load_ECM_BR7K7_QLQ[as.Date(Dates_BARN) %in% as.Date(Dates_BR7K7)] - Load_ECM_BR7K7_QLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR7K7)]), BR7K7_TrueLoad[as.Date(Dates_BR7K7) %in% as.Date(Dates_BARN)], (Load_ECM_BR7K795[as.Date(Dates_BARN) %in% as.Date(Dates_BR7K7)] + Load_ECM_BR7K7_QLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR7K7)]), length=0.05, angle=90, code=3)
+arrows(BR7K7_TrueLoad[as.Date(Dates_BR7K7) %in% as.Date(Dates_BARN)], (Load_ECM_BR7K7_MatQLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR7K7)]), BR7K7_TrueLoad[as.Date(Dates_BR7K7) %in% as.Date(Dates_BARN)], (Load_ECM_BR7K7_MatQLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR7K7)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col ='red')
 dev.off()
 
 #   Make maps of the contributing areas for these sampling locations----
 
-# Evaluate adding flow information and other normalizers to the ECM models----
+# Evaluate adding other normalizers to the ECM models----
+#  Population----
+
+#  Slope gradient----
+Slopes = raster(x = paste0(wd_BRPOBR, '\\', f_BaismanSlope))
+Slopes = projectRaster(Slopes, crs = CRS(pCRS))
+
+#Add impervious fraction to worldfile information
+world$ImpFrac = raster::extract(x = impFrac, y = world)
 # Convert back to concentration by subtracting flow that resulted from covered catchments. Then make a model for urban and a model for forest at basin outlet and make sure that forest is same as POBR and that devekoped matches the sampling site data well.
+
+
+plot(POBR_PredTN_POBRWRTDS$MedLoad, POBR_PredTN_POBRWRTDS$TrueLoad, log = 'xy', xlim = c(0.001, 1000), ylim = c(0.001, 1000), xlab = 'Estimated TN Load (kg N/s)', ylab = 'True TN Load (kg N/s)')
+par(new = T)
+plot(POBR_PredTN_POBRWRTDS$MedLoad[POBR_PredTN_POBRWRTDS$LowTNLim == 1], POBR_PredTN_POBRWRTDS$TrueLoad[POBR_PredTN_POBRWRTDS$LowTNLim == 1], log = 'xy', xlim = c(0.001, 1000), ylim = c(0.001, 1000), col ='blue', xlab = '', ylab = '', axes = FALSE)
+par(new = T)
+plot(POBR_PredTN_POBRWRTDS$MedLoad[POBR_PredTN_POBRWRTDS$LowTNLim == 2], POBR_PredTN_POBRWRTDS$TrueLoad[POBR_PredTN_POBRWRTDS$LowTNLim == 2], log = 'xy', xlim = c(0.001, 1000), ylim = c(0.001, 1000), col = 'red', xlab = '', ylab = '', axes = FALSE)
+lines(c(0.00001,10000), c(0.00001,10000))
+legend('bottomright', title = 'Detection Limits', legend = c('0.01', '0.05'), pch = 1, col = c('blue', 'red'))
+
+plot(BARN_PredTN$MedLoad, BARN_PredTN$TrueLoad, log = 'xy', xlim = c(0.001, 1000), ylim = c(0.001, 1000), xlab = 'Estimated TN Load (kg N/s)', ylab = 'True TN Load (kg N/s)')
+lines(c(0.00001,10000), c(0.00001,10000))
