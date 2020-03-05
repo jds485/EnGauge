@@ -109,6 +109,8 @@ f_Precip_locs = 'BES_GaugeLocs.csv'
 f_streams = 'NHDFlowline'
 #Baisman Impervious Fraction
 f_BaismanImperviousFrac = "ImperviousFraction.tiff"
+#Baisman Slopes
+f_BaismanSlope = "slopedem30m.tif"
 #Laurence Lin Datasets
 f_LinRain = "Oregon.rain"
 f_LinTmax = "Oregon.tmax"
@@ -5829,6 +5831,18 @@ plot(BARN_PredTN$TrueLoad/1000000*3600*24, Load_ECM_Baisman_MatQLQMean/1000000*3
 arrows(BARN_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Baisman_MatQLQ05)/1000000*3600*24, BARN_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Baisman_MatQLQ95)/1000000*3600*24, length=0.05, angle=90, code=3)
 lines(c(0.000001,100), c(0.000001,100), col = 'red')
 
+#Pond and Baisman on same scale
+plot(POBR_AllDates_PredTN$TrueLoad/1000000*3600*24, Load_ECM_Pond_MatMean/1000000*3600*24,
+     ylim = c(0.00001,1000), xlim = c(0.00001,1000), 
+     xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'Pond Branch Outlet', log = 'xy')
+arrows(POBR_AllDates_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Pond_Mat05)/1000000*3600*24, POBR_AllDates_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Pond_Mat95)/1000000*3600*24, length=0.05, angle=90, code=3)
+lines(c(0.000001,100), c(0.000001,100), col = 'red')
+
+plot(BARN_PredTN$TrueLoad/1000000*3600*24, Load_ECM_Baisman_MatQLQMean/1000000*3600*24, log = 'xy',
+     ylim = c(0.00001,1000), xlim = c(0.00001,1000), 
+     xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'Baisman Outlet')
+arrows(BARN_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Baisman_MatQLQ05)/1000000*3600*24, BARN_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Baisman_MatQLQ95)/1000000*3600*24, length=0.05, angle=90, code=3)
+lines(c(0.000001,100), c(0.000001,100), col = 'red')
 
 #cor(BARN_PredTN$TrueLoad, Load_ECM_Baisman)
 
@@ -7290,10 +7304,102 @@ Slopes = raster(x = paste0(wd_BRPOBR, '\\', f_BaismanSlope))
 Slopes = projectRaster(Slopes, crs = CRS(pCRS))
 
 #Add impervious fraction to worldfile information
-world$ImpFrac = raster::extract(x = impFrac, y = world)
-# Convert back to concentration by subtracting flow that resulted from covered catchments. Then make a model for urban and a model for forest at basin outlet and make sure that forest is same as POBR and that devekoped matches the sampling site data well.
+world$Slope = raster::extract(x = Slopes, y = world)
 
+#Get the slope / average slope upstream of the sampling location
+world$SlopeG0 = world$SlopeG1 = world$SlopeG2 = world$SlopeG3 = world$SlopeG4 = world$SlopeG5 = world$SlopeG6 = world$SlopeG7 = world$SlopeG8 = world$SlopeG9 = world$SlopeG10 = NA
+world$SlopeGK0 = world$SlopeGK1 = world$SlopeGK2 = world$SlopeGK3 = world$SlopeGK4 = world$SlopeGK5 = world$SlopeGK6 = world$SlopeGK7 = world$SlopeGK8 = world$SlopeGK9 = world$SlopeGK10 = world$SlopeGK11 = NA
+world$SlopeG0[which(!is.na(world$G_0))] = world$Slope[which(!is.na(world$G_0))]/mean(world$Slope[which(!is.na(world$G_0))])
+world$SlopeG1[which(!is.na(world$G_1))] = world$Slope[which(!is.na(world$G_1))]/mean(world$Slope[which(!is.na(world$G_1))])
+world$SlopeG2[which(!is.na(world$G_2))] = world$Slope[which(!is.na(world$G_2))]/mean(world$Slope[which(!is.na(world$G_2))])
+world$SlopeG3[which(!is.na(world$G_3))] = world$Slope[which(!is.na(world$G_3))]/mean(world$Slope[which(!is.na(world$G_3))])
+world$SlopeG4[which(!is.na(world$G_4))] = world$Slope[which(!is.na(world$G_4))]/mean(world$Slope[which(!is.na(world$G_4))])
+world$SlopeG5[which(!is.na(world$G_5))] = world$Slope[which(!is.na(world$G_5))]/mean(world$Slope[which(!is.na(world$G_5))])
+world$SlopeG6[which(!is.na(world$G_6))] = world$Slope[which(!is.na(world$G_6))]/mean(world$Slope[which(!is.na(world$G_6))])
+world$SlopeG7[which(!is.na(world$G_7))] = world$Slope[which(!is.na(world$G_7))]/mean(world$Slope[which(!is.na(world$G_7))])
+world$SlopeG8[which(!is.na(world$G_8))] = world$Slope[which(!is.na(world$G_8))]/mean(world$Slope[which(!is.na(world$G_8))])
+world$SlopeG9[which(!is.na(world$G_9))] = world$Slope[which(!is.na(world$G_9))]/mean(world$Slope[which(!is.na(world$G_9))])
+world$SlopeG10[which(!is.na(world$G_10))] = world$Slope[which(!is.na(world$G_10))]/mean(world$Slope[which(!is.na(world$G_10))])
+world$SlopeGK0[which(!is.na(world$GK_0))] = world$Slope[which(!is.na(world$GK_0))]/mean(world$Slope[which(!is.na(world$GK_0))])
+world$SlopeGK1[which(!is.na(world$GK_1))] = world$Slope[which(!is.na(world$GK_1))]/mean(world$Slope[which(!is.na(world$GK_1))])
+world$SlopeGK2[which(!is.na(world$GK_2))] = world$Slope[which(!is.na(world$GK_2))]/mean(world$Slope[which(!is.na(world$GK_2))])
+world$SlopeGK3[which(!is.na(world$GK_3))] = world$Slope[which(!is.na(world$GK_3))]/mean(world$Slope[which(!is.na(world$GK_3))])
+world$SlopeGK4[which(!is.na(world$GK_4))] = world$Slope[which(!is.na(world$GK_4))]/mean(world$Slope[which(!is.na(world$GK_4))])
+world$SlopeGK5[which(!is.na(world$GK_5))] = world$Slope[which(!is.na(world$GK_5))]/mean(world$Slope[which(!is.na(world$GK_5))])
+world$SlopeGK6[which(!is.na(world$GK_6))] = world$Slope[which(!is.na(world$GK_6))]/mean(world$Slope[which(!is.na(world$GK_6))])
+world$SlopeGK7[which(!is.na(world$GK_7))] = world$Slope[which(!is.na(world$GK_7))]/mean(world$Slope[which(!is.na(world$GK_7))])
+world$SlopeGK8[which(!is.na(world$GK_8))] = world$Slope[which(!is.na(world$GK_8))]/mean(world$Slope[which(!is.na(world$GK_8))])
+world$SlopeGK9[which(!is.na(world$GK_9))] = world$Slope[which(!is.na(world$GK_9))]/mean(world$Slope[which(!is.na(world$GK_9))])
+world$SlopeGK10[which(!is.na(world$GK_10))] = world$Slope[which(!is.na(world$GK_10))]/mean(world$Slope[which(!is.na(world$GK_10))])
+world$SlopeGK11[which(!is.na(world$GK_11))] = world$Slope[which(!is.na(world$GK_11))]/mean(world$Slope[which(!is.na(world$GK_11))])
 
+#    BR3 S1----
+#Get the impervious surface area contributing to this location
+AreaImpSlp_S1 = 0
+AreaSlp_S1 = 0
+for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$G_10 == 1))){
+  AreaImpSlp_S1 = AreaImpSlp_S1 + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$G_10 == 1)[i]]*res^2*world$SlopeG10[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$G_10 == 1)[i]]
+  AreaSlp_S1 = AreaSlp_S1 + (1-world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$G_10 == 1)[i]])*res^2*world$SlopeG10[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$G_10 == 1)[i]]
+}
+rm(i)
+
+Load_ECM_BR3S1Slp_Mat = EC_UndevMat*(AreaSlp_S1) + EC_DevMat*AreaImpSlp_S1
+Load_ECM_BR3S1Slp_MatMean = apply(Load_ECM_BR3S1Slp_Mat, MARGIN = 1, FUN = mean)
+Load_ECM_BR3S1Slp_Mat05 = apply(Load_ECM_BR3S1Slp_Mat, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR3S1Slp_Mat95 = apply(Load_ECM_BR3S1Slp_Mat, MARGIN = 1, FUN = quantile, probs = 0.95)
+Load_ECM_BR3S1Slp_MatQLQ = EC_UndevMatQLQ*(AreaSlp_S1) + EC_DevMatQLQ*AreaImpSlp_S1
+Load_ECM_BR3S1Slp_MatQLQMean = apply(Load_ECM_BR3S1Slp_MatQLQ, MARGIN = 1, FUN = mean)
+Load_ECM_BR3S1Slp_MatQLQ05 = apply(Load_ECM_BR3S1Slp_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR3S1Slp_MatQLQ95 = apply(Load_ECM_BR3S1Slp_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
+
+png('ECMBR3S1Slp.png', res = 300, units = 'in', width = 5, height = 5)
+plot(x = BR3S1_TrueLoad[as.Date(Dates_BR3S1) %in% as.Date(Dates_BARN)], y = Load_ECM_BR3S1Slp_MatMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)], 
+     xlim = c(0,30), ylim = c(0,30), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S1')
+arrows(BR3S1_TrueLoad[as.Date(Dates_BR3S1) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S1Slp_Mat05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)]), BR3S1_TrueLoad[as.Date(Dates_BR3S1) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S1Slp_Mat95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col = 'red')
+dev.off()
+
+png('ECMBR3S1Slp_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
+plot(BR3S1_TrueLoad[as.Date(Dates_BR3S1) %in% as.Date(Dates_BARN)], Load_ECM_BR3S1Slp_MatQLQMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)], 
+     xlim = c(0,30), ylim = c(0,30), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR3 S1')
+arrows(BR3S1_TrueLoad[as.Date(Dates_BR3S1) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S1Slp_MatQLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)]), BR3S1_TrueLoad[as.Date(Dates_BR3S1) %in% as.Date(Dates_BARN)], (Load_ECM_BR3S1Slp_MatQLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR3S1)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col ='red')
+dev.off()
+
+#    BR5 K5----
+#Get the impervious surface area contributing to this location
+AreaImpSlp_K5 = 0
+AreaSlp_K5 = 0
+for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_3 == 1))){
+  AreaImpSlp_K5 = AreaImpSlp_K5 + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$GK_3 == 1)[i]]*res^2*world$SlopeGK3[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$GK_3 == 1)[i]]
+  AreaSlp_K5 = AreaSlp_K5 + (1-world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$GK_3 == 1)[i]])*res^2*world$SlopeGK3[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$GK_3 == 1)[i]]
+}
+rm(i)
+
+Load_ECM_BR5K5Slp_Mat = EC_UndevMat*(AreaSlp_K5) + EC_DevMat*AreaImpSlp_K5
+Load_ECM_BR5K5Slp_MatMean = apply(Load_ECM_BR5K5Slp_Mat, MARGIN = 1, FUN = mean)
+Load_ECM_BR5K5Slp_Mat05 = apply(Load_ECM_BR5K5Slp_Mat, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR5K5Slp_Mat95 = apply(Load_ECM_BR5K5Slp_Mat, MARGIN = 1, FUN = quantile, probs = 0.95)
+Load_ECM_BR5K5Slp_MatQLQ = EC_UndevMatQLQ*(AreaSlp_K5) + EC_DevMatQLQ*AreaImpSlp_K5
+Load_ECM_BR5K5Slp_MatQLQMean = apply(Load_ECM_BR5K5Slp_MatQLQ, MARGIN = 1, FUN = mean)
+Load_ECM_BR5K5Slp_MatQLQ05 = apply(Load_ECM_BR5K5Slp_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
+Load_ECM_BR5K5Slp_MatQLQ95 = apply(Load_ECM_BR5K5Slp_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
+
+png('ECMBR5K5Slp.png', res = 300, units = 'in', width = 5, height = 5)
+plot(x = BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], y = Load_ECM_BR5K5Slp_MatMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)], 
+     xlim = c(0,20), ylim = c(0,20), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR5 K5')
+arrows(BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5Slp_Mat05[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)]), BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5Slp_Mat95[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col = 'red')
+dev.off()
+
+png('ECMBR5K5Slp_QLQ.png', res = 300, units = 'in', width = 5, height = 5)
+plot(BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], Load_ECM_BR5K5Slp_MatQLQMean[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)], 
+     xlim = c(0,20), ylim = c(0,20), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'BR5 K5')
+arrows(BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5Slp_MatQLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)]), BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5Slp_MatQLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)]), length=0.05, angle=90, code=3)
+lines(c(0,200), c(0,200), col ='red')
+dev.off()
+
+#extra plots----
 plot(POBR_PredTN_POBRWRTDS$MedLoad, POBR_PredTN_POBRWRTDS$TrueLoad, log = 'xy', xlim = c(0.001, 1000), ylim = c(0.001, 1000), xlab = 'Estimated TN Load (kg N/s)', ylab = 'True TN Load (kg N/s)')
 par(new = T)
 plot(POBR_PredTN_POBRWRTDS$MedLoad[POBR_PredTN_POBRWRTDS$LowTNLim == 1], POBR_PredTN_POBRWRTDS$TrueLoad[POBR_PredTN_POBRWRTDS$LowTNLim == 1], log = 'xy', xlim = c(0.001, 1000), ylim = c(0.001, 1000), col ='blue', xlab = '', ylab = '', axes = FALSE)
