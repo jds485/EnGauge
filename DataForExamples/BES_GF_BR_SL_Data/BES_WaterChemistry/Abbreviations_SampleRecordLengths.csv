@@ -1,0 +1,35 @@
+Abbreviation,Name,Land Cover,Start Date,End Date,USGSGaugeNum
+GFGL , Gwynns Falls at Glyndon (grab samples) , Suburban headwaters ,15/Oct/1998, ongoing ,01589180
+GFGLcomp , Gwynns Falls at Glyndon (ISCO sampler) , Suburban headwaters ,30/Jan/2009, ongoing ,01589180
+GFGB , Gwynns Falls at Gwynnbrook Avenue (Delight) , Suburban ,15/Oct/1998, ongoing ,01589197
+GFVN , Gwynns Falls at Villa Nova (grab samples) , Suburban/urban boundary ,15/Oct/1998, ongoing ,01589300
+GFVNcomp , Gwynns Falls at Villa Nova (ISCO sampler) , Suburban/urban boundary ,1/Apr/2008, ongoing (with gap from June 2002 to January 2004) ,01589300
+GFCP , Gwynns Falls at Carroll Park , Urban ,15/Oct/1998, ongoing ,01589352
+POBR , Pond Branch forested reference site , Forested reference ,15/Oct/1998, ongoing ,01583570
+BARN , Baisman Run at Ivy Hill Road , Suburban unsewered ,4/Dec/1998, onging ,01583580
+MCDN , McDonogh agricultural site , Agricultural ,9/Dec/1999, ongoing ,01589238
+DRKR , Dead Run at Krome Avenue , Urban ,24/Nov/1998, ongoing ,01589330
+MAWI , Maidens Choice at Wilkens Avenue , Urban ,18/Feb/2004, ongoing ,
+RGHT , Rognel Heights (grab samples) , Urban ,25/Feb/1999, ongoing ,
+RGHTisco , Rognel Heights (ISCO sampler) , Urban ,18/Feb/2002, ongoing ,
+GRGF , Gwynns Run at Gwynns Falls , Urban ,27/Aug/2001, onging ,
+GFuGR , Gwynns Falls above Gwynns Run , Urban ,21/Jan/2004, ongoing ,
+CRBR , Cranberry Branch , Exurban ,2/Jun/2011, ongoing ,01585500
+JBHH , Jennifer Branch at Hartford Hills , Suburban ,12/Aug/2003, 5/11/2010 ,
+JBNW , Jennifer Branch at Northwind , Suburban ,12/Aug/2003, 6/8/2010 ,
+JBON , Jennifer Branch at Ontario , Suburban ,12/Aug/2003, 6/8/2010 ,
+LANV , Lanvale street station in WS263 (grab samples) , Urban ,6/Apr/2004, 5/4/2010 ,
+LANVisco , Lanvale street station in WS263 (ISCO sampler) , Urban ,1/Apr/2004, 5/7/2009 ,
+BALTisco , Baltimore street station in WS263 (ISCO sampler) , Urban ,1/Apr/2004, 5/7/2009 ,
+BALT , Baltimore street station in WS263 (grab samples) , Urban ,6/Apr/2004, 5/4/2010 ,
+GRuTW , Gwynns Run above trash weir , Urban ,20/Jun/2006,25/Jul/2006,
+RR1,Red Run #1,,,,
+RR2,Red Run #2,,,,
+SL1,Scotts Level #1,,,,
+SL2,Scotts Level #2,,,,
+HH,Horseshed Branch,,,,
+HLB,Holly Branch,,,,
+GF5,Gwynns Falls 5,,,,
+,,,,,
+,,,,,
+,,,,,
