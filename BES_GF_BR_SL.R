@@ -10,52 +10,73 @@ dir_ColFuns = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BE
 
 #Repositories that should match those used for or created by EnGauge 
 #Region of interest shapefile
-dir_ROI = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge\\DataForExamples\\"
+dir_ROI = paste0(dir_EnGauge, "\\DataForExamples")
 #dir_ROI = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\BES-Watersheds-Land-Cover-Analysis"  
 #Watersheds shapefiles
-dir_Sheds = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge\\DataForExamples\\BES_GF_BR_SL_Data"
+dir_Sheds = paste0(dir_EnGauge, "\\DataForExamples\\BES_GF_BR_SL_Data")
 #dir_Sheds = "C:\\Users\\js4yd\\Documents\\DEMtest"
 #DEM
-dir_DEM_out = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge\\DataForExamples"
-#dir_DEM_out = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\DEM\\'
+dir_DEM_out = "C:\\Users\\js4yd\\Desktop\\TestEnGauge\\BaismanAndGwynnsFalls"
+#dir_DEM_out = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge\\DataForExamples"
+#dir_DEM_out = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\DEM'
 #Streamflow gauges
-wd_sf = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge\\DataForExamples\\Streamflow"
+wd_sf = "C:\\Users\\js4yd\\Desktop\\TestEnGauge\\BaismanAndGwynnsFalls\\Streamflow"
+#wd_sf = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge\\DataForExamples\\Streamflow"
 #wd_sf = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges\\Streamflow"
 #Nitrogen
-wd_N = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge\\DataForExamples\\Nitrogen"
+wd_N = "C:\\Users\\js4yd\\Desktop\\TestEnGauge\\BaismanAndGwynnsFalls\\Nitrogen"
+#wd_N = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge\\DataForExamples\\Nitrogen"
 #wd_N = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges\\Nitrogen'
 #Phosphorus
-wd_P = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge\\DataForExamples\\Phosphorus"
+wd_P = "C:\\Users\\js4yd\\Desktop\\TestEnGauge\\BaismanAndGwynnsFalls\\Phosphorus"
+#wd_P = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\EnGauge\\EnGauge\\DataForExamples\\Phosphorus"
 #wd_P = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\USGSGauges\\Phosphorus'
 
 #Water Chemistry from non-EnGauge Datasets
-dir_WChem = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\WaterChemistry"
+dir_WChem = "C:\\Users\\js4yd\\Desktop\\TestEnGauge\\BaismanAndGwynnsFalls"
+#dir_WChem = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\WaterChemistry"
+dir_WChemData = paste0(dir_EnGauge, "\\DataForExamples\\BES_GF_BR_SL_Data\\BES_WaterChemistry")
+#dir_WChemData = dirWChem
+
 #Synoptic Water Chemistry
-dir_SynWChem_Kenworth = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\WaterChemistry\\BARN_Synoptic\\WaterChemical_Kenworth_01-02"
-dir_SynWChem_Smith = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\WaterChemistry\\BARN_Synoptic\\WaterChemical_Smith_06-07"
+dir_SynWChem_Kenworth = paste0(dir_WChemData, "\\BARN_Synoptic\\WaterChemical_Kenworth_01-02")
+dir_SynWChem_Smith = paste0(dir_WChemData, "\\BARN_Synoptic\\WaterChemical_Smith_06-07")
+
+#Baisman Run and Pond Branch Main Directory
+wd_BRPOBR = "C:\\Users\\js4yd\\Desktop\\TestEnGauge\\BaismanAndGwynnsFalls\\BR&POBR"
+#wd_BRPOBR = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR"
 
 #WRTDS Interpolation Table Directory
-wd_WRTDS_BARN = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\WRTDS'
-wd_WRTDS_POBR = 'C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\WRTDS\\POBR'
+wd_WRTDS_BARN = paste0(wd_BRPOBR, '\\WRTDS')
+wd_WRTDS_BARN_INFO = paste0(dir_EnGauge, "\\DataForExamples\\BES_GF_BR_SL_Data\\BES_WaterChemistry")
+#wd_WRTDS_BARN_INFO = paste0(wd_BRPOBR, '\\WRTDS')
+wd_WRTDS_POBR = paste0(wd_WRTDS_BARN, '\\POBR')
+wd_WRTDS_POBR_INFO = paste0(dir_EnGauge, "\\DataForExamples\\BES_GF_BR_SL_Data\\BES_WaterChemistry")
+#wd_WRTDS_POBR_INFO = paste0(wd_WRTDS_BARN, '\\POBR')
 
 #RHESSys Observation File Directory
-wd_RHESSysObs_BARN = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs"
-wd_RHESSysObs_POBR = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\obs\\POBR\\"
+wd_RHESSysObs_BARN = paste0(wd_BRPOBR, "\\RHESSysFilePreparation\\obs")
+wd_RHESSysObs_POBR = paste0(wd_RHESSysObs_BARN, "\\POBR")
 
 #Precipitation
-dir_precip = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\Precipitation"
+dir_precip = "C:\\Users\\js4yd\\Desktop\\TestEnGauge\\BaismanAndGwynnsFalls\\Precipitation"
+#dir_precip = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\Precipitation"
+dir_precipData = paste0(dir_EnGauge, "\\DataForExamples\\BES_GF_BR_SL_Data\\BES_Precipitation")
+#dir_precipData = dir_precip
+
 dir_Nexrad = paste0(dir_precip, '/', "BES_Nexrad")
 
 #Streams Shapefile
 dir_streams = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\NHD_H_Maryland_State_Shape\\Shape"
 
-#RHESSys Climate Files
-wd_clim = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\RHESSysFilePreparation\\clim"
+#RHESSys Climate File Directory
+wd_clim = paste0(wd_BRPOBR, "\\RHESSysFilePreparation\\clim")
 #Laurence Lin's climate files
-wd_LinData = "C:\\Users\\jsmif\\OneDrive - University of Virginia\\JDS_DesktopFiles_13Feb2020\\rhessys30m_Pond\\clim"
+#wd_LinData = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\JDS_DesktopFiles_13Feb2020\\rhessys30m_Pond\\clim"
 
-#Baisman Run and Pond Branch Main Directory
-wd_BRPOBR = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR"
+#Worldfile directory
+dir_worldfile = "C:\\Users\\js4yd\\Desktop\\TestEnGauge\\BaismanAndGwynnsFalls\\BR&POBR"
+#dir_worldfile = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\SARunReferenceData\\Run0\\worldfiles"
 
 #Set input filenames----
 #Region of interest shapefile name
@@ -112,11 +133,11 @@ f_BaismanImperviousFrac = "ImperviousFraction.tiff"
 #Baisman Slopes
 f_BaismanSlope = "slopedem30m.tif"
 #Laurence Lin Datasets
-f_LinRain = "Oregon.rain"
-f_LinTmax = "Oregon.tmax"
-f_LinTmin = "Oregon.tmin"
+#f_LinRain = "Oregon.rain"
+#f_LinTmax = "Oregon.tmax"
+#f_LinTmin = "Oregon.tmin"
 #Baisman Worldfile
-f_worldfile = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\SARunReferenceData\\Run0\\worldfiles\\worldfile.csv"
+f_worldfile = "worldfile.csv"
 
 #Set output filenames----
 #all chemical data as lists by site
@@ -221,6 +242,12 @@ pCRS = '+init=epsg:26918'
 #Define a buffer to use for the ROI to download weather gauges, in map units
 ROIbuffPrecip = 20000
 
+#Set pixel resolution for raster data (m)----
+res = 30
+#Define a small buffer to use for the ROI, in pCRS map units----
+#For weather stations
+ROIbuffWeather = 5000
+
 #Set plot limits - set to NULL to ignore use----
 #BES TN Dates
 xlim_BESTN = c(as.POSIXct('2000-01-01'), as.POSIXct('2020-01-01'))
@@ -270,7 +297,7 @@ setwd('C:\\Users\\js4yd\\OneDrive - University of Virginia\\RHESSys_ParameterSA'
 source('WRTDS_modifiedFunctions.R')
 
 #Load information from EnGauge downloads and place into the project coordinate system----
-DEM = raster(x = paste0(dir_DEM_out, f_DEM_mosiac))
+DEM = raster(x = paste0(dir_DEM_out, '\\', f_DEM_mosiac))
 DEM = projectRaster(DEM, crs = CRS(pCRS))
 #Region of interest
 ROI = readOGR(dsn = dir_ROI, layer = f_ROI, stringsAsFactors = FALSE)
@@ -315,8 +342,8 @@ MDstreams = spTransform(MDstreams, CRS(pCRS))
 #Clip streams to the ROI
 MDstreams = MDstreams[ROI,]
 
-#BES Water Quality Gauge Data----
-setwd(dir_WChem)
+#Process BES Water Quality Gauge Data----
+setwd(dir_WChemData)
 #BES Water quality time series
 BES_WQ = read.csv(f_WChem, stringsAsFactors = FALSE)
 #BES gauge number reference table
@@ -1144,7 +1171,7 @@ DEM_DR = as(mask(DEM, DeadRun_Outlet), 'SpatialGridDataFrame')
 DEM_BR = as(mask(DEM, BaisRun_Outlet), 'SpatialGridDataFrame')
 DEM_SL = as(mask(DEM, ScottsLevel), 'SpatialGridDataFrame')
 #Plot curve
-setwd(dir_Sheds)
+setwd(dir_DEM_out)
 png('DR_HypsometricCurve.png', res = 300, units = 'in', width = 5, height = 5)
 par(mar =c(4,4,1,1))
 hypsometric(DEM_DR, col = 'black', main = 'Dead Run Hypsometric Curve')
@@ -1184,7 +1211,7 @@ dev.off()
 #       need to have matching timeseries to do this. Hydropairs function may work.
 #       can help the spatial prediction
 # Write water quality data to files----
-setwd(dir = dir_WChem)
+setwd(dir_WChem)
 list.save(x = BES_WQ_Sites, file = f_BESallchem, type = "YAML")
 setwd(wd_BESN)
 writeOGR(BES_WQ_Sites_locs_TN, dsn = getwd(), layer = f_Nsites, driver = "ESRI Shapefile")
@@ -1200,7 +1227,7 @@ list.save(x = BES_TP_m, file = f_BES_TPm, type = "YAML")
 list.save(x = BES_TP_a, file = f_BES_TPa, type = "YAML")
 
 #Weather Station Data----
-setwd(dir_precip)
+setwd(dir_precipData)
 # BES Precipitation Stations----
 BES_Precip = read.csv(file = f_Precip, stringsAsFactors = FALSE)
 
@@ -1269,6 +1296,7 @@ proj4string(BES_Precip_locs) = CRS('+init=epsg:4269')
 BES_Precip_locs = spTransform(BES_Precip_locs, CRS(pCRS))
 
 #Plot locations of precip gauges
+setwd(dir_precip)
 png('Precip_BES.png', res = 300, units = 'in', width = 6, height = 6)
 plot(ROI, lwd = 2)
 plot(DeadRun_Outlet, add = TRUE)
@@ -1517,7 +1545,7 @@ file.copy(from = user_cache_dir(appname = 'rnoaa', version = NULL, opinion = TRU
 setwd(wd_NOAA)
 
 #Select only the met stations in a 5 km buffer for now
-ROI_buffer_5km = buffer(ROI, width = 5000)
+ROI_buffer_5km = buffer(ROI, width = ROIbuffWeather)
 ROI_buffer_5km_WGS = spTransform(ROI_buffer_5km, CRS('+init=epsg:4326'))
 NOAAstations_5km_locs = AllNOAAstations[ROI_buffer_5km_WGS,]
 NOAAstations_5km_locs = spTransform(NOAAstations_5km_locs, CRS(pCRS))
@@ -1576,8 +1604,8 @@ MetStations_5km_TMIN = FillMissingDates_par(Dataset = NOAAstations_5km_locs[NOAA
 NOAAstations_5km_locs_TMIN = MetStations_5km_TMIN$Dataset
 MetStations_5km_TMIN = MetStations_5km_TMIN$StationList
 
-# Plot the met station timeseries----
-#  Precip----
+#  Plot the met station timeseries----
+#   Precip----
 for (i in 1:length(MetStations_5km_Precip)){
   png(paste0('Precip_Timeseries_', MetStations_5km_Precip[[i]]$id[1], '.png'), res = 300, units = 'in', width = 6, height = 6)
   plot(y = MetStations_5km_Precip[[i]]$prcp/10, x = as.Date(MetStations_5km_Precip[[i]]$date), type = 'o', pch = 16, cex = 0.3,
@@ -1614,7 +1642,7 @@ for (i in 1:length(MetStations_5km_Precip)){
 }
 rm(i)
 
-#  Max and Min Temperature----
+#   Max and Min Temperature----
 for (i in 1:length(MetStations_5km_TMAX)){
   png(paste0('Temp_Timeseries_', MetStations_5km_TMAX[[i]]$id[1], '.png'), res = 300, units = 'in', width = 6, height = 6)
   plot(y = MetStations_5km_TMAX[[i]]$tmax/10, x = as.Date(MetStations_5km_TMAX[[i]]$date), type = 'o', pch = 16, cex = 0.3,
@@ -1659,7 +1687,7 @@ for (i in 1:length(MetStations_5km_TMAX)){
 }
 rm(i)
 
-# Map of record lengths for precip and temperature stations----
+# Map of record lengths for BES precip stations----
 BES_Precip_locs$RecordLength = BES_Precip_locs$RecordLengthMinusGaps = NA
 for (i in 1:length(BES_PrecipList)){
   BES_Precip_locs$RecordLength[which(BES_Precip_locs$Gauge == BES_PrecipList[[i]]$Rain_Gauge_ID[1])] = as.numeric((max(BES_PrecipList[[i]]$SortDate) - min(BES_PrecipList[[i]]$SortDate)))
@@ -2377,26 +2405,26 @@ options(scipen = 0)
 #Create climate station timeseries for RHESSys runs----
 # Rainfall for Oregon Ridge gauge at Baisman Run----
 #Laurence Lin's Oregon Ridge gauge dataset
-OR_Lin = read.table(file = paste0(wd_LinData, "\\", f_LinRain), sep = '\t', stringsAsFactors = FALSE)
+#OR_Lin = read.table(file = paste0(wd_LinData, "\\", f_LinRain), sep = '\t', stringsAsFactors = FALSE)
 
-x = as.Date('2006-01-01')
-x = x + seq(0, nrow(OR_Lin)-2, 1)
-plot(x, OR_Lin[-1,], type ='l')
+#x = as.Date('2006-01-01')
+#x = x + seq(0, nrow(OR_Lin)-2, 1)
+#plot(x, OR_Lin[-1,], type ='l')
 
 #Compare Lin to BES OR precip
-plot(BES_Precip_Avg_d$`Oregon Ridge Park`$mean/1000, as.numeric(OR_Lin[-1,][1197:4377]), log = 'xy')
+#plot(BES_Precip_Avg_d$`Oregon Ridge Park`$mean/1000, as.numeric(OR_Lin[-1,][1197:4377]), log = 'xy')
 #Laurence used OR rain gauge 1, did not average the two gauges
-plot(BES_Precip_d$WXORDG_RG1$Precipitation_.mm./1000, as.numeric(OR_Lin[-1,][1197:4377]), log = 'xy')
+#plot(BES_Precip_d$WXORDG_RG1$Precipitation_.mm./1000, as.numeric(OR_Lin[-1,][1197:4377]), log = 'xy')
 
 #Compare Lin to MD Science Center USW00093784
-plot(MetStations_5km$USW00093784[2742:3937,]$prcp/10000, as.numeric(OR_Lin[-1,][1:1196]), log = 'xy')
+#plot(MetStations_5km$USW00093784[2742:3937,]$prcp/10000, as.numeric(OR_Lin[-1,][1:1196]), log = 'xy')
 
 #Compare Lin to BALTIMORE WASH INTL AP USW00093721
 BWI = meteo_tidy_ghcnd(stationid = 'USW00093721', var = 'all', keep_flags = TRUE)
-BWI_LinDateStart = which(BWI$date == '2006-01-01')
-BWI_LinDateEnd = which(BWI$date == max(x))
-plot(BWI[BWI_LinDateStart:BWI_LinDateEnd,]$prcp/10000, as.numeric(OR_Lin[-1,][1:1196]), log = 'xy')
-rm(x)
+#BWI_LinDateStart = which(BWI$date == '2006-01-01')
+#BWI_LinDateEnd = which(BWI$date == max(x))
+#plot(BWI[BWI_LinDateStart:BWI_LinDateEnd,]$prcp/10000, as.numeric(OR_Lin[-1,]), log = 'xy')
+#rm(x)
 
 #Compare BWI and MD Sci Center
 BWI_CalDateStart = which(BWI$date == CalEarliestDate)
@@ -2443,7 +2471,6 @@ lines(y = c(.0254*1000,.0254*1000), x = c(0,150))
 BES_Precip_Avg_d$`Oregon Ridge Park`$Selected = BES_Precip_Avg_d$`Oregon Ridge Park`$mean
 BES_Precip_Avg_d$`Oregon Ridge Park`$Selected[which(abs(BES_Precip_Avg_d$`Oregon Ridge Park`$GaugeDiff) > 20)] = apply(X = rbind(BES_Precip_Avg_d$`Oregon Ridge Park`$P_WXORDG_RG1[which(abs(BES_Precip_Avg_d$`Oregon Ridge Park`$GaugeDiff) > 20)], 
                                                                                                                                  BES_Precip_Avg_d$`Oregon Ridge Park`$P_WXORDG_RG2[which(abs(BES_Precip_Avg_d$`Oregon Ridge Park`$GaugeDiff) > 20)]), MARGIN = 2, FUN = max)
-
 #Check the NA rain dates with the MD Science Center precip. It's possible that some of these NA dates were days that the gauges did not record.
 ORGauge_NADates = BES_Precip_Avg_d$`Oregon Ridge Park`$SortDate[which(is.na(BES_Precip_Avg_d$`Oregon Ridge Park`$Selected))]
 plot(MetStations_5km$USW00093784[MDSci_ORStartDate:MDSci_OREndDate,]$date[MetStations_5km$USW00093784[MDSci_ORStartDate:MDSci_OREndDate,]$date %in% ORGauge_NADates],
@@ -2488,25 +2515,25 @@ options(scipen = 0)
 
 # Temperature min and max from MD Science Center and BWI Airport ----
 #Laurence's dataset
-OR_Lin_tmin = read.table(file = paste0(wd_LinData, '\\', f_LinTmin), sep = '\t', stringsAsFactors = FALSE)
-OR_Lin_tmax = read.table(file = paste0(wd_LinData, '\\', f_LinTmax), sep = '\t', stringsAsFactors = FALSE)
+#OR_Lin_tmin = read.table(file = paste0(wd_LinData, '\\', f_LinTmin), sep = '\t', stringsAsFactors = FALSE)
+#OR_Lin_tmax = read.table(file = paste0(wd_LinData, '\\', f_LinTmax), sep = '\t', stringsAsFactors = FALSE)
 
-x = as.Date('1996-04-01')
-x = x + seq(0, nrow(OR_Lin_tmin)-2, 1)
-plot(x, as.numeric(OR_Lin_tmin[-1,]), type ='l', col = 'blue', ylim = c(-20,50), xlab = 'Years', ylab = expression(paste('Temperature (',degree,'C)')))
-par(new=TRUE)
-plot(x, as.numeric(OR_Lin_tmax[-1,]), type ='l', col = 'red', ylim = c(-20,50), axes=FALSE, xlab = '', ylab = '')
+#x = as.Date('1996-04-01')
+#x = x + seq(0, nrow(OR_Lin_tmin)-2, 1)
+#plot(x, as.numeric(OR_Lin_tmin[-1,]), type ='l', col = 'blue', ylim = c(-20,50), xlab = 'Years', ylab = expression(paste('Temperature (',degree,'C)')))
+#par(new=TRUE)
+#plot(x, as.numeric(OR_Lin_tmax[-1,]), type ='l', col = 'red', ylim = c(-20,50), axes=FALSE, xlab = '', ylab = '')
 
 #Compare Lin to MD Science Center USW00093784
-plot(MetStations_5km$USW00093784[MDSci_CalDateStart:(MDSci_CalDateStart+6697),]$tmin/10, as.numeric(OR_Lin_tmin[-1,][1324:(nrow(OR_Lin_tmin)-1)]))
-plot(MetStations_5km$USW00093784[MDSci_CalDateStart:(MDSci_CalDateStart+6697),]$tmax/10, as.numeric(OR_Lin_tmax[-1,][1324:(nrow(OR_Lin_tmin)-1)]))
+#plot(MetStations_5km$USW00093784[MDSci_CalDateStart:(MDSci_CalDateStart+6697),]$tmin/10, as.numeric(OR_Lin_tmin[-1,][1324:(nrow(OR_Lin_tmin)-1)]))
+#plot(MetStations_5km$USW00093784[MDSci_CalDateStart:(MDSci_CalDateStart+6697),]$tmax/10, as.numeric(OR_Lin_tmax[-1,][1324:(nrow(OR_Lin_tmin)-1)]))
 
 #Compare Lin to BALTIMORE WASH INTL AP USW00093721
 #Laurence used BWI
-plot(BWI[20730:(20730+8020),]$tmin/10, as.numeric(OR_Lin_tmin[-1,]))
-plot(BWI[BWI_CalDateStart:(BWI_CalDateStart+6697),]$tmin/10, as.numeric(OR_Lin_tmin[-1,][1324:(nrow(OR_Lin_tmin)-1)]))
-plot(BWI[20730:(20730+8020),]$tmax/10, as.numeric(OR_Lin_tmax[-1,]))
-plot(BWI[(BWI_CalDateStart):(BWI_CalDateStart+6697),]$tmax/10, as.numeric(OR_Lin_tmax[-1,][1324:(nrow(OR_Lin_tmax)-1)]))
+#plot(BWI[20730:(20730+8020),]$tmin/10, as.numeric(OR_Lin_tmin[-1,]))
+#plot(BWI[BWI_CalDateStart:(BWI_CalDateStart+6697),]$tmin/10, as.numeric(OR_Lin_tmin[-1,][1324:(nrow(OR_Lin_tmin)-1)]))
+#plot(BWI[20730:(20730+8020),]$tmax/10, as.numeric(OR_Lin_tmax[-1,]))
+#plot(BWI[(BWI_CalDateStart):(BWI_CalDateStart+6697),]$tmax/10, as.numeric(OR_Lin_tmax[-1,][1324:(nrow(OR_Lin_tmax)-1)]))
 
 
 #Compare BWI and MD Sci Center
@@ -2630,9 +2657,9 @@ Daily = readUserDaily(filePath = wd_RHESSysObs_BARN, fileName = f_BaismanStreamf
 #Read the TN data
 Sample = readUserSample(filePath = wd_RHESSysObs_BARN, fileName = f_BaismanTNCal_WRTDS, hasHeader = TRUE, separator = '\t', verbose = FALSE)
 #Set the required information
-INFO = readUserInfo(filePath = wd_WRTDS_BARN, fileName = f_BaismanWRTDSInfo, interactive = FALSE)
+INFO = readUserInfo(filePath = wd_WRTDS_BARN_INFO, fileName = f_BaismanWRTDSInfo, interactive = FALSE)
 eList = mergeReport(INFO = INFO, Daily = Daily, Sample = Sample)
-saveResults(wd_WRTDS_BARN, eList)
+saveResults(paste0(wd_WRTDS_BARN, '\\'), eList)
 
 # Default WRTDS parameters----
 WRTDSmod = modelEstimation(eList = eList, windowY = 7, windowQ = 2, windowS = .5, minNumObs = 100, minNumUncen = 50, edgeAdjust = TRUE)
@@ -3271,7 +3298,7 @@ RepVal = matrix(0, nrow=length(IndReplace), ncol = 6)
 for (ir in 1:length(IndReplace)){
   #Make a new temporary interpolation table that does not include the missing cell in it
   TempColInd = ceiling(IndReplace[ir]/nrow(TabInt))
-  TempRowInd = IndReplace[ir] - nrow(TabInt_QLQ)*(TempColInd-1)
+  TempRowInd = IndReplace[ir] - nrow(TabInt)*(TempColInd-1)
   
   #Check if this is the first column
   if (TempColInd == 1){
@@ -3694,7 +3721,7 @@ TabCosYear_QLQ = as.matrix(read.table(file = f_BaismanWRTDS_TabCosYear_QLQ, sep 
 TabLogErr_QLQ = as.matrix(read.table(file = f_BaismanWRTDS_TabLogErr_QLQ, sep = '\t', header = TRUE, check.names = FALSE))
 TabLogQ2_QLQ = as.matrix(read.table(file = f_BaismanWRTDS_TabLogQ2_QLQ, sep = '\t', header = TRUE, check.names = FALSE))
 
-#WRTDS for hillslopes----
+#WRTDS Load Allocation for hillslopes----
 # Data: Kenworth 2001-2002----
 setwd(dir_SynWChem_Kenworth)
 K_Q = read.csv(file = f_KenworthWQ_Q, stringsAsFactors = FALSE)
@@ -4508,7 +4535,7 @@ Daily_POBR = readUserDaily(filePath = wd_RHESSysObs_POBR, fileName = f_POBRStrea
 #Read the TN data
 Sample_POBR = readUserSample(filePath = wd_RHESSysObs_POBR, fileName = f_POBRTNCal_WRTDS, hasHeader = TRUE, separator = '\t', verbose = FALSE)
 #Set the required information
-INFO_POBR = readUserInfo(filePath = wd_WRTDS_POBR, fileName = f_POBRWRTDSInfo, interactive = FALSE)
+INFO_POBR = readUserInfo(filePath = wd_WRTDS_POBR_INFO, fileName = f_POBRWRTDSInfo, interactive = FALSE)
 eList_POBR = mergeReport(INFO = INFO_POBR, Daily = Daily_POBR, Sample = Sample_POBR)
 
 #Make edits to include left-censored data. Nore two different thresholds.
@@ -4521,7 +4548,7 @@ Sample_POBR$ConcHigh = ifelse((as.Date(Sample_POBR$Date) < '2012-03-15') & (Samp
 eList_POBR$Sample = Sample_POBR
 eList_POBR = fixSampleFrame(eList_POBR)
 
-saveResults(savePath = wd_WRTDS_POBR, eList = eList_POBR)
+saveResults(savePath = paste0(wd_WRTDS_POBR, '\\'), eList = eList_POBR)
 
 #  Default WRTDS parameters----
 WRTDSmod_POBR = modelEstimation(eList = eList_POBR, windowY = 7, windowQ = 2, windowS = .5, minNumObs = 100, minNumUncen = 50, edgeAdjust = TRUE)
@@ -5305,9 +5332,7 @@ dev.off()
 # Make a map of these water quality sampling locations----
 setwd(dir_WChem)
 
-res = 30
-
-world = read.csv(f_worldfile, stringsAsFactors = FALSE)
+world = read.csv(paste0(dir_worldfile, '\\', f_worldfile), stringsAsFactors = FALSE)
 
 #Taking the unique patch IDs because strata can exist in more than one patch.
 Area.basin = length(unique(world$patchID))*res^2
@@ -5543,23 +5568,46 @@ impFrac = projectRaster(impFrac, crs = CRS(pCRS))
 #Add impervious fraction to worldfile information
 world$ImpFrac = raster::extract(x = impFrac, y = world)
 
-#Compute impervious area for Pond Branch upstream of water quality site
+#    Obtain upstream contributing patches for each sampling location----
+#An ArcGIS script was used to get the raster cells corresponding to the upstream areas for each sampling site.
+#For that script, the tif file extension did not want to be added. So, need to add that manually to the filename.
+#The nice thing about this file.rename function is that it will run and return FALSE if the task has already been completed.
+file.rename(from = paste0("C:\\Users\\js4yd\\Documents\\DEMtest\\SynopticSites\\", grep(grep(list.files("C:\\Users\\js4yd\\Documents\\DEMtest\\SynopticSites"), pattern = '.', fixed = TRUE, invert = TRUE, value = TRUE), pattern = '_', fixed = TRUE, value = TRUE)),
+            to = paste0("C:\\Users\\js4yd\\Documents\\DEMtest\\SynopticSites\\", grep(grep(list.files("C:\\Users\\js4yd\\Documents\\DEMtest\\SynopticSites"), pattern = '.', fixed = TRUE, invert = TRUE, value = TRUE), pattern = '_', fixed = TRUE, value = TRUE), '.tif'))
+
+#    Add patch identifiers for each sampling site to the world dataframe, one column for each site----
+setwd(wd_BESN)
+fs = grep(grep(list.files("C:\\Users\\js4yd\\Documents\\DEMtest\\SynopticSites"), pattern = '.tif', fixed = TRUE, value = TRUE), pattern = '_', fixed = TRUE, value = TRUE)
+for (i in 1:length(fs)){
+  temp = raster::extract(x = projectRaster(raster(x = paste0("C:\\Users\\js4yd\\Documents\\DEMtest\\SynopticSites\\", fs[i])), crs = pCRS), y = world)
+  temp[!is.na(temp)] = 1
+  temp = as.data.frame(temp)
+  colnames(temp) = strsplit(fs[i], split = '.tif', fixed = TRUE)
+  world@data = cbind(world@data, temp)
+  
+  #Create simple maps of the contributing areas for these sampling locations
+  png(paste0('ECM_ContributingAreas_', strsplit(fs[i], split = '.', fixed = TRUE)[[1]][1], '.png'), res = 200, height = 5, width = 5, units = 'in')
+  plot(BaisRun_Outlet)
+  plot(world[which(world@data[colnames(temp)] == 1),], add = T, pch = 15)
+  dev.off()
+}
+rm(i,temp, fs)
+
+#    Compute impervious area for Pond Branch upstream of water quality site----
 AreaImp_K2S = 0
 Area_K2S = length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_6 == 1))*res^2
 for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_6 == 1))){
   AreaImp_K2S = AreaImp_K2S + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$GK_6 == 1)[i]]*res^2
 }
 rm(i)
-#Will treat this as all undeveloped land because fraction impervious is 7e-5.
-AreaImp_K2S = 0
 
-#Compute the impervious area of each hillslope and for the basin
+#    Compute the impervious area of each hillslope and for the basin----
 Area.basin_imp = 0
 for (i in 1:length(unique(world$patchID))){
   Area.basin_imp = Area.basin_imp + world$ImpFrac[which(duplicated(world$patchID) == FALSE)[i]]*res^2
 }
 #Correct for Pond Branch impervious correction
-Area.basin_imp = Area.basin_imp - 28
+Area.basin_imp = Area.basin_imp - AreaImp_K2S
 Area.basin_imp/Area.basin #5.1% impervious
 
 Area.Hills = cbind(Area.Hills, rep(0, nrow(Area.Hills)))
@@ -5570,14 +5618,18 @@ for (h in 1:length(uhills)){
   }
 }
 #Correct for Pond Branch in Hillslope 4
-Area.Hills[4,3] = Area.Hills[4,3] - 28
+Area.Hills[4,3] = Area.Hills[4,3] - AreaImp_K2S
 
 #Add fraction of impervious surface to the dataset
 Area.Hills = cbind(Area.Hills, Area.Hills[,3]/Area.Hills[,2])
 
-#Estimate the Pond Branch "Undeveloped" model
+#    Estimate the Pond Branch "Undeveloped" model----
+#Will treat the Pond Branch upstream of gauge as all undeveloped land because fraction impervious is 7e-5.
 #Fixme: neglecting the 28 m^2 of Pond Branch Hillslope 4 that is developed here.
 # Also neglecting that the streamflow was measured slightly upstream of water quality.
+AreaImp_K2S = 0
+
+#     Method 1: Using quantiles from WRTDS----
 EC_Undev05 = POBR_AllDates_PredTN$Load05/Area_K2S
 EC_Undev = POBR_AllDates_PredTN$MedLoad/Area_K2S
 EC_Undev95 = POBR_AllDates_PredTN$Load95/Area_K2S
@@ -5590,7 +5642,57 @@ EC_DevQLQ05 = (BARN_PredTN$Load05QLQ - EC_Undev05*sum(Area.Hills[,2] - Area.Hill
 EC_DevQLQ = (BARN_PredTN$MedLoadQLQ - EC_Undev*sum(Area.Hills[,2] - Area.Hills[,3]))/sum(Area.Hills[,3])
 EC_DevQLQ95 = (BARN_PredTN$Load95QLQ - EC_Undev95*sum(Area.Hills[,2] - Area.Hills[,3]))/sum(Area.Hills[,3])
 
-#Trying new approach that uses simulation to get quantiles:
+#There are some negative values, so maybe this can be attributed to the in-stream losses. Plot dates that these happen
+plot(y = EC_Dev05, x = Dates_POBR_AllDates, ylim = c(-0.0005, .007), xlim = c(10500, 16500))
+par(new = TRUE)
+plot(y = EC_Dev05[EC_Dev05 < 0], x = Dates_POBR_AllDates[EC_Dev05 < 0], ylim = c(-0.0005, .007), xlim = c(10500, 16500), col = 'red')
+
+plot(y = EC_Dev, x = Dates_POBR_AllDates, ylim = c(-0.0005, .007), xlim = c(10500, 16500))
+par(new = TRUE)
+plot(y = EC_Dev[EC_Dev < 0], x = Dates_POBR_AllDates[EC_Dev < 0], ylim = c(-0.0005, .007), xlim = c(10500, 16500), col = 'red')
+
+plot(y = EC_Dev95, x = Dates_POBR_AllDates, ylim = c(-0.005, .01), xlim = c(10500, 16500))
+par(new = TRUE)
+plot(y = EC_Dev95[EC_Dev95 < 0], x = Dates_POBR_AllDates[EC_Dev95 < 0], ylim = c(-0.005, .01), xlim = c(10500, 16500), col = 'red')
+
+plot(y = EC_DevQLQ05, x = Dates_POBR_AllDates, ylim = c(-0.0005, .007), xlim = c(10500, 16500))
+par(new = TRUE)
+plot(y = EC_DevQLQ05[EC_DevQLQ05 < 0], x = Dates_POBR_AllDates[EC_DevQLQ05 < 0], ylim = c(-0.0005, .007), xlim = c(10500, 16500), col = 'red')
+
+plot(y = EC_DevQLQ, x = Dates_POBR_AllDates, ylim = c(-0.0005, .0035), xlim = c(10500, 16500))
+par(new = TRUE)
+plot(y = EC_DevQLQ[EC_DevQLQ < 0], x = Dates_POBR_AllDates[EC_DevQLQ < 0], ylim = c(-0.0005, .0035), xlim = c(10500, 16500), col = 'red')
+
+#Many negative values for 95th percentile. Probably means that this is not physically realistic.
+plot(y = EC_DevQLQ95, x = Dates_POBR_AllDates, ylim = c(-0.005, .01), xlim = c(10500, 16500))
+par(new = TRUE)
+plot(y = EC_DevQLQ95[EC_DevQLQ95 < 0], x = Dates_POBR_AllDates[EC_DevQLQ95 < 0], ylim = c(-0.005, .01), xlim = c(10500, 16500), col = 'red')
+
+#Also mostly during the drought of 2002 and 2007. 2 are during high flows at Pond Branch
+Flows_POBR_AllDates[EC_Dev05 < 0]
+Dates_POBR_AllDates[EC_Dev05 < 0]
+Flows_POBR_AllDates[EC_Dev < 0]
+Dates_POBR_AllDates[EC_Dev < 0]
+Flows_POBR_AllDates[EC_DevQLQ05 < 0]
+Dates_POBR_AllDates[EC_DevQLQ05 < 0]
+Flows_POBR_AllDates[EC_DevQLQ < 0]
+Dates_POBR_AllDates[EC_DevQLQ < 0]
+
+#These are basically every low flow day < 0.5 cfs. Some higher flow days, too.
+Flows_POBR_AllDates[EC_Dev95 < 0]
+Dates_POBR_AllDates[EC_Dev95 < 0]
+Flows_POBR_AllDates[EC_DevQLQ95 < 0]
+Dates_POBR_AllDates[EC_DevQLQ95 < 0]
+
+#Fixme: for now setting all of these dates equal to 0 and not adjusting POBR
+EC_Dev05[EC_Dev05 < 0] = 0
+EC_Dev[EC_Dev < 0] = 0
+EC_Dev95[EC_Dev95 < 0] = 0
+EC_DevQLQ05[EC_DevQLQ05 < 0] = 0
+EC_DevQLQ[EC_DevQLQ < 0] = 0
+EC_DevQLQ95[EC_DevQLQ95 < 0] = 0
+
+#     Method 2: Using simulation to get quantiles and mean value----
 set.seed(3220)
 MCreps = 10000
 EC_UndevMat = EC_DevMat = EC_UndevMatQLQ = EC_DevMatQLQ = matrix(NA, nrow = length(Dates_POBR_AllDates), ncol = MCreps)
@@ -5652,57 +5754,8 @@ for (i in 1:nrow(EC_UndevMatQLQ)){
 }
 rm(e_temp, e_temp_bais, i, IndL0)
 
-#There are some negative values, so maybe this can be attributed to the in-stream losses. Plot dates that these happen
-plot(y = EC_Dev05, x = Dates_POBR_AllDates, ylim = c(-0.0005, .007), xlim = c(10500, 16500))
-par(new = TRUE)
-plot(y = EC_Dev05[EC_Dev05 < 0], x = Dates_POBR_AllDates[EC_Dev05 < 0], ylim = c(-0.0005, .007), xlim = c(10500, 16500), col = 'red')
-
-plot(y = EC_Dev, x = Dates_POBR_AllDates, ylim = c(-0.0005, .007), xlim = c(10500, 16500))
-par(new = TRUE)
-plot(y = EC_Dev[EC_Dev < 0], x = Dates_POBR_AllDates[EC_Dev < 0], ylim = c(-0.0005, .007), xlim = c(10500, 16500), col = 'red')
-
-plot(y = EC_Dev95, x = Dates_POBR_AllDates, ylim = c(-0.005, .01), xlim = c(10500, 16500))
-par(new = TRUE)
-plot(y = EC_Dev95[EC_Dev95 < 0], x = Dates_POBR_AllDates[EC_Dev95 < 0], ylim = c(-0.005, .01), xlim = c(10500, 16500), col = 'red')
-
-plot(y = EC_DevQLQ05, x = Dates_POBR_AllDates, ylim = c(-0.0005, .007), xlim = c(10500, 16500))
-par(new = TRUE)
-plot(y = EC_DevQLQ05[EC_DevQLQ05 < 0], x = Dates_POBR_AllDates[EC_DevQLQ05 < 0], ylim = c(-0.0005, .007), xlim = c(10500, 16500), col = 'red')
-
-plot(y = EC_DevQLQ, x = Dates_POBR_AllDates, ylim = c(-0.0005, .0035), xlim = c(10500, 16500))
-par(new = TRUE)
-plot(y = EC_DevQLQ[EC_DevQLQ < 0], x = Dates_POBR_AllDates[EC_DevQLQ < 0], ylim = c(-0.0005, .0035), xlim = c(10500, 16500), col = 'red')
-
-#Many negative values for 95th percentile. Probably means that this is not physically realistic.
-plot(y = EC_DevQLQ95, x = Dates_POBR_AllDates, ylim = c(-0.005, .01), xlim = c(10500, 16500))
-par(new = TRUE)
-plot(y = EC_DevQLQ95[EC_DevQLQ95 < 0], x = Dates_POBR_AllDates[EC_DevQLQ95 < 0], ylim = c(-0.005, .01), xlim = c(10500, 16500), col = 'red')
-
-#Also mostly during the drought of 2002 and 2007. 2 are during high flows at Pond Branch
-Flows_POBR_AllDates[EC_Dev05 < 0]
-Dates_POBR_AllDates[EC_Dev05 < 0]
-Flows_POBR_AllDates[EC_Dev < 0]
-Dates_POBR_AllDates[EC_Dev < 0]
-Flows_POBR_AllDates[EC_DevQLQ05 < 0]
-Dates_POBR_AllDates[EC_DevQLQ05 < 0]
-Flows_POBR_AllDates[EC_DevQLQ < 0]
-Dates_POBR_AllDates[EC_DevQLQ < 0]
-
-#These are basically every low flow day < 0.5 cfs. Some higher flow days, too.
-Flows_POBR_AllDates[EC_Dev95 < 0]
-Dates_POBR_AllDates[EC_Dev95 < 0]
-Flows_POBR_AllDates[EC_DevQLQ95 < 0]
-Dates_POBR_AllDates[EC_DevQLQ95 < 0]
-
-#Fixme: for now setting all of these dates equal to 0 and not adjusting POBR
-EC_Dev05[EC_Dev05 < 0] = 0
-EC_Dev[EC_Dev < 0] = 0
-EC_Dev95[EC_Dev95 < 0] = 0
-EC_DevQLQ05[EC_DevQLQ05 < 0] = 0
-EC_DevQLQ[EC_DevQLQ < 0] = 0
-EC_DevQLQ95[EC_DevQLQ95 < 0] = 0
-
-#Look at fit of model to Pond Branch and Baisman
+#    Pond Branch Load estimation for both methods----
+#Method 1
 Load_ECM_Pond05 = EC_Undev05*Area_K2S + EC_Dev05*AreaImp_K2S
 Load_ECM_Pond = EC_Undev*Area_K2S + EC_Dev*AreaImp_K2S
 Load_ECM_Pond95 = EC_Undev95*Area_K2S + EC_Dev95*AreaImp_K2S
@@ -5710,6 +5763,7 @@ Load_ECM_Pond_QLQ05 = EC_Undev05*Area_K2S + EC_DevQLQ05*AreaImp_K2S
 Load_ECM_Pond_QLQ = EC_Undev*Area_K2S + EC_DevQLQ*AreaImp_K2S
 Load_ECM_Pond_QLQ95 = EC_Undev95*Area_K2S + EC_DevQLQ95*AreaImp_K2S
 
+#Method 2
 Load_ECM_Pond_Mat = EC_UndevMat*Area_K2S + EC_DevMat*AreaImp_K2S
 #Get mean and 5th, 95th percentiles
 Load_ECM_Pond_MatMean = apply(Load_ECM_Pond_Mat, MARGIN = 1, FUN = mean)
@@ -5722,6 +5776,7 @@ Load_ECM_Pond_MatQLQMean = apply(Load_ECM_Pond_MatQLQ, MARGIN = 1, FUN = mean)
 Load_ECM_Pond_MatQLQ05 = apply(Load_ECM_Pond_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
 Load_ECM_Pond_MatQLQ95 = apply(Load_ECM_Pond_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
 
+#    Look at fit of model to Pond Branch----
 plot(as.Date(Dates_POBR_AllDates), POBR_AllDates_PredTN$MedLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,50))
 par(new = TRUE)
 plot(as.Date(Dates_POBR_AllDates), Load_ECM_Pond, col = 'red', xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,50))
@@ -5773,6 +5828,7 @@ plot(POBR_AllDates_PredTN$TrueLoad/1000000*3600*24, Load_ECM_Pond_MatQLQMean/100
 arrows(POBR_AllDates_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Pond_MatQLQ05)/1000000*3600*24, POBR_AllDates_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Pond_MatQLQ95)/1000000*3600*24, length=0.05, angle=90, code=3)
 lines(c(0.000001,100), c(0.000001,100), col = 'red')
 
+#    Baisman Outlet Load estimation for both methods----
 Load_ECM_Baisman05 = EC_Undev05*(Area.basin - Area.basin_imp) + EC_Dev05*(Area.basin_imp)
 Load_ECM_Baisman = EC_Undev*(Area.basin - Area.basin_imp) + EC_Dev*(Area.basin_imp)
 Load_ECM_Baisman95 = EC_Undev95*(Area.basin - Area.basin_imp) + EC_Dev95*(Area.basin_imp)
@@ -5790,6 +5846,7 @@ Load_ECM_Baisman_MatQLQMean = apply(Load_ECM_Baisman_MatQLQ, MARGIN = 1, FUN = m
 Load_ECM_Baisman_MatQLQ05 = apply(Load_ECM_Baisman_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.05)
 Load_ECM_Baisman_MatQLQ95 = apply(Load_ECM_Baisman_MatQLQ, MARGIN = 1, FUN = quantile, probs = 0.95)
 
+#    Look at fit of model to Baisman----
 plot(as.Date(Dates_BARN), BARN_PredTN$TrueLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,1100))
 par(new = TRUE)
 plot(as.Date(Dates_BARN), Load_ECM_Baisman, col = 'red', xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,1100))
@@ -5798,6 +5855,22 @@ plot(as.Date(Dates_BARN), BARN_PredTN$TrueLoad, xlim = c(as.Date('1999-01-01'), 
 par(new = TRUE)
 plot(as.Date(Dates_BARN), Load_ECM_Baisman_QLQ, col = 'red', xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,1100))
 
+plot(as.Date(Dates_BARN), BARN_PredTN$MedLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,1100))
+par(new = TRUE)
+plot(as.Date(Dates_BARN), Load_ECM_Baisman, col = 'red', xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,1100))
+
+plot(BARN_PredTN$MedLoad, Load_ECM_Baisman,
+     ylim = c(0,1100), xlim = c(0,1100), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'Baisman Outlet')
+lines(c(0,1.3), c(0,1.3))
+
+plot(BARN_PredTN$MedLoadQLQ, Load_ECM_Baisman_QLQ,
+     ylim = c(0,1100), xlim = c(0,1100), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'Baisman Outlet')
+lines(c(0,1.3), c(0,1.3))
+
+#Check on method - some sites set to 0, so this will fail.
+if(cor(round(Load_ECM_Baisman,7), round(BARN_PredTN$MedLoad,7)) != 1){
+  print('method producing correlation != 1')
+}
 #Load in kg/d
 plot(as.Date(Dates_BARN), BARN_PredTN$TrueLoad/1000000*3600*24, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,100))
 par(new = TRUE)
@@ -5831,56 +5904,26 @@ plot(BARN_PredTN$TrueLoad/1000000*3600*24, Load_ECM_Baisman_MatQLQMean/1000000*3
 arrows(BARN_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Baisman_MatQLQ05)/1000000*3600*24, BARN_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Baisman_MatQLQ95)/1000000*3600*24, length=0.05, angle=90, code=3)
 lines(c(0.000001,100), c(0.000001,100), col = 'red')
 
-#Pond and Baisman on same scale
+#    Pond and Baisman on same scale----
+setwd(wd_BESN)
+png('ECMload_BARN_POBR.png', res = 300, height = 5, width = 10, units = 'in')
+layout(rbind(c(1,2)))
 plot(POBR_AllDates_PredTN$TrueLoad/1000000*3600*24, Load_ECM_Pond_MatMean/1000000*3600*24,
      ylim = c(0.00001,1000), xlim = c(0.00001,1000), 
-     xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'Pond Branch Outlet', log = 'xy')
+     xlab = 'True TN Load (kg/d)', ylab = 'ECM Predicted TN Load (kg/d)', main = 'Pond Branch Outlet', log = 'xy')
 arrows(POBR_AllDates_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Pond_Mat05)/1000000*3600*24, POBR_AllDates_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Pond_Mat95)/1000000*3600*24, length=0.05, angle=90, code=3)
 lines(c(0.000001,100), c(0.000001,100), col = 'red')
 
 plot(BARN_PredTN$TrueLoad/1000000*3600*24, Load_ECM_Baisman_MatQLQMean/1000000*3600*24, log = 'xy',
      ylim = c(0.00001,1000), xlim = c(0.00001,1000), 
-     xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'Baisman Outlet')
+     xlab = 'True TN Load (kg/d)', ylab = 'ECM Predicted TN Load (kg/d)', main = 'Baisman Outlet')
 arrows(BARN_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Baisman_MatQLQ05)/1000000*3600*24, BARN_PredTN$TrueLoad/1000000*3600*24, (Load_ECM_Baisman_MatQLQ95)/1000000*3600*24, length=0.05, angle=90, code=3)
 lines(c(0.000001,100), c(0.000001,100), col = 'red')
+dev.off()
 
 #cor(BARN_PredTN$TrueLoad, Load_ECM_Baisman)
 
-plot(as.Date(Dates_BARN), BARN_PredTN$MedLoad, xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,1100))
-par(new = TRUE)
-plot(as.Date(Dates_BARN), Load_ECM_Baisman, col = 'red', xlim = c(as.Date('1999-01-01'), as.Date('2014-01-01')), ylim = c(0,1100))
-
-plot(BARN_PredTN$MedLoad, Load_ECM_Baisman,
-     ylim = c(0,1100), xlim = c(0,1100), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'Baisman Outlet')
-lines(c(0,1.3), c(0,1.3))
-
-plot(BARN_PredTN$MedLoadQLQ, Load_ECM_Baisman_QLQ,
-     ylim = c(0,1100), xlim = c(0,1100), xlab = 'True TN Load', ylab = 'ECM Predicted TN Load', main = 'Baisman Outlet')
-lines(c(0,1.3), c(0,1.3))
-
-#Check on method - some sites set to 0, so this will fail.
-if(cor(round(Load_ECM_Baisman,7), round(BARN_PredTN$MedLoad,7)) != 1){
-  print('method producing correlation != 1')
-}
-
 #  Compare models to where there are datasets----
-#   Obtain upstream contributing patches for each sampling location----
-#An ArcGIS script was used to get the raster cells corresponding to the upstream areas for each sampling site.
-#For that script, the tif file extension did not want to be added. So, need to add that manually to the filename.
-file.rename(from = paste0("C:\\Users\\js4yd\\Documents\\DEMtest\\SynopticSites\\", grep(grep(list.files("C:\\Users\\js4yd\\Documents\\DEMtest\\SynopticSites"), pattern = '.', fixed = TRUE, invert = TRUE, value = TRUE), pattern = '_', fixed = TRUE, value = TRUE)),
-            to = paste0("C:\\Users\\js4yd\\Documents\\DEMtest\\SynopticSites\\", grep(grep(list.files("C:\\Users\\js4yd\\Documents\\DEMtest\\SynopticSites"), pattern = '.', fixed = TRUE, invert = TRUE, value = TRUE), pattern = '_', fixed = TRUE, value = TRUE), '.tif'))
-            
-#    Add patch identifiers for each sampling site to the world dataframe, one column for each site----
-fs = grep(list.files("C:\\Users\\js4yd\\Documents\\DEMtest\\SynopticSites"), pattern = '.tif', fixed = TRUE, value = TRUE)
-for (i in 1:length(fs)){
-  temp = raster::extract(x = projectRaster(raster(x = paste0("C:\\Users\\js4yd\\Documents\\DEMtest\\SynopticSites\\", fs[i])), crs = pCRS), y = world)
-  temp[!is.na(temp)] = 1
-  temp = as.data.frame(temp)
-  colnames(temp) = strsplit(fs[i], split = '.tif', fixed = TRUE)
-  world@data = cbind(world@data, temp)
-}
-rm(i,temp,fs)
-
 #   BR3 as collected from above analysis----
 Load_ECM_BR305 = EC_Undev05*sum(Area.Hills[c(13,14),2]-Area.Hills[c(13,14),3]) + EC_Dev05*sum(Area.Hills[c(13,14),3])
 Load_ECM_BR3 = EC_Undev*sum(Area.Hills[c(13,14),2]-Area.Hills[c(13,14),3]) + EC_Dev*sum(Area.Hills[c(13,14),3])
@@ -6653,14 +6696,15 @@ dev.off()
 
 #    POBR K2 Synoptic----
 #Get the impervious surface area contributing to this location
-AreaImp_K2S = 0
-Area_K2S = length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_6 == 1))*res^2
-for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_6 == 1))){
-  AreaImp_K2S = AreaImp_K2S + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$GK_6 == 1)[i]]*res^2
-}
-rm(i)
+#This is same as used above for Pond Branch
+#AreaImp_K2S = 0
+#Area_K2S = length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_6 == 1))*res^2
+#for (i in 1:length(which(world[which(duplicated(world$patchID) == FALSE),]$GK_6 == 1))){
+#  AreaImp_K2S = AreaImp_K2S + world$ImpFrac[which(duplicated(world$patchID) == FALSE)][which(world[which(duplicated(world$patchID) == FALSE),]$GK_6 == 1)[i]]*res^2
+#}
+#rm(i)
 #Will treat this as all undeveloped land because fraction impervious is 7e-5.
-AreaImp_K2S = 0
+#AreaImp_K2S = 0
 
 #Observed data for this site
 POBRK2S_TN = K_TN[K_TN$Site == K_Sites@data$NAME[7],]
@@ -7294,12 +7338,10 @@ arrows(BR7K7_TrueLoad[as.Date(Dates_BR7K7) %in% as.Date(Dates_BARN)], (Load_ECM_
 lines(c(0,200), c(0,200), col ='red')
 dev.off()
 
-#   Make maps of the contributing areas for these sampling locations----
+#  Evaluate adding other normalizers to the ECM models----
+#   Population----
 
-# Evaluate adding other normalizers to the ECM models----
-#  Population----
-
-#  Slope gradient----
+#   Slope gradient----
 Slopes = raster(x = paste0(wd_BRPOBR, '\\', f_BaismanSlope))
 Slopes = projectRaster(Slopes, crs = CRS(pCRS))
 
@@ -7400,13 +7442,13 @@ lines(c(0,200), c(0,200), col ='red')
 dev.off()
 
 #extra plots----
-plot(POBR_PredTN_POBRWRTDS$MedLoad, POBR_PredTN_POBRWRTDS$TrueLoad, log = 'xy', xlim = c(0.001, 1000), ylim = c(0.001, 1000), xlab = 'Estimated TN Load (kg N/s)', ylab = 'True TN Load (kg N/s)')
-par(new = T)
-plot(POBR_PredTN_POBRWRTDS$MedLoad[POBR_PredTN_POBRWRTDS$LowTNLim == 1], POBR_PredTN_POBRWRTDS$TrueLoad[POBR_PredTN_POBRWRTDS$LowTNLim == 1], log = 'xy', xlim = c(0.001, 1000), ylim = c(0.001, 1000), col ='blue', xlab = '', ylab = '', axes = FALSE)
-par(new = T)
-plot(POBR_PredTN_POBRWRTDS$MedLoad[POBR_PredTN_POBRWRTDS$LowTNLim == 2], POBR_PredTN_POBRWRTDS$TrueLoad[POBR_PredTN_POBRWRTDS$LowTNLim == 2], log = 'xy', xlim = c(0.001, 1000), ylim = c(0.001, 1000), col = 'red', xlab = '', ylab = '', axes = FALSE)
-lines(c(0.00001,10000), c(0.00001,10000))
-legend('bottomright', title = 'Detection Limits', legend = c('0.01', '0.05'), pch = 1, col = c('blue', 'red'))
-
-plot(BARN_PredTN$MedLoad, BARN_PredTN$TrueLoad, log = 'xy', xlim = c(0.001, 1000), ylim = c(0.001, 1000), xlab = 'Estimated TN Load (kg N/s)', ylab = 'True TN Load (kg N/s)')
-lines(c(0.00001,10000), c(0.00001,10000))
+# plot(POBR_PredTN_POBRWRTDS$MedLoad, POBR_PredTN_POBRWRTDS$TrueLoad, log = 'xy', xlim = c(0.001, 1000), ylim = c(0.001, 1000), xlab = 'Estimated TN Load (kg N/s)', ylab = 'True TN Load (kg N/s)')
+# par(new = T)
+# plot(POBR_PredTN_POBRWRTDS$MedLoad[POBR_PredTN_POBRWRTDS$LowTNLim == 1], POBR_PredTN_POBRWRTDS$TrueLoad[POBR_PredTN_POBRWRTDS$LowTNLim == 1], log = 'xy', xlim = c(0.001, 1000), ylim = c(0.001, 1000), col ='blue', xlab = '', ylab = '', axes = FALSE)
+# par(new = T)
+# plot(POBR_PredTN_POBRWRTDS$MedLoad[POBR_PredTN_POBRWRTDS$LowTNLim == 2], POBR_PredTN_POBRWRTDS$TrueLoad[POBR_PredTN_POBRWRTDS$LowTNLim == 2], log = 'xy', xlim = c(0.001, 1000), ylim = c(0.001, 1000), col = 'red', xlab = '', ylab = '', axes = FALSE)
+# lines(c(0.00001,10000), c(0.00001,10000))
+# legend('bottomright', title = 'Detection Limits', legend = c('0.01', '0.05'), pch = 1, col = c('blue', 'red'))
+# 
+# plot(BARN_PredTN$MedLoad, BARN_PredTN$TrueLoad, log = 'xy', xlim = c(0.001, 1000), ylim = c(0.001, 1000), xlab = 'Estimated TN Load (kg N/s)', ylab = 'True TN Load (kg N/s)')
+# lines(c(0.00001,10000), c(0.00001,10000))
