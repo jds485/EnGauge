@@ -41,6 +41,7 @@ dir_WChemData = paste0(dir_EnGauge, "\\DataForExamples\\BES_GF_BR_SL_Data\\BES_W
 #Synoptic Water Chemistry
 dir_SynWChem_Kenworth = paste0(dir_WChemData, "\\BARN_Synoptic\\WaterChemical_Kenworth_01-02")
 dir_SynWChem_Smith = paste0(dir_WChemData, "\\BARN_Synoptic\\WaterChemical_Smith_06-07")
+dir_ContributingAreas = paste0(dir_WChemData, "\\BARN_Synoptic\\ContributingAreaSamplingSites")
 
 #Baisman Run and Pond Branch Main Directory
 wd_BRPOBR = "C:\\Users\\js4yd\\Desktop\\TestEnGauge\\BaismanAndGwynnsFalls\\BR&POBR"
@@ -67,7 +68,8 @@ dir_precipData = paste0(dir_EnGauge, "\\DataForExamples\\BES_GF_BR_SL_Data\\BES_
 dir_Nexrad = paste0(dir_precip, '/', "BES_Nexrad")
 
 #Streams Shapefile
-dir_streams = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\NHD_H_Maryland_State_Shape\\Shape"
+dir_streams = paste0(dir_EnGauge, "\\DataForExamples")
+#dir_streams = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\NHD_H_Maryland_State_Shape\\Shape"
 
 #RHESSys Climate File Directory
 wd_clim = paste0(wd_BRPOBR, "\\RHESSysFilePreparation\\clim")
@@ -127,7 +129,8 @@ f_USGS_GaugeMatch = 'Abbreviations_SampleRecordLengths.csv'
 f_Precip = 'BES_precipitation.csv'
 f_Precip_locs = 'BES_GaugeLocs.csv'
 #Stream shapefile
-f_streams = 'NHDFlowline'
+f_streams = 'MDstreams'
+#f_streams = 'NHDFlowline'
 #Baisman Impervious Fraction
 f_BaismanImperviousFrac = "ImperviousFraction.tiff"
 #Baisman Slopes
@@ -341,6 +344,8 @@ MDstreams = readOGR(dsn = getwd(), layer = f_streams, stringsAsFactors = FALSE)
 MDstreams = spTransform(MDstreams, CRS(pCRS))
 #Clip streams to the ROI
 MDstreams = MDstreams[ROI,]
+#Save new stream data
+#writeOGR(obj = MDstreams, dsn = dir_streams, layer = 'MDstreams', driver = 'ESRI Shapefile')
 
 #Process BES Water Quality Gauge Data----
 setwd(dir_WChemData)
@@ -5572,14 +5577,14 @@ world$ImpFrac = raster::extract(x = impFrac, y = world)
 #An ArcGIS script was used to get the raster cells corresponding to the upstream areas for each sampling site.
 #For that script, the tif file extension did not want to be added. So, need to add that manually to the filename.
 #The nice thing about this file.rename function is that it will run and return FALSE if the task has already been completed.
-file.rename(from = paste0("C:\\Users\\js4yd\\Documents\\DEMtest\\SynopticSites\\", grep(grep(list.files("C:\\Users\\js4yd\\Documents\\DEMtest\\SynopticSites"), pattern = '.', fixed = TRUE, invert = TRUE, value = TRUE), pattern = '_', fixed = TRUE, value = TRUE)),
-            to = paste0("C:\\Users\\js4yd\\Documents\\DEMtest\\SynopticSites\\", grep(grep(list.files("C:\\Users\\js4yd\\Documents\\DEMtest\\SynopticSites"), pattern = '.', fixed = TRUE, invert = TRUE, value = TRUE), pattern = '_', fixed = TRUE, value = TRUE), '.tif'))
+file.rename(from = paste0(dir_ContributingAreas, "\\", grep(grep(list.files(dir_ContributingAreas), pattern = '.', fixed = TRUE, invert = TRUE, value = TRUE), pattern = '_', fixed = TRUE, value = TRUE)),
+            to = paste0(dir_ContributingAreas, "\\", grep(grep(list.files(dir_ContributingAreas), pattern = '.', fixed = TRUE, invert = TRUE, value = TRUE), pattern = '_', fixed = TRUE, value = TRUE), '.tif'))
 
 #    Add patch identifiers for each sampling site to the world dataframe, one column for each site----
 setwd(wd_BESN)
-fs = grep(grep(list.files("C:\\Users\\js4yd\\Documents\\DEMtest\\SynopticSites"), pattern = '.tif', fixed = TRUE, value = TRUE), pattern = '_', fixed = TRUE, value = TRUE)
+fs = grep(grep(list.files(dir_ContributingAreas), pattern = '.tif', fixed = TRUE, value = TRUE), pattern = '_', fixed = TRUE, value = TRUE)
 for (i in 1:length(fs)){
-  temp = raster::extract(x = projectRaster(raster(x = paste0("C:\\Users\\js4yd\\Documents\\DEMtest\\SynopticSites\\", fs[i])), crs = pCRS), y = world)
+  temp = raster::extract(x = projectRaster(raster(x = paste0(dir_ContributingAreas, "\\", fs[i])), crs = pCRS), y = world)
   temp[!is.na(temp)] = 1
   temp = as.data.frame(temp)
   colnames(temp) = strsplit(fs[i], split = '.tif', fixed = TRUE)
