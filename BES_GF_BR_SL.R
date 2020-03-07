@@ -6829,7 +6829,7 @@ lines(c(0,200), c(0,200), col ='red')
 dev.off()
 
 #  Evaluate adding other normalizers to the ECM models----
-#   Population----
+#   Fixme: Population----
 
 #   Slope gradient----
 Slopes = raster(x = paste0(dir_worldfile, '\\', f_BaismanSlope))
@@ -6936,15 +6936,15 @@ write.csv(x = EC_UndevMat, file = f_EC_Undev, row.names = FALSE)
 write.csv(x = EC_DevMat, file = f_EC_Dev, row.names = FALSE)
 
 #Save updated site water chem data----
-writeOGR(obj = K_Sites, dsn = dir_SynWChem_Kenworth, layer = f_KenworthSites_p, driver = "ESRI Shapefile")
+writeOGR(obj = K_Sites, dsn = wd_BESN, layer = f_KenworthSites_p, driver = "ESRI Shapefile")
 write.csv(x = K_Q, file = f_KenworthWQ_Q_p, row.names = FALSE)
 write.csv(x = K_TN, file = f_KenworthWQ_TN_p, row.names = FALSE)
-writeOGR(obj = S_Sites, dsn = dir_SynWChem_Smith, layer = f_SmithSites_p, driver = "ESRI Shapefile")
+writeOGR(obj = S_Sites, dsn = wd_BESN, layer = f_SmithSites_p, driver = "ESRI Shapefile")
 write.csv(x = S_Q, file = f_SmithWQ_Q_p, row.names = FALSE)
 write.csv(x = S_TN, file = f_SmithWQ_TN_p, row.names = FALSE)
 
-#Save updated worldfile csv
-writeOGR(obj = world, dsn = dir_worldfile, layer = f_worldfile_p, driver = "ESRI Shapefile")
+#Save updated worldfile csv----
+writeOGR(obj = world, dsn = wd_BRPOBR, layer = f_worldfile_p, driver = "ESRI Shapefile")
 
 #extra plots----
 # plot(POBR_PredTN_POBRWRTDS$MedLoad, POBR_PredTN_POBRWRTDS$TrueLoad, log = 'xy', xlim = c(0.001, 1000), ylim = c(0.001, 1000), xlab = 'Estimated TN Load (kg N/s)', ylab = 'True TN Load (kg N/s)')
