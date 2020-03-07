@@ -78,6 +78,15 @@ wd_clim = paste0(wd_BRPOBR, "\\RHESSysFilePreparation\\clim")
 dir_worldfile = paste0(dir_EnGauge, "\\DataForExamples\\BES_GF_BR_SL_Data\\BES_Worldfile")
 #dir_worldfile = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\SARunReferenceData\\Run0\\worldfiles"
 
+#Check for and make directories that are required to run the script----
+dir.create(path = dir_precip, showWarnings = FALSE, recursive = FALSE)
+dir.create(path = wd_BRPOBR, showWarnings = FALSE, recursive = FALSE)
+dir.create(path = wd_WRTDS_BARN, showWarnings = FALSE, recursive = FALSE)
+dir.create(path = wd_WRTDS_POBR, showWarnings = FALSE, recursive = FALSE)
+dir.create(path = wd_clim, showWarnings = FALSE, recursive = TRUE)
+dir.create(path = wd_RHESSysObs_BARN, showWarnings = FALSE, recursive = FALSE)
+dir.create(path = wd_RHESSysObs_POBR, showWarnings = FALSE, recursive = FALSE)
+
 #Set input filenames----
 #Region of interest shapefile name
 f_ROI = "BaismanGFMerge2"
