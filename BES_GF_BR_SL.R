@@ -65,8 +65,6 @@ dir_precip = "C:\\Users\\js4yd\\Desktop\\TestEnGauge\\BaismanAndGwynnsFalls\\Pre
 dir_precipData = paste0(dir_EnGauge, "\\DataForExamples\\BES_GF_BR_SL_Data\\BES_Precipitation")
 #dir_precipData = dir_precip
 
-dir_Nexrad = paste0(dir_precip, '/', "BES_Nexrad")
-
 #Streams Shapefile
 dir_streams = paste0(dir_EnGauge, "\\DataForExamples")
 #dir_streams = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\Hydrology\\NHD_H_Maryland_State_Shape\\Shape"
@@ -77,7 +75,7 @@ wd_clim = paste0(wd_BRPOBR, "\\RHESSysFilePreparation\\clim")
 #wd_LinData = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\JDS_DesktopFiles_13Feb2020\\rhessys30m_Pond\\clim"
 
 #Worldfile directory
-dir_worldfile = "C:\\Users\\js4yd\\Desktop\\TestEnGauge\\BaismanAndGwynnsFalls\\BR&POBR"
+dir_worldfile = paste0(dir_EnGauge, "\\DataForExamples\\BES_GF_BR_SL_Data\\BES_Worldfile")
 #dir_worldfile = "C:\\Users\\js4yd\\OneDrive - University of Virginia\\BES_Data\\BES_Data\\RHESSysFiles\\BR&POBR\\SARunReferenceData\\Run0\\worldfiles"
 
 #Set input filenames----
@@ -236,6 +234,19 @@ f_POBRWRTDS_TabSinYear = 'TabSinYear_POBRMod5_p4.txt'
 f_POBRWRTDS_TabCosYear = 'TabCosYear_POBRMod5_p4.txt'
 f_POBRWRTDS_TabLogErr = 'TabLogErr_POBRMod5_p5.txt'
 
+#Export coefficient timeseries matrices
+f_EC_Undev = "EC_Undev_Baisman.csv"
+f_EC_Dev = "EC_Dev_Baisman.csv"
+
+#Processed datasets
+f_worldfile_p = 'worldfile_processed'
+f_SmithWQ_TN_p = 'S_TN_Processed.csv'
+f_SmithWQ_Q_p = 'S_Q_Processed.csv'
+f_KenworthWQ_TN_p = 'K_TN_Processed.csv'
+f_KenworthWQ_Q_p = 'K_Q_Processed.csv'
+f_SmithSites_p = "SmithSites_Processed"
+f_KenworthSites_p = "KenworthSites_Processed"
+
 #Set project coordinate system----
 #This is the coordinate system that all data will be plotted and written in
 # It is not the coordinate system of your data (although it could be)
@@ -256,6 +267,9 @@ xlim_BESTN_Full = c(as.Date("1995-01-01"), as.Date("2010-01-01"))
 
 #Streamflow y axis limits
 ylim_SF = c(0, 7000)
+
+#Set number of Monte Carlo replicates for export coefficient model----
+MCreps = 10000
 
 #Load libraries----
 library(dataRetrieval)
@@ -5039,7 +5053,7 @@ Flows_POBR_AllDates[EC_DevQLQ < 0]
 #EC_Dev[EC_Dev < 0] = 0
 
 #   ECM based on impervious fraction of land (original input to RHESSys land use type)----
-impFrac = raster(x = paste0(wd_BRPOBR, '\\', f_BaismanImperviousFrac))
+impFrac = raster(x = paste0(dir_worldfile, '\\', f_BaismanImperviousFrac))
 impFrac = projectRaster(impFrac, crs = CRS(pCRS))
 
 #Add impervious fraction to worldfile information
@@ -5171,7 +5185,6 @@ EC_DevQLQ95[EC_DevQLQ95 < 0] = 0
 
 #     Method 2: Using simulation to get quantiles and mean value----
 set.seed(3220)
-MCreps = 10000
 EC_UndevMat = EC_DevMat = EC_UndevMatQLQ = EC_DevMatQLQ = matrix(NA, nrow = length(Dates_POBR_AllDates), ncol = MCreps)
 for (i in 1:nrow(EC_UndevMat)){
   #Get pond branch error for this day
@@ -6819,7 +6832,7 @@ dev.off()
 #   Population----
 
 #   Slope gradient----
-Slopes = raster(x = paste0(wd_BRPOBR, '\\', f_BaismanSlope))
+Slopes = raster(x = paste0(dir_worldfile, '\\', f_BaismanSlope))
 Slopes = projectRaster(Slopes, crs = CRS(pCRS))
 
 #Add impervious fraction to worldfile information
@@ -6918,7 +6931,20 @@ arrows(BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], (Load_ECM_
 lines(c(0,200), c(0,200), col ='red')
 dev.off()
 
-#Fixme: Save ECM Timeseries for undeveloped and developed land----
+#  Save ECM Timeseries for undeveloped and developed land----
+write.csv(x = EC_UndevMat, file = f_EC_Undev, row.names = FALSE)
+write.csv(x = EC_DevMat, file = f_EC_Dev, row.names = FALSE)
+
+#Save updated site water chem data----
+writeOGR(obj = K_Sites, dsn = dir_SynWChem_Kenworth, layer = f_KenworthSites_p, driver = "ESRI Shapefile")
+write.csv(x = K_Q, file = f_KenworthWQ_Q_p, row.names = FALSE)
+write.csv(x = K_TN, file = f_KenworthWQ_TN_p, row.names = FALSE)
+writeOGR(obj = S_Sites, dsn = dir_SynWChem_Smith, layer = f_SmithSites_p, driver = "ESRI Shapefile")
+write.csv(x = S_Q, file = f_SmithWQ_Q_p, row.names = FALSE)
+write.csv(x = S_TN, file = f_SmithWQ_TN_p, row.names = FALSE)
+
+#Save updated worldfile csv
+writeOGR(obj = world, dsn = dir_worldfile, layer = f_worldfile_p, driver = "ESRI Shapefile")
 
 #extra plots----
 # plot(POBR_PredTN_POBRWRTDS$MedLoad, POBR_PredTN_POBRWRTDS$TrueLoad, log = 'xy', xlim = c(0.001, 1000), ylim = c(0.001, 1000), xlab = 'Estimated TN Load (kg N/s)', ylab = 'True TN Load (kg N/s)')
