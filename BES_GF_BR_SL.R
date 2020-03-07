@@ -242,15 +242,13 @@ f_POBRWRTDS_TabLogErr = 'TabLogErr_POBRMod5_p5.txt'
 # EPSG codes from: https://spatialreference.org/ref/?page=2
 pCRS = '+init=epsg:26918'
 
-#Define a buffer to use for the ROI to download weather gauges, in map units
+#Define a buffer to use for the ROI to download weather gauges, in map units----
 ROIbuffPrecip = 20000
-
-#Set pixel resolution for raster data (m)----
-res = 30
-#Define a small buffer to use for the ROI, in pCRS map units----
 #For weather stations
 ROIbuffWeather = 5000
 
+#Set pixel resolution for raster data (m)----
+res = 30
 #Set plot limits - set to NULL to ignore use----
 #BES TN Dates
 xlim_BESTN = c(as.POSIXct('2000-01-01'), as.POSIXct('2020-01-01'))
@@ -1814,7 +1812,7 @@ BaisPix$Pix = seq(1, nrow(BaisPix@data), 1)
 
 scaleRange = c(1,nrow(BaisPix@data))
 scaleBy = 1
-Pal = colorRampPalette('red', 'orange', 'yellow', 'green', 'blue')
+Pal = colorRampPalette(c('red', 'orange', 'yellow', 'green', 'blue'))((scaleRange[2] - scaleRange[1])/scaleBy)
 
 # Map of which pixel is which----
 setwd(dir_Nexrad)
@@ -2594,11 +2592,10 @@ options(scipen = 0)
 
 # Elevation of BWI and MD Sci Center for RHESSys----
 #No lapse rate correction made for these stations. 
-#Fixme: hard coded numbers
 #MD Sci Center - 6.1 m
-NOAAstations_locs@data[886,]
+NOAAstations_locs@data[which(NOAAstations_locs@data$id == "USW00093784")[1],]
 #BWI - 47.5 m
-NOAAstations_locs@data[871,]
+NOAAstations_locs@data[which(NOAAstations_locs@data$id == "USW00093721")[1],]
 #BES Oregon Ridge: 178.22 according to Laurence. 60 m screen height, which has been changed to 6 m.
 #Using these elevations in calculations.
 
@@ -7445,6 +7442,8 @@ plot(BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], Load_ECM_BR5
 arrows(BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5Slp_MatQLQ05[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)]), BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], (Load_ECM_BR5K5Slp_MatQLQ95[as.Date(Dates_BARN) %in% as.Date(Dates_BR5K5)]), length=0.05, angle=90, code=3)
 lines(c(0,200), c(0,200), col ='red')
 dev.off()
+
+#Fixme: Save ECM Timeseries for undeveloped and developed land----
 
 #extra plots----
 # plot(POBR_PredTN_POBRWRTDS$MedLoad, POBR_PredTN_POBRWRTDS$TrueLoad, log = 'xy', xlim = c(0.001, 1000), ylim = c(0.001, 1000), xlab = 'Estimated TN Load (kg N/s)', ylab = 'True TN Load (kg N/s)')
