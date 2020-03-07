@@ -1,7 +1,7 @@
 # EnGauge README
 This is a repository for gathering Environmental Gauge data, processing that data, and doing basic exploratory (spatial & temporal) data analysis.
 
-The repository depends on several packages and functions developed by the USGS and NOAA to retreive data from government host servers. Significant processing is required to use some of these datasets for environmental modeling. This repository provides several functions to process datasets for this purpose.
+The repository depends on several packages and functions developed by the USGS and NOAA to retreive data from U.S. government host servers. Significant processing is required to use some of these datasets for environmental modeling. This repository provides several functions to process datasets for this purpose.
 
 A blog post describing the main functionality of this repository is available [here](https://waterprogramming.wordpress.com/2020/02/03/engauge-r-code-repository-for-environmental-gauge-data-acquisition-processing-and-visualization/)
 
@@ -11,7 +11,7 @@ It is likely that others have made similar functions to process these and other 
 ### Gauge datasets include:
 1. USGS streamflow from the NWIS portal
 2. EPA STORET, USGS, USDA and other water quality data via the water quality portal
-3. NOAA ACIS, GHCN weather station data
+3. NOAA ACIS, GHCN weather station data. This is a global dataset.
 
 ---
 ### USGS and NOAA R libraries include:
@@ -221,8 +221,8 @@ Hypsometric curves for DEMs
 ---
 ### Other Example Files:
 
-1. Method1Example_GFBR.R - example employing only the Method 1 streamflow and water chemistry (TN and TP) approaches to the Baltimore Ecosystem Study Long Term Ecological Research Site in Gwynns Falls and Baisman Run (GFBR)
-2. BES_GF_BR_SL.R - In development, data are not all available here. This is based on an earlier version of the main script. Example of loading the processed data for further analysis, using site water quality data (as opposed to Water Quality Portal Data), downloading weather station data, among other tasks.
+1. Method1Example_GFBR.R - example employing only the Method 1 streamflow and water chemistry (TN and TP) approaches to the Baltimore Ecosystem Study Long Term Ecological Research Site in Gwynns Falls and Baisman Run (GFBR). Estimated runtime is less than 1 hour. Estimated RAM is < 1 GB.
+2. BES_GF_BR_SL.R - Examples of loading the processed data output from Method1Example_GFBR.R for further analysis, processing site water quality data (instead of Water Quality Portal Data) and site precipitation data (instead of NOAA data) using the repository functions, and creating timeseries from the processed datasets for use in model runs. Estimated runtime is less than 2 hours. Estimated RAM is about 25 GB.
 
 ---
 ## Citation and Contact Information
