@@ -6940,6 +6940,72 @@ arrows(BR5K5_TrueLoad[as.Date(Dates_BR5K5) %in% as.Date(Dates_BARN)], (Load_ECM_
 lines(c(0,200), c(0,200), col ='red')
 dev.off()
 
+#  Evaluate temporal correlation in ECM TN load - true TN load residuals----
+setwd(wd_BESN)
+acf(x = Load_ECM_Baisman_MatMean - BARN_PredTN$TrueLoad, na.action = na.pass)
+
+#Variogram method
+#Make the variogram cloud matrix
+Dists = Vals = matrix(NA, nrow = length(BARN_PredTN$TrueLoad[!is.na(BARN_PredTN$TrueLoad)]), ncol = length(BARN_PredTN$TrueLoad[!is.na(BARN_PredTN$TrueLoad)]))
+for (i in 1:length(BARN_PredTN$TrueLoad[!is.na(BARN_PredTN$TrueLoad)])){
+  #Get the distance of this point to all other points
+  Dists[i,] = abs(as.numeric(Dates_BARN[!is.na(BARN_PredTN$TrueLoad)] - Dates_BARN[!is.na(BARN_PredTN$TrueLoad)][i]))
+  #Get the squared difference of this point and all other points, and add to matrix
+  Vals[i,] = 0.5*((Load_ECM_Baisman_MatMean[!is.na(BARN_PredTN$TrueLoad)] - BARN_PredTN$TrueLoad[!is.na(BARN_PredTN$TrueLoad)]) - (Load_ECM_Baisman_MatMean[!is.na(BARN_PredTN$TrueLoad)][i] - BARN_PredTN$TrueLoad[!is.na(BARN_PredTN$TrueLoad)][i]))^2
+} 
+
+#Estimate bin lags
+h = seq(0,2500,100)
+Bins = n = vector('numeric', length=length(h))
+tol=50
+
+for (j in 1:length(h)){
+  #Assign the value of semivariance
+  n[j] = length(which(Dists[upper.tri(Dists)] >= (h[j]-tol) & Dists[upper.tri(Dists)] <= (h[j]+tol)))
+  Bins[j] = sum(Vals[upper.tri(Vals)][which((Dists[upper.tri(Dists)] >= (h[j]-tol)) & (Dists[upper.tri(Dists)] <= (h[j]+tol)))])/n[j]
+}
+
+#Plot variogram cloud and bin means
+#Real space
+png('Variogram_RealSpace_BARNecm.png', res = 300, units = 'in', width = 5, height = 5)
+par(mar=c(5,5,2,1))
+plot(x = Dists[upper.tri(Dists)], y = Vals[upper.tri(Vals)], xlab='Time Distance [days]', ylab=expression(Semivariance ~ (mg/s)^2), cex.lab=1.5, cex.axis=1.5,
+     ylim=c(0, 1000), xlim=c(0,6000), main = '100 day lag means, y-axis trimmed')
+par(new=TRUE)
+plot(h, Bins, pch=16, col='blue', ylim=c(0, 1000), xlim=c(0,6000), axes=FALSE, xlab='', ylab='')
+legend('bottomright', legend = c('Variogram Cloud', 'Bin Estimates'), pch=c(1,16), col=c('black', 'blue'))
+dev.off()
+
+#log space
+png('Variogram_LogSpace_BARNecm.png', res = 300, units = 'in', width = 5, height = 5)
+par(mar=c(5,5,2,1))
+plot(x = Dists[upper.tri(Dists)], y = Vals[upper.tri(Vals)], xlab='Time Distance [days]', ylab=expression(Semivariance ~ (mg/s)^2), cex.lab=1.5, cex.axis=1.5,
+     ylim=c(0.001, 100000), xlim=c(0,6000), log = 'y', main = '100 day lag means')
+par(new=TRUE)
+plot(h, Bins, pch=16, col='blue', ylim=c(0.001, 100000), xlim=c(0,6000), axes=FALSE, xlab='', ylab='', log = 'y')
+legend('bottomright', legend = c('Variogram Cloud', 'Bin Estimates'), pch=c(1,16), col=c('black', 'blue'))
+dev.off()
+
+#Smaller time distances
+h = seq(0,500,20)
+Bins = n = vector('numeric', length=length(h))
+tol=10
+
+for (j in 1:length(h)){
+  #Assign the value of semivariance
+  n[j] = length(which(Dists[upper.tri(Dists)] >= (h[j]-tol) & Dists[upper.tri(Dists)] <= (h[j]+tol)))
+  Bins[j] = sum(Vals[upper.tri(Vals)][which((Dists[upper.tri(Dists)] >= (h[j]-tol)) & (Dists[upper.tri(Dists)] <= (h[j]+tol)))])/n[j]
+}
+
+png('Variogram_LogSpace_BARNecm_500days.png', res = 300, units = 'in', width = 5, height = 5)
+par(mar=c(5,5,2,1))
+plot(x = Dists[upper.tri(Dists)], y = Vals[upper.tri(Vals)], xlab='Time Distance [days]', ylab=expression(Semivariance ~ (mg/s)^2), cex.lab=1.5, cex.axis=1.5,
+     ylim=c(0, 1000), xlim=c(0,500), main = '20 day lags')
+par(new=TRUE)
+plot(h, Bins, pch=16, col='blue', ylim=c(0, 1000), xlim=c(0,500), axes=FALSE, xlab='', ylab='')
+legend('bottomright', legend = c('Variogram Cloud', 'Bin Estimates'), pch=c(1,16), col=c('black', 'blue'))
+dev.off()
+
 #  Save ECM Timeseries for undeveloped and developed land----
 write.csv(x = EC_UndevMat, file = f_EC_Undev, row.names = FALSE)
 write.csv(x = EC_DevMat, file = f_EC_Dev, row.names = FALSE)
