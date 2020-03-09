@@ -6945,6 +6945,7 @@ setwd(wd_BESN)
 acf(x = Load_ECM_Baisman_MatMean - BARN_PredTN$TrueLoad, na.action = na.pass)
 
 #Variogram method
+#   BARN----
 #Make the variogram cloud matrix
 Dists = Vals = matrix(NA, nrow = length(BARN_PredTN$TrueLoad[!is.na(BARN_PredTN$TrueLoad)]), ncol = length(BARN_PredTN$TrueLoad[!is.na(BARN_PredTN$TrueLoad)]))
 for (i in 1:length(BARN_PredTN$TrueLoad[!is.na(BARN_PredTN$TrueLoad)])){
@@ -7003,6 +7004,68 @@ plot(x = Dists[upper.tri(Dists)], y = Vals[upper.tri(Vals)], xlab='Time Distance
      ylim=c(0, 1000), xlim=c(0,500), main = '20 day lags')
 par(new=TRUE)
 plot(h, Bins, pch=16, col='blue', ylim=c(0, 1000), xlim=c(0,500), axes=FALSE, xlab='', ylab='')
+legend('bottomright', legend = c('Variogram Cloud', 'Bin Estimates'), pch=c(1,16), col=c('black', 'blue'))
+dev.off()
+
+#   POBR----
+#Make the variogram cloud matrix
+Dists_POBR = Vals_POBR = matrix(NA, nrow = length(POBR_AllDates_PredTN$TrueLoad[!is.na(POBR_AllDates_PredTN$TrueLoad)]), ncol = length(POBR_AllDates_PredTN$TrueLoad[!is.na(POBR_AllDates_PredTN$TrueLoad)]))
+for (i in 1:length(POBR_AllDates_PredTN$TrueLoad[!is.na(POBR_AllDates_PredTN$TrueLoad)])){
+  #Get the distance of this point to all other points
+  Dists_POBR[i,] = abs(as.numeric(Dates_POBR_AllDates[!is.na(POBR_AllDates_PredTN$TrueLoad)] - Dates_POBR_AllDates[!is.na(POBR_AllDates_PredTN$TrueLoad)][i]))
+  #Get the squared difference of this point and all other points, and add to matrix
+  Vals_POBR[i,] = 0.5*((Load_ECM_Pond_MatMean[!is.na(POBR_AllDates_PredTN$TrueLoad)] - POBR_AllDates_PredTN$TrueLoad[!is.na(POBR_AllDates_PredTN$TrueLoad)]) - (Load_ECM_Pond_MatMean[!is.na(POBR_AllDates_PredTN$TrueLoad)][i] - POBR_AllDates_PredTN$TrueLoad[!is.na(POBR_AllDates_PredTN$TrueLoad)][i]))^2
+} 
+
+#Estimate bin lags
+h = seq(0,2500,50)
+Bins = n = vector('numeric', length=length(h))
+tol=25
+
+for (j in 1:length(h)){
+  #Assign the value of semivariance
+  n[j] = length(which(Dists_POBR[upper.tri(Dists_POBR)] >= (h[j]-tol) & Dists_POBR[upper.tri(Dists_POBR)] <= (h[j]+tol)))
+  Bins[j] = sum(Vals_POBR[upper.tri(Vals_POBR)][which((Dists_POBR[upper.tri(Dists_POBR)] >= (h[j]-tol)) & (Dists_POBR[upper.tri(Dists_POBR)] <= (h[j]+tol)))])/n[j]
+}
+
+#Plot variogram cloud and bin means
+#Real space
+png('Variogram_RealSpace_POBRecm.png', res = 300, units = 'in', width = 5, height = 5)
+par(mar=c(5,5,2,1))
+plot(x = Dists_POBR[upper.tri(Dists_POBR)], y = Vals_POBR[upper.tri(Vals_POBR)], xlab='Time Distance [days]', ylab=expression(Semivariance ~ (mg/s)^2), cex.lab=1.5, cex.axis=1.5,
+     ylim=c(0, 100), xlim=c(0,6000), main = '50 day lag means, y-axis trimmed')
+par(new=TRUE)
+plot(h, Bins, pch=16, col='blue', ylim=c(0, 100), xlim=c(0,6000), axes=FALSE, xlab='', ylab='')
+legend('bottomright', legend = c('Variogram Cloud', 'Bin Estimates'), pch=c(1,16), col=c('black', 'blue'))
+dev.off()
+
+#log space
+png('Variogram_LogSpace_POBRecm.png', res = 300, units = 'in', width = 5, height = 5)
+par(mar=c(5,5,2,1))
+plot(x = Dists_POBR[upper.tri(Dists_POBR)], y = Vals_POBR[upper.tri(Vals_POBR)], xlab='Time Distance [days]', ylab=expression(Semivariance ~ (mg/s)^2), cex.lab=1.5, cex.axis=1.5,
+     ylim=c(0.001, 100000), xlim=c(0,6000), log = 'y', main = '50 day lag means')
+par(new=TRUE)
+plot(h, Bins, pch=16, col='blue', ylim=c(0.001, 100000), xlim=c(0,6000), axes=FALSE, xlab='', ylab='', log = 'y')
+legend('bottomright', legend = c('Variogram Cloud', 'Bin Estimates'), pch=c(1,16), col=c('black', 'blue'))
+dev.off()
+
+#Smaller time distances
+h = seq(0,500,10)
+Bins = n = vector('numeric', length=length(h))
+tol=5
+
+for (j in 1:length(h)){
+  #Assign the value of semivariance
+  n[j] = length(which(Dists_POBR[upper.tri(Dists_POBR)] >= (h[j]-tol) & Dists_POBR[upper.tri(Dists_POBR)] <= (h[j]+tol)))
+  Bins[j] = sum(Vals_POBR[upper.tri(Vals_POBR)][which((Dists_POBR[upper.tri(Dists_POBR)] >= (h[j]-tol)) & (Dists_POBR[upper.tri(Dists_POBR)] <= (h[j]+tol)))])/n[j]
+}
+
+png('Variogram_LogSpace_POBRecm_500days.png', res = 300, units = 'in', width = 5, height = 5)
+par(mar=c(5,5,2,1))
+plot(x = Dists_POBR[upper.tri(Dists_POBR)], y = Vals_POBR[upper.tri(Vals_POBR)], xlab='Time Distance [days]', ylab=expression(Semivariance ~ (mg/s)^2), cex.lab=1.5, cex.axis=1.5,
+     ylim=c(0, 100), xlim=c(0,500), main = '10 day lags')
+par(new=TRUE)
+plot(h, Bins, pch=16, col='blue', ylim=c(0, 100), xlim=c(0,500), axes=FALSE, xlab='', ylab='')
 legend('bottomright', legend = c('Variogram Cloud', 'Bin Estimates'), pch=c(1,16), col=c('black', 'blue'))
 dev.off()
 
